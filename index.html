@@ -20,7 +20,8 @@
 <header class="site-header" id="top">
   <div class="header-inner">
     <a href="#top" class="brand" aria-label="Au P'tit Paradis — Accueil">
-      <img src="assets/logo.jpg" alt="Au P'tit Paradis — Boulangerie Pâtisserie" class="brand-logo">
+      <img src="assets/logo.jpg" alt="" class="brand-logo">
+      <span class="brand-name">Au P'tit Paradis</span>
     </a>
 
     <nav class="main-nav" id="main-nav" aria-label="Navigation principale">
@@ -28,7 +29,6 @@
         <li><a href="#specialites">Nos spécialités</a></li>
         <li><a href="#histoire">Notre histoire</a></li>
         <li><a href="#horaires">Horaires &amp; accès</a></li>
-        <li><a href="#contact" class="nav-cta">Nous écrire</a></li>
       </ul>
     </nav>
 
@@ -215,10 +215,55 @@
 
 <!-- ===================== FOOTER ===================== -->
 <footer class="site-footer">
-  <div class="footer-inner">
-    <img src="assets/logo.jpg" alt="Au P'tit Paradis" class="footer-logo">
-    <p>&copy; <span id="year"></span> Au P'tit Paradis — Luc-sur-Mer. Tous droits réservés.</p>
+
+  <div class="footer-top">
+    <div class="footer-grid">
+
+      <div class="footer-brand">
+        <a href="#top" class="footer-brand-link">
+          <img src="assets/logo.jpg" alt="" class="footer-logo">
+          <div class="footer-brand-text">
+            <span class="footer-brand-name">Au P'tit Paradis</span>
+            <span class="footer-brand-tagline">Boulangerie · Pâtisserie · Glacier</span>
+          </div>
+        </a>
+        <p class="footer-brand-desc">Fait à Luc-sur-Mer, tous les matins, depuis longtemps.</p>
+      </div>
+
+      <nav class="footer-nav" aria-label="Navigation secondaire">
+        <p class="footer-section-label">Le site</p>
+        <ul>
+          <li><a href="#specialites">Nos spécialités</a></li>
+          <li><a href="#histoire">Notre histoire</a></li>
+          <li><a href="#horaires">Horaires &amp; accès</a></li>
+        </ul>
+      </nav>
+
+      <div class="footer-contact">
+        <p class="footer-section-label">Nous trouver</p>
+        <address>
+          <p>1 Place du Petit Enfer<br>14530 Luc-sur-Mer</p>
+        </address>
+        <div class="footer-socials">
+          <a href="#" class="footer-social-link" aria-label="Instagram" rel="noopener">
+            <img src="https://cdn.jsdelivr.net/npm/@tabler/icons@2.47.0/icons/brand-instagram.svg" alt="" width="18" height="18">
+          </a>
+          <a href="#" class="footer-social-link" aria-label="Facebook" rel="noopener">
+            <img src="https://cdn.jsdelivr.net/npm/@tabler/icons@2.47.0/icons/brand-facebook.svg" alt="" width="18" height="18">
+          </a>
+        </div>
+      </div>
+
+    </div>
   </div>
+
+  <div class="footer-bottom">
+    <div class="footer-bottom-inner">
+      <p>&copy; <span id="year"></span> Au P'tit Paradis — Luc-sur-Mer. Tous droits réservés.</p>
+      <a href="admin/" class="footer-admin-link">Admin</a>
+    </div>
+  </div>
+
 </footer>
 
 <script type="module" src="js/site-data.js"></script>
