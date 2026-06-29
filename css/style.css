@@ -178,7 +178,7 @@ p{ margin:0 0 1em; color:var(--ink-soft); }
 /* Produits vedettes dans les cartes spécialités */
 .spec-produits{ display:flex; flex-direction:column; gap:.75rem; margin-top:1.2rem; border-top:1px solid var(--sand); padding-top:1.1rem; }
 .spec-produit{ display:flex; align-items:center; gap:.9rem; }
-.spec-produit-img{ width:58px; height:58px; object-fit:cover; border-radius:8px; flex-shrink:0; background:var(--sand); }
+.spec-produit-img{ width:82px; height:82px; object-fit:cover; border-radius:10px; flex-shrink:0; background:var(--sand); }
 .spec-produit-info{ display:flex; flex-direction:column; gap:.15rem; }
 .spec-produit-header{ display:flex; align-items:center; gap:.5rem; flex-wrap:wrap; }
 .spec-produit-info strong{ font-size:.92rem; font-family:var(--font-display); font-weight:600; color:var(--ink); }
