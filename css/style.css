@@ -222,6 +222,25 @@ address a{ color:var(--gold-deep); font-weight:600; }
 .form-row input:focus, .form-row textarea:focus{ border-color:var(--gold); }
 .contact-form .btn{ align-self:flex-start; margin-top:.4rem; }
 
+/* ---------- Bandeau avis Google ---------- */
+.google-reviews-band{
+  display:flex; align-items:center; gap:1.2rem; justify-content:center; flex-wrap:wrap;
+  padding:1.3rem 1.5rem; background:var(--white);
+  border-top:1px solid var(--sand); border-bottom:1px solid var(--sand);
+  text-decoration:none; color:var(--ink);
+  transition:background .25s var(--ease);
+}
+.google-reviews-band:hover{ background:var(--cream); }
+.google-g{ width:28px; height:28px; flex-shrink:0; }
+.google-reviews-text{ display:flex; flex-direction:column; line-height:1.2; }
+.google-reviews-stars{ color:#f4b400; font-size:1rem; letter-spacing:.05em; }
+.star-half{ opacity:.4; }
+.google-reviews-count{ font-size:.8rem; color:var(--ink-soft); font-family:var(--font-body); }
+.google-reviews-cta{
+  margin-left:.4rem; font-size:.85rem; font-weight:600;
+  color:var(--gold-deep); text-decoration:underline; text-underline-offset:3px;
+}
+
 /* ---------- Footer ---------- */
 .site-footer{ background:var(--ink); color:var(--sand); padding:2.6rem 1.5rem; }
 .footer-inner{ max-width:var(--max-w); margin:0 auto; display:flex; align-items:center; gap:1rem; flex-wrap:wrap; }
