@@ -16,8 +16,8 @@
   --sea-pale:   #e7eeec;
   --white:      #ffffff;
 
-  --font-display: "Fraunces", serif;
-  --font-script:  "Beau Rivage", cursive;
+  --font-display: "Atma", sans-serif;
+  --font-script:  "Atma", sans-serif;
   --font-body:    "Jost", sans-serif;
 
   --max-w: 1140px;
@@ -63,7 +63,7 @@ p{ margin:0 0 1em; color:var(--ink-soft); }
   font-size:.78rem; font-weight:600; color:var(--gold-deep); margin-bottom:.8em;
 }
 .eyebrow-script{
-  font-family:var(--font-script); font-size:2.2rem; color:var(--gold); margin:0 0 -.4rem 0; line-height:1;
+  font-family:var(--font-script); font-size:1.6rem; font-weight:300; color:var(--gold); margin:0 0 .1rem 0; line-height:1; letter-spacing:.12em;
 }
 .btn{
   display:inline-block; padding:.85em 1.8em; border-radius:var(--radius);
