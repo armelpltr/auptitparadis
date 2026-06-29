@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Au P'tit Paradis — Boulangerie · Pâtisserie · Glacier à Luc-sur-Mer</title>
+<meta name="description" content="Au P'tit Paradis, boulangerie-pâtisserie artisanale à Luc-sur-Mer. Pain frais, viennoiseries, pâtisseries gourmandes et glaces maison, à deux pas de la plage.">
+
+<link rel="icon" href="assets/logo.jpg" type="image/jpeg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Jost:wght@400;500;600&family=Beau+Rivage&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<a class="skip-link" href="#main">Aller au contenu</a>
+
+<!-- ===================== HEADER ===================== -->
+<header class="site-header" id="top">
+  <div class="header-inner">
+    <a href="#top" class="brand" aria-label="Au P'tit Paradis — Accueil">
+      <img src="assets/logo.jpg" alt="Au P'tit Paradis — Boulangerie Pâtisserie" class="brand-logo">
+    </a>
+
+    <nav class="main-nav" id="main-nav" aria-label="Navigation principale">
+      <ul>
+        <li><a href="#specialites">Nos spécialités</a></li>
+        <li><a href="#histoire">Notre histoire</a></li>
+        <li><a href="#horaires">Horaires &amp; accès</a></li>
+        <li><a href="#contact" class="nav-cta">Nous écrire</a></li>
+      </ul>
+    </nav>
+
+    <button class="nav-toggle" id="navToggle" aria-expanded="false" aria-controls="main-nav" aria-label="Ouvrir le menu">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+</header>
+
+<main id="main">
+
+  <!-- ===================== HERO ===================== -->
+  <section class="hero">
+    <svg class="hero-wave" viewBox="0 0 1200 360" preserveAspectRatio="none" aria-hidden="true">
+      <path class="wave-path" d="M0,260 C90,230 150,300 230,270 C300,245 320,160 400,140 C470,123 500,190 560,170 C630,148 650,70 730,55 C800,42 840,110 910,95 C980,80 1010,30 1090,25 C1140,22 1170,40 1200,35" />
+    </svg>
+
+    <div class="hero-inner">
+      <p class="eyebrow-script">Au</p>
+      <h1>P'tit Paradis</h1>
+      <p class="hero-tagline" id="heroTagline">Boulangerie · Pâtisserie · Glacier artisanal, à deux pas de la plage de Luc&#8209;sur&#8209;Mer</p>
+      <div class="hero-actions">
+        <a href="#specialites" class="btn btn-primary">Découvrir nos gourmandises</a>
+        <a href="#horaires" class="btn btn-ghost">Horaires &amp; adresse</a>
+      </div>
+    </div>
+
+    <a href="#specialites" class="scroll-cue" aria-label="Défiler vers le bas">
+      <span></span>
+    </a>
+  </section>
+
+  <div class="divider" aria-hidden="true">
+    <svg viewBox="0 0 1200 80" preserveAspectRatio="none"><path d="M0,40 C150,10 250,70 400,45 C550,20 650,65 800,38 C950,12 1050,55 1200,30" /></svg>
+  </div>
+
+  <!-- ===================== SPÉCIALITÉS ===================== -->
+  <section class="specialites" id="specialites">
+    <div class="section-inner">
+      <p class="eyebrow">Faits maison, chaque matin</p>
+      <h2>Nos spécialités</h2>
+
+      <div class="cards" id="specCards">
+
+        <article class="card" data-spec="1">
+          <span class="card-icon" aria-hidden="true">
+            <svg viewBox="0 0 100 100"><path d="M15,68 C15,55 28,46 40,50 C46,38 60,32 70,42 C82,38 92,48 88,60 C92,68 88,78 76,78 L24,78 C14,78 12,72 15,68 Z" /><path d="M28,50 L24,40 M45,46 L44,33 M64,44 L70,33" /></svg>
+          </span>
+          <h3 id="specTitle1">Boulangerie</h3>
+          <p id="specText1">Pain de tradition, baguette croustillante, pains spéciaux aux céréales et pains de campagne, pétris et cuits sur place tous les matins.</p>
+        </article>
+
+        <article class="card" data-spec="2">
+          <span class="card-icon" aria-hidden="true">
+            <svg viewBox="0 0 100 100"><path d="M50,12 C66,12 78,26 78,42 C78,50 72,56 65,58 C68,64 64,70 58,70 L42,70 C36,70 32,64 35,58 C28,56 22,50 22,42 C22,26 34,12 50,12 Z" /><path d="M50,12 C50,20 46,26 50,32 C54,26 50,20 50,12 Z" /></svg>
+          </span>
+          <h3 id="specTitle2">Pâtisserie</h3>
+          <p id="specText2">Viennoiseries pur beurre, entremets, tartes de saison et pièces sur mesure pour vos fêtes et anniversaires.</p>
+        </article>
+
+        <article class="card" data-spec="3">
+          <span class="card-icon" aria-hidden="true">
+            <svg viewBox="0 0 100 100"><path d="M35,42 C35,26 65,26 65,42 L62,42 C66,48 64,56 58,58 L50,86 L42,58 C36,56 34,48 38,42 Z" /><path d="M30,38 C30,18 70,18 70,38" /></svg>
+          </span>
+          <h3 id="specTitle3">Glacier</h3>
+          <p id="specText3">Glaces et sorbets artisanaux préparés sur place, parfaits pour prolonger la balade sur le front de mer.</p>
+        </article>
+
+      </div>
+    </div>
+  </section>
+
+  <div class="divider divider-flip" aria-hidden="true">
+    <svg viewBox="0 0 1200 80" preserveAspectRatio="none"><path d="M0,40 C150,10 250,70 400,45 C550,20 650,65 800,38 C950,12 1050,55 1200,30" /></svg>
+  </div>
+
+  <!-- ===================== SECTIONS DYNAMIQUES (gérées depuis l'admin) ===================== -->
+  <div id="dynamicSections"></div>
+
+  <!-- ===================== HISTOIRE ===================== -->
+  <section class="histoire" id="histoire">
+    <div class="section-inner histoire-grid">
+      <div class="histoire-visual" aria-hidden="true">
+        <div class="histoire-frame">
+          <img src="assets/logo.jpg" alt="" id="histoireImage">
+        </div>
+      </div>
+      <div class="histoire-text">
+        <p class="eyebrow">Notre histoire</p>
+        <h2 id="histoireTitle">Une fournée de bonheur, depuis toujours</h2>
+        <!-- À PERSONNALISER (ou via l'admin) : remplacez ce texte par l'histoire réelle du P'tit Paradis -->
+        <p id="histoireText1">Au P'tit Paradis est née d'une passion simple&nbsp;: celle du bon pain et des recettes gourmandes partagées en famille. Chaque jour, notre équipe se lève avant le soleil pour pétrir, façonner et cuire des produits frais, fidèles aux gestes de la boulangerie traditionnelle.</p>
+        <p id="histoireText2">Installés au cœur de Luc&#8209;sur&#8209;Mer, nous aimons accueillir habitants et vacanciers avec le sourire, et leur faire vivre, à chaque visite, un petit coin de paradis gourmand.</p>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider" aria-hidden="true">
+    <svg viewBox="0 0 1200 80" preserveAspectRatio="none"><path d="M0,40 C150,10 250,70 400,45 C550,20 650,65 800,38 C950,12 1050,55 1200,30" /></svg>
+  </div>
+
+  <!-- ===================== HORAIRES & ACCÈS ===================== -->
+  <section class="horaires" id="horaires">
+    <div class="section-inner horaires-grid">
+
+      <div class="horaires-col">
+        <p class="eyebrow">Nous trouver</p>
+        <h2>Horaires &amp; accès</h2>
+
+        <table class="hours-table">
+          <!-- Rempli dynamiquement depuis l'admin (ou via le contenu ci-dessous par défaut) -->
+          <tbody id="hoursTableBody">
+            <tr><th>Lundi</th><td>Fermé</td></tr>
+            <tr><th>Mardi — Vendredi</th><td>7h00 – 13h30 · 15h30 – 19h30</td></tr>
+            <tr><th>Samedi</th><td>7h00 – 19h30</td></tr>
+            <tr><th>Dimanche</th><td>7h00 – 13h30</td></tr>
+          </tbody>
+        </table>
+
+        <address>
+          <!-- À PERSONNALISER (ou via l'admin) : adresse, téléphone et e-mail réels -->
+          <span id="addressLine">[Adresse à compléter]<br>14530 Luc-sur-Mer, Normandie</span><br>
+          <a href="tel:+33000000000" id="phoneLink">02 00 00 00 00</a><br>
+          <a href="mailto:contact@auptitparadis.fr" id="emailLink">contact@auptitparadis.fr</a>
+        </address>
+
+        <div class="social-row">
+          <a href="#" aria-label="Instagram" class="social-icon" id="instagramLink">
+            <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="0.8" fill="currentColor" stroke="none"/></svg>
+          </a>
+          <a href="#" aria-label="Facebook" class="social-icon" id="facebookLink">
+            <svg viewBox="0 0 24 24"><path d="M15 8.5h-2c-.6 0-1 .4-1 1V12h3l-.4 3h-2.6v7h-3v-7H7v-3h2V9c0-2.2 1.8-4 4-4h2v3.5Z"/></svg>
+          </a>
+        </div>
+      </div>
+
+      <div class="horaires-col map-col">
+        <!-- À PERSONNALISER (ou via l'admin) : remplacez l'URL Google Maps par celle de la véritable adresse -->
+        <iframe
+          id="mapIframe"
+          title="Localisation Au P'tit Paradis sur la carte"
+          src="https://www.google.com/maps?q=Luc-sur-Mer&output=embed"
+          loading="lazy"
+          referrerpolicy="no-referrer-when-downgrade">
+        </iframe>
+      </div>
+
+    </div>
+  </section>
+
+  <div class="divider divider-flip" aria-hidden="true">
+    <svg viewBox="0 0 1200 80" preserveAspectRatio="none"><path d="M0,40 C150,10 250,70 400,45 C550,20 650,65 800,38 C950,12 1050,55 1200,30" /></svg>
+  </div>
+
+  <!-- ===================== CONTACT ===================== -->
+  <section class="contact" id="contact">
+    <div class="section-inner contact-inner">
+      <p class="eyebrow-script">Une question, une commande&nbsp;?</p>
+      <h2>Écrivez-nous</h2>
+      <p class="contact-intro" id="contactIntro">Pour une pièce sur mesure, un anniversaire ou simplement nous dire bonjour, laissez-nous un message.</p>
+
+      <!-- Formulaire statique : à connecter à un service d'envoi (Formspree, mailto, etc.) -->
+      <form class="contact-form" action="#" method="post">
+        <div class="form-row">
+          <label for="nom">Nom</label>
+          <input type="text" id="nom" name="nom" required>
+        </div>
+        <div class="form-row">
+          <label for="email">E-mail</label>
+          <input type="email" id="email" name="email" required>
+        </div>
+        <div class="form-row">
+          <label for="message">Message</label>
+          <textarea id="message" name="message" rows="4" required></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary">Envoyer le message</button>
+      </form>
+    </div>
+  </section>
+
+</main>
+
+<!-- ===================== FOOTER ===================== -->
+<footer class="site-footer">
+  <div class="footer-inner">
+    <img src="assets/logo.jpg" alt="Au P'tit Paradis" class="footer-logo">
+    <p>&copy; <span id="year"></span> Au P'tit Paradis — Luc-sur-Mer. Tous droits réservés.</p>
+  </div>
+</footer>
+
+<script type="module" src="js/site-data.js"></script>
+<script src="js/script.js"></script>
+</body>
+</html>

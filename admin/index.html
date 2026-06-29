@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Administration — Au P'tit Paradis</title>
+<meta name="robots" content="noindex, nofollow">
+
+<link rel="icon" href="../assets/logo.jpg" type="image/jpeg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Jost:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/style.css">
+<link rel="stylesheet" href="../css/admin.css">
+</head>
+<body class="admin-body">
+
+<!-- ===================== ÉCRAN DE CONNEXION ===================== -->
+<div class="login-screen" id="loginScreen">
+  <form class="login-card" id="loginForm">
+    <img src="../assets/logo.jpg" alt="Au P'tit Paradis" class="login-logo">
+    <h1>Administration du site</h1>
+    <p class="login-sub">Connecte-toi pour modifier le contenu.</p>
+
+    <div class="form-row">
+      <label for="loginEmail">E-mail</label>
+      <input type="email" id="loginEmail" required autocomplete="username">
+    </div>
+    <div class="form-row">
+      <label for="loginPassword">Mot de passe</label>
+      <input type="password" id="loginPassword" required autocomplete="current-password">
+    </div>
+
+    <p class="login-error" id="loginError" hidden></p>
+
+    <button type="submit" class="btn btn-primary login-submit">Se connecter</button>
+    <a href="../index.html" class="back-to-site">← Retour au site</a>
+  </form>
+</div>
+
+<!-- ===================== APPLICATION ADMIN ===================== -->
+<div class="admin-app" id="adminApp" hidden>
+
+  <header class="admin-topbar">
+    <div class="admin-topbar-inner">
+      <img src="../assets/logo.jpg" alt="" class="admin-logo">
+      <h1>Administration — Au P'tit Paradis</h1>
+      <a href="../index.html" class="admin-view-site" target="_blank">Voir le site ↗</a>
+      <button class="btn btn-ghost admin-logout" id="logoutBtn">Déconnexion</button>
+    </div>
+  </header>
+
+  <nav class="admin-tabs">
+    <button class="admin-tab is-active" data-tab="settings">Réglages du site</button>
+    <button class="admin-tab" data-tab="sections">Sections</button>
+  </nav>
+
+  <main class="admin-main">
+
+    <p class="admin-status" id="adminStatus" hidden></p>
+
+    <!-- ===================== ONGLET RÉGLAGES ===================== -->
+    <section class="admin-panel is-active" id="panel-settings">
+
+      <div class="admin-card">
+        <h2>Accroche (page d'accueil)</h2>
+        <div class="form-row">
+          <label for="set-tagline">Phrase sous le logo</label>
+          <input type="text" id="set-tagline">
+        </div>
+      </div>
+
+      <div class="admin-card">
+        <h2>Nos spécialités</h2>
+        <p class="admin-card-hint">Les 3 fiches affichées juste sous l'accueil.</p>
+
+        <div class="spec-edit" data-spec="1">
+          <h3>Fiche 1 — Boulangerie</h3>
+          <div class="form-row"><label>Titre</label><input type="text" id="set-spec1-title"></div>
+          <div class="form-row"><label>Texte</label><textarea id="set-spec1-text" rows="3"></textarea></div>
+        </div>
+        <div class="spec-edit" data-spec="2">
+          <h3>Fiche 2 — Pâtisserie</h3>
+          <div class="form-row"><label>Titre</label><input type="text" id="set-spec2-title"></div>
+          <div class="form-row"><label>Texte</label><textarea id="set-spec2-text" rows="3"></textarea></div>
+        </div>
+        <div class="spec-edit" data-spec="3">
+          <h3>Fiche 3 — Glacier</h3>
+          <div class="form-row"><label>Titre</label><input type="text" id="set-spec3-title"></div>
+          <div class="form-row"><label>Texte</label><textarea id="set-spec3-text" rows="3"></textarea></div>
+        </div>
+      </div>
+
+      <div class="admin-card">
+        <h2>Notre histoire</h2>
+        <div class="form-row"><label>Titre</label><input type="text" id="set-histoire-title"></div>
+        <div class="form-row"><label>Paragraphe 1</label><textarea id="set-histoire-text1" rows="3"></textarea></div>
+        <div class="form-row"><label>Paragraphe 2</label><textarea id="set-histoire-text2" rows="3"></textarea></div>
+        <div class="form-row">
+          <label>Photo</label>
+          <div class="image-upload" data-target="histoire">
+            <img class="image-upload-preview" id="preview-histoire" alt="">
+            <input type="file" accept="image/*" id="file-histoire">
+            <span class="image-upload-status" id="status-histoire"></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="admin-card">
+        <h2>Horaires</h2>
+        <div id="hoursRowsContainer"></div>
+        <button type="button" class="btn btn-ghost btn-small" id="addHourRow">+ Ajouter une ligne</button>
+      </div>
+
+      <div class="admin-card">
+        <h2>Adresse &amp; contact</h2>
+        <div class="form-row-grid">
+          <div class="form-row"><label>Adresse — ligne 1</label><input type="text" id="set-address1" placeholder="12 rue de la Mer"></div>
+          <div class="form-row"><label>Adresse — ligne 2</label><input type="text" id="set-address2" placeholder="14530 Luc-sur-Mer"></div>
+        </div>
+        <div class="form-row-grid">
+          <div class="form-row"><label>Téléphone (numéro, ex. 0231000000)</label><input type="text" id="set-phone"></div>
+          <div class="form-row"><label>Téléphone affiché (ex. 02 31 00 00 00)</label><input type="text" id="set-phoneDisplay"></div>
+        </div>
+        <div class="form-row"><label>E-mail</label><input type="email" id="set-email"></div>
+        <div class="form-row-grid">
+          <div class="form-row"><label>Lien Instagram</label><input type="url" id="set-instagram" placeholder="https://instagram.com/..."></div>
+          <div class="form-row"><label>Lien Facebook</label><input type="url" id="set-facebook" placeholder="https://facebook.com/..."></div>
+        </div>
+        <div class="form-row">
+          <label>URL de la carte Google Maps (lien d'intégration)</label>
+          <input type="text" id="set-mapUrl" placeholder="https://www.google.com/maps?q=...&output=embed">
+          <p class="field-hint">Google Maps → rechercher l'adresse → Partager → Intégrer une carte → copier le lien dans la balise <code>src</code>.</p>
+        </div>
+      </div>
+
+      <div class="admin-card">
+        <h2>Contact</h2>
+        <div class="form-row"><label>Texte d'intro du formulaire</label><textarea id="set-contactIntro" rows="2"></textarea></div>
+      </div>
+
+      <button type="button" class="btn btn-primary admin-save" id="saveSettingsBtn">Enregistrer les réglages</button>
+    </section>
+
+    <!-- ===================== ONGLET SECTIONS ===================== -->
+    <section class="admin-panel" id="panel-sections">
+
+      <div class="admin-card">
+        <h2>Sections de la page</h2>
+        <p class="admin-card-hint">Elles s'affichent entre "Nos spécialités" et "Notre histoire", dans cet ordre.</p>
+        <div id="blocksList" class="blocks-list"></div>
+        <button type="button" class="btn btn-primary btn-small" id="addBlockBtn">+ Ajouter une section</button>
+      </div>
+
+      <!-- Sélecteur de modèle -->
+      <div class="modal-overlay" id="templatePicker" hidden>
+        <div class="modal">
+          <h2>Choisir un type de section</h2>
+          <div class="template-grid">
+            <button class="template-card" data-type="banner">
+              <strong>Bannière</strong>
+              <span>Annonce courte, fermeture exceptionnelle, promo…</span>
+            </button>
+            <button class="template-card" data-type="cards">
+              <strong>Grille de cartes</strong>
+              <span>2 à 6 fiches avec icône, titre et texte</span>
+            </button>
+            <button class="template-card" data-type="text-image">
+              <strong>Texte + image</strong>
+              <span>Un texte et une photo, côte à côte</span>
+            </button>
+            <button class="template-card" data-type="gallery">
+              <strong>Galerie photo</strong>
+              <span>Une série de photos en grille</span>
+            </button>
+          </div>
+          <button type="button" class="btn btn-ghost" id="cancelTemplatePicker">Annuler</button>
+        </div>
+      </div>
+
+      <!-- Formulaire d'édition de bloc -->
+      <div class="modal-overlay" id="blockEditor" hidden>
+        <div class="modal modal-wide">
+          <h2 id="blockEditorTitle">Modifier la section</h2>
+          <div id="blockEditorFields"></div>
+          <div class="modal-actions">
+            <button type="button" class="btn btn-ghost" id="cancelBlockEditor">Annuler</button>
+            <button type="button" class="btn btn-primary" id="saveBlockBtn">Enregistrer la section</button>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+  </main>
+</div>
+
+<script type="module" src="../js/admin.js"></script>
+</body>
+</html>
