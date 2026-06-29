@@ -42,6 +42,33 @@ const logoutBtn = document.getElementById('logoutBtn');
 const statusEl = document.getElementById('adminStatus');
 
 /* ============================================================
+   Modal de confirmation
+   ============================================================ */
+function confirm(title, sub) {
+  return new Promise(resolve => {
+    const overlay = document.getElementById('confirmOverlay');
+    document.getElementById('confirmTitle').textContent = title;
+    document.getElementById('confirmSub').textContent = sub;
+    overlay.hidden = false;
+
+    const ok = document.getElementById('confirmOk');
+    const cancel = document.getElementById('confirmCancel');
+
+    function close(result) {
+      overlay.hidden = true;
+      ok.removeEventListener('click', onOk);
+      cancel.removeEventListener('click', onCancel);
+      resolve(result);
+    }
+    const onOk = () => close(true);
+    const onCancel = () => close(false);
+    ok.addEventListener('click', onOk);
+    cancel.addEventListener('click', onCancel);
+    overlay.addEventListener('click', e => { if (e.target === overlay) close(false); }, { once: true });
+  });
+}
+
+/* ============================================================
    Authentification
    ============================================================ */
 loginForm.addEventListener('submit', async (e) => {
@@ -198,6 +225,8 @@ async function loadSettings() {
 }
 
 document.getElementById('saveSettingsBtn').addEventListener('click', async () => {
+  const ok = await confirm('Enregistrer les réglages ?', 'Les modifications seront appliquées sur le site immédiatement.');
+  if (!ok) return;
   const data = {
     tagline: val('set-tagline'),
     specialites: [1, 2, 3].map(n => ({
@@ -496,6 +525,8 @@ function renderGalleryThumbs() {
 
 /* ---------- Enregistrement du bloc ---------- */
 document.getElementById('saveBlockBtn').addEventListener('click', async () => {
+  const ok = await confirm('Enregistrer cette section ?', 'Les modifications seront appliquées sur le site immédiatement.');
+  if (!ok) return;
   const type = editingBlockType;
   let data = { type };
 
