@@ -170,6 +170,10 @@ async function loadDynamicBlocks() {
   container.innerHTML = html;
 }
 
+function revealDynamic() {
+  document.querySelectorAll('[data-dynamic]').forEach(el => el.classList.add('is-loaded'));
+}
+
 /* ---------- Lancement ---------- */
 (async () => {
   try {
@@ -177,6 +181,8 @@ async function loadDynamicBlocks() {
     if (settingsSnap.exists()) applySettings(settingsSnap.data());
   } catch (err) {
     console.warn('Contenu par défaut affiché (Firestore indisponible) :', err.message);
+  } finally {
+    revealDynamic();
   }
 
   try {

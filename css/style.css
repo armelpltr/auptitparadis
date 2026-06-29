@@ -43,6 +43,9 @@ ul{ margin:0; padding:0; list-style:none; }
 h1,h2,h3{ font-family:var(--font-display); font-weight:600; margin:0 0 .4em; color:var(--ink); }
 p{ margin:0 0 1em; color:var(--ink-soft); }
 
+[data-dynamic]{ opacity:0; transition:opacity .3s ease; }
+[data-dynamic].is-loaded{ opacity:1; }
+
 .skip-link{
   position:absolute; left:-999px; top:0;
   background:var(--gold); color:var(--white); padding:.6em 1em; z-index:200;
