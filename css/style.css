@@ -235,6 +235,45 @@ address a{ color:var(--gold-deep); font-weight:600; }
 .form-row input:focus, .form-row textarea:focus{ border-color:var(--gold); }
 .contact-form .btn{ align-self:flex-start; margin-top:.4rem; }
 
+/* ---------- Lightbox ---------- */
+.lightbox{
+  position:fixed; inset:0; z-index:200;
+  background:rgba(15,12,9,.85); backdrop-filter:blur(8px);
+  display:flex; align-items:center; justify-content:center; padding:1.5rem;
+  opacity:0; pointer-events:none;
+  transition:opacity .3s cubic-bezier(.4,0,.2,1);
+}
+.lightbox.is-open{ opacity:1; pointer-events:auto; }
+
+.lightbox-inner{
+  position:relative; max-width:min(90vw, 780px); max-height:90vh;
+  display:flex; flex-direction:column; align-items:center; gap:.8rem;
+  transform:scale(.86) translateY(12px);
+  transition:transform .35s cubic-bezier(.34,1.26,.64,1);
+}
+.lightbox.is-open .lightbox-inner{ transform:scale(1) translateY(0); }
+
+.lightbox-img{
+  max-width:100%; max-height:80vh; object-fit:contain;
+  border-radius:12px; box-shadow:0 32px 80px -16px rgba(0,0,0,.7);
+  display:block;
+}
+.lightbox-caption{
+  color:rgba(255,255,255,.72); font-size:.88rem; font-family:var(--font-body);
+  text-align:center; letter-spacing:.02em;
+}
+.lightbox-close{
+  position:fixed; top:1.2rem; right:1.4rem;
+  width:40px; height:40px; border-radius:50%;
+  background:rgba(255,255,255,.15); border:1px solid rgba(255,255,255,.2);
+  color:#fff; font-size:1.1rem; cursor:pointer; line-height:1;
+  transition:background .2s, transform .2s;
+}
+.lightbox-close:hover{ background:rgba(255,255,255,.28); transform:scale(1.1); }
+
+.spec-produit-img{ cursor:zoom-in; transition:transform .25s var(--ease), box-shadow .25s var(--ease); }
+.spec-produit-img:hover{ transform:scale(1.06); box-shadow:0 8px 20px -8px rgba(33,28,23,.3); }
+
 /* ---------- Bandeau avis Google ---------- */
 .google-reviews-band{
   display:flex; align-items:center; gap:1.2rem; justify-content:center; flex-wrap:wrap;
