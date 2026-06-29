@@ -49,8 +49,8 @@ function confirm(title, sub) {
     const overlay = document.getElementById('confirmOverlay');
     document.getElementById('confirmTitle').textContent = title;
     document.getElementById('confirmSub').textContent = sub;
-    document.querySelector('.confirm-actions').hidden = false;
-    document.querySelector('.confirm-actions--success').hidden = true;
+    document.querySelector('.confirm-actions').style.display = 'flex';
+    document.querySelector('.confirm-actions--success').style.display = 'none';
     overlay.hidden = false;
 
     const ok = document.getElementById('confirmOk');
@@ -75,8 +75,8 @@ function showSuccess(title, sub = '') {
     const overlay = document.getElementById('confirmOverlay');
     document.getElementById('confirmTitle').textContent = title;
     document.getElementById('confirmSub').textContent = sub;
-    document.querySelector('.confirm-actions').hidden = true;
-    document.querySelector('.confirm-actions--success').hidden = false;
+    document.querySelector('.confirm-actions').style.display = 'none';
+    document.querySelector('.confirm-actions--success').style.display = 'flex';
     overlay.hidden = false;
 
     const closeBtn = document.getElementById('confirmClose');
