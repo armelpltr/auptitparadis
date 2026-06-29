@@ -31,6 +31,20 @@ const BLOCK_LABELS = {
   banner: 'Bannière', cards: 'Grille de cartes', 'text-image': 'Texte + image', gallery: 'Galerie photo'
 };
 
+const DEFAULTS = {
+  tagline: "Il y a des matins où l'odeur du pain chaud rivalise avec celle de la mer. Les nôtres, c'est tous les jours.",
+  specialites: [
+    { title: 'Boulangerie', text: "On se lève à 4h pour que vous ayez du pain chaud à 7h. Baguette de tradition, miche de campagne, pains aux céréales : chaque fournée est une promesse recommencée chaque matin." },
+    { title: 'Pâtisserie',  text: "Pur beurre, sans compromis — c'est la règle depuis le premier jour. Croissants feuilletés, tartes de saison, entremets : le genre de choses qu'on mange lentement, parce qu'on sait que ça ne dure pas." },
+    { title: 'Glaces artisanales', text: "En juillet, la file d'attente commence à 10h. On ne s'en plaint pas. Glaces et sorbets faits maison, aux fruits de saison — le meilleur alibi pour rester cinq minutes de plus à Luc-sur-Mer." }
+  ],
+  histoire: {
+    title: "On se lève avant vous. Depuis longtemps.",
+    text1: "Au P'tit Paradis, les journées commencent dans le noir. Pendant que Luc-sur-Mer dort encore, notre équipe pétrit, façonne, enfourne. Pas parce qu'on y est obligés — parce qu'un pain fait à la main et cuit à l'heure, c'est une chose qui a encore du sens.",
+    text2: "On accueille les habitués qui savent qu'on les reconnaît, et les vacanciers qui reviennent chaque été parce qu'ils n'ont pas trouvé mieux ailleurs. C'est peu, et c'est tout."
+  }
+};
+
 /* ============================================================
    Références DOM
    ============================================================ */
@@ -207,51 +221,63 @@ function collectHourRows() {
 
 
 async function loadSettings() {
+  // Pré-remplissage avec les valeurs par défaut du site
+  setVal('set-tagline', DEFAULTS.tagline);
+  DEFAULTS.specialites.forEach((item, i) => {
+    setVal(`set-spec${i + 1}-title`, item.title);
+    setVal(`set-spec${i + 1}-text`, item.text);
+  });
+  setVal('set-histoire-title', DEFAULTS.histoire.title);
+  setVal('set-histoire-text1', DEFAULTS.histoire.text1);
+  setVal('set-histoire-text2', DEFAULTS.histoire.text2);
+
+  const container = document.getElementById('hoursRowsContainer');
+  container.innerHTML = '';
+  [
+    { day: 'Lundi', hours: 'Fermé' },
+    { day: 'Mardi — Vendredi', hours: '7h00 – 13h30 · 15h30 – 19h30' },
+    { day: 'Samedi', hours: '7h00 – 19h30' },
+    { day: 'Dimanche', hours: '7h00 – 13h30' }
+  ].forEach(r => addHourRowEl(r.day, r.hours));
+
   try {
     const snap = await getDoc(doc(db, 'settings', 'site'));
     if (!snap.exists()) return;
     const s = snap.data();
 
-    setVal('set-tagline', s.tagline);
+    if (s.tagline) setVal('set-tagline', s.tagline);
 
     (s.specialites || []).forEach((item, i) => {
       const n = i + 1;
-      setVal(`set-spec${n}-title`, item.title);
-      setVal(`set-spec${n}-text`, item.text);
+      if (item.title) setVal(`set-spec${n}-title`, item.title);
+      if (item.text)  setVal(`set-spec${n}-text`,  item.text);
       if (Array.isArray(item.produits)) {
         item.produits.forEach(p => addProduitRow(n, p.nom, p.description, p.imageUrl, p.tag));
       }
     });
 
     if (s.histoire) {
-      setVal('set-histoire-title', s.histoire.title);
-      setVal('set-histoire-text1', s.histoire.text1);
-      setVal('set-histoire-text2', s.histoire.text2);
-      setVal('set-histoire-imageUrl', s.histoire.imageUrl);
+      if (s.histoire.title)    setVal('set-histoire-title',    s.histoire.title);
+      if (s.histoire.text1)    setVal('set-histoire-text1',    s.histoire.text1);
+      if (s.histoire.text2)    setVal('set-histoire-text2',    s.histoire.text2);
+      if (s.histoire.imageUrl) setVal('set-histoire-imageUrl', s.histoire.imageUrl);
     }
 
-    const container = document.getElementById('hoursRowsContainer');
-    container.innerHTML = '';
-    const rows = (s.horaires && s.horaires.rows && s.horaires.rows.length) ? s.horaires.rows : [
-      { day: 'Lundi', hours: 'Fermé' },
-      { day: 'Mardi — Vendredi', hours: '7h00 – 13h30 · 15h30 – 19h30' },
-      { day: 'Samedi', hours: '7h00 – 19h30' },
-      { day: 'Dimanche', hours: '7h00 – 13h30' }
-    ];
-    rows.forEach(r => addHourRowEl(r.day, r.hours));
+    if (s.horaires && s.horaires.rows && s.horaires.rows.length) {
+      container.innerHTML = '';
+      s.horaires.rows.forEach(r => addHourRowEl(r.day, r.hours));
+    }
 
     if (s.horaires) {
-      setVal('set-address1', s.horaires.address1);
-      setVal('set-address2', s.horaires.address2);
-      setVal('set-phone', s.horaires.phone);
-      setVal('set-phoneDisplay', s.horaires.phoneDisplay);
-      setVal('set-email', s.horaires.email);
-      setVal('set-instagram', s.horaires.instagram);
-      setVal('set-facebook', s.horaires.facebook);
-      setVal('set-mapUrl', s.horaires.mapUrl);
+      setVal('set-address1',    s.horaires.address1);
+      setVal('set-address2',    s.horaires.address2);
+      setVal('set-phone',       s.horaires.phone);
+      setVal('set-phoneDisplay',s.horaires.phoneDisplay);
+      setVal('set-email',       s.horaires.email);
+      setVal('set-instagram',   s.horaires.instagram);
+      setVal('set-facebook',    s.horaires.facebook);
+      setVal('set-mapUrl',      s.horaires.mapUrl);
     }
-
-    setVal('set-contactIntro', s.contactIntro);
   } catch (err) {
     showStatus('Impossible de charger les réglages existants (' + err.message + ')', true);
   }
