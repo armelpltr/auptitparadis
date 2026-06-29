@@ -49,6 +49,17 @@ function applySettings(s) {
       const n = i + 1;
       setText(`specTitle${n}`, item.title);
       setText(`specText${n}`, item.text);
+      const container = document.getElementById(`specProduits${n}`);
+      if (container && Array.isArray(item.produits) && item.produits.length) {
+        container.innerHTML = item.produits.map(p => `
+          <div class="spec-produit">
+            ${p.imageUrl ? `<img class="spec-produit-img" src="${escapeHTML(p.imageUrl)}" alt="${escapeHTML(p.nom)}">` : ''}
+            <div class="spec-produit-info">
+              <strong>${escapeHTML(p.nom)}</strong>
+              ${p.description ? `<span>${escapeHTML(p.description)}</span>` : ''}
+            </div>
+          </div>`).join('');
+      }
     });
   }
 

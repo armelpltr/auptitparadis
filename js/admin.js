@@ -112,6 +112,30 @@ function addHourRowEl(day = '', hours = '') {
   container.appendChild(row);
 }
 
+function addProduitRow(nom = '', description = '', imageUrl = '') {
+  const list = document.getElementById('spec1-produits-list');
+  const row = document.createElement('div');
+  row.className = 'produit-row';
+  row.innerHTML = `
+    <input type="text" class="produit-nom" placeholder="Nom du produit" value="${escapeAttr(nom)}">
+    <input type="text" class="produit-desc" placeholder="Description courte" value="${escapeAttr(description)}">
+    <input type="url" class="produit-img" placeholder="URL image" value="${escapeAttr(imageUrl)}">
+    <button type="button" class="row-remove" title="Supprimer">✕</button>
+  `;
+  row.querySelector('.row-remove').addEventListener('click', () => row.remove());
+  list.appendChild(row);
+}
+
+document.getElementById('addSpec1Produit').addEventListener('click', () => addProduitRow());
+
+function collectSpec1Produits() {
+  return Array.from(document.querySelectorAll('#spec1-produits-list .produit-row')).map(row => ({
+    nom: row.querySelector('.produit-nom').value.trim(),
+    description: row.querySelector('.produit-desc').value.trim(),
+    imageUrl: row.querySelector('.produit-img').value.trim()
+  })).filter(p => p.nom);
+}
+
 document.getElementById('addHourRow').addEventListener('click', () => addHourRowEl());
 
 function collectHourRows() {
@@ -131,8 +155,12 @@ async function loadSettings() {
     setVal('set-tagline', s.tagline);
 
     (s.specialites || []).forEach((item, i) => {
-      setVal(`set-spec${i + 1}-title`, item.title);
-      setVal(`set-spec${i + 1}-text`, item.text);
+      const n = i + 1;
+      setVal(`set-spec${n}-title`, item.title);
+      setVal(`set-spec${n}-text`, item.text);
+      if (n === 1 && Array.isArray(item.produits)) {
+        item.produits.forEach(p => addProduitRow(p.nom, p.description, p.imageUrl));
+      }
     });
 
     if (s.histoire) {
@@ -174,7 +202,8 @@ document.getElementById('saveSettingsBtn').addEventListener('click', async () =>
     tagline: val('set-tagline'),
     specialites: [1, 2, 3].map(n => ({
       title: val(`set-spec${n}-title`),
-      text: val(`set-spec${n}-text`)
+      text: val(`set-spec${n}-text`),
+      ...(n === 1 ? { produits: collectSpec1Produits() } : {})
     })),
     histoire: {
       title: val('set-histoire-title'),

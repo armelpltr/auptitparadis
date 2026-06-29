@@ -85,6 +85,14 @@
 .image-upload-preview:not([src]), .image-upload-preview[src=""]{ visibility:hidden; }
 .image-upload-status{ font-size:.85rem; color:var(--ink-soft); }
 
+/* ---------- Produits vedettes ---------- */
+.produits-list{ margin-bottom:.7rem; }
+.produit-row{ display:grid; grid-template-columns:1fr 1.4fr 1.6fr auto; gap:.6rem; margin-bottom:.6rem; align-items:center; }
+.produit-row input{
+  font-family:var(--font-body); font-size:.88rem; padding:.55em .7em;
+  border:1.5px solid var(--sand); border-radius:var(--radius); background:var(--cream); color:var(--ink);
+}
+
 /* ---------- Liste des horaires ---------- */
 .hour-row{ display:grid; grid-template-columns:1fr 1fr auto; gap:.8rem; margin-bottom:.7rem; align-items:center; }
 .hour-row input{
