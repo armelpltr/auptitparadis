@@ -139,7 +139,7 @@ function addHourRowEl(day = '', hours = '') {
   container.appendChild(row);
 }
 
-function addProduitRow(nom = '', description = '', imageUrl = '') {
+function addProduitRow(nom = '', description = '', imageUrl = '', tag = '') {
   const list = document.getElementById('spec1-produits-list');
   const row = document.createElement('div');
   row.className = 'produit-row';
@@ -147,6 +147,12 @@ function addProduitRow(nom = '', description = '', imageUrl = '') {
     <input type="text" class="produit-nom" placeholder="Nom du produit" value="${escapeAttr(nom)}">
     <input type="text" class="produit-desc" placeholder="Description courte" value="${escapeAttr(description)}">
     <input type="url" class="produit-img" placeholder="URL image" value="${escapeAttr(imageUrl)}">
+    <select class="produit-tag">
+      <option value="">— Pas de tag —</option>
+      <option value="top-vente" ${tag === 'top-vente' ? 'selected' : ''}>⭐ Top vente</option>
+      <option value="selection" ${tag === 'selection' ? 'selected' : ''}>✦ Sélection du moment</option>
+      <option value="nouveaute" ${tag === 'nouveaute' ? 'selected' : ''}>🆕 Nouveauté</option>
+    </select>
     <button type="button" class="row-remove" title="Supprimer">✕</button>
   `;
   row.querySelector('.row-remove').addEventListener('click', () => row.remove());
@@ -159,7 +165,8 @@ function collectSpec1Produits() {
   return Array.from(document.querySelectorAll('#spec1-produits-list .produit-row')).map(row => ({
     nom: row.querySelector('.produit-nom').value.trim(),
     description: row.querySelector('.produit-desc').value.trim(),
-    imageUrl: row.querySelector('.produit-img').value.trim()
+    imageUrl: row.querySelector('.produit-img').value.trim(),
+    tag: row.querySelector('.produit-tag').value
   })).filter(p => p.nom);
 }
 
@@ -186,7 +193,7 @@ async function loadSettings() {
       setVal(`set-spec${n}-title`, item.title);
       setVal(`set-spec${n}-text`, item.text);
       if (n === 1 && Array.isArray(item.produits)) {
-        item.produits.forEach(p => addProduitRow(p.nom, p.description, p.imageUrl));
+        item.produits.forEach(p => addProduitRow(p.nom, p.description, p.imageUrl, p.tag));
       }
     });
 

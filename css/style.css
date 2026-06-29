@@ -180,8 +180,13 @@ p{ margin:0 0 1em; color:var(--ink-soft); }
 .spec-produit{ display:flex; align-items:center; gap:.9rem; }
 .spec-produit-img{ width:58px; height:58px; object-fit:cover; border-radius:8px; flex-shrink:0; background:var(--sand); }
 .spec-produit-info{ display:flex; flex-direction:column; gap:.15rem; }
+.spec-produit-header{ display:flex; align-items:center; gap:.5rem; flex-wrap:wrap; }
 .spec-produit-info strong{ font-size:.92rem; font-family:var(--font-display); font-weight:600; color:var(--ink); }
-.spec-produit-info span{ font-size:.8rem; color:var(--ink-soft); line-height:1.4; }
+.spec-produit-info > span{ font-size:.8rem; color:var(--ink-soft); line-height:1.4; }
+.produit-tag{ font-size:.68rem; font-weight:700; letter-spacing:.05em; padding:.2em .55em; border-radius:100px; white-space:nowrap; }
+.produit-tag--top-vente{ background:#fff4e0; color:#a06020; }
+.produit-tag--selection{ background:#e8f0ee; color:var(--sea); }
+.produit-tag--nouveaute{ background:#edf0ff; color:#4a5bcc; }
 .card h3{ font-size:1.4rem; margin-bottom:.5rem; }
 .card p{ font-size:.96rem; margin-bottom:0; }
 

@@ -87,8 +87,8 @@
 
 /* ---------- Produits vedettes ---------- */
 .produits-list{ margin-bottom:.7rem; }
-.produit-row{ display:grid; grid-template-columns:1fr 1.4fr 1.6fr auto; gap:.6rem; margin-bottom:.6rem; align-items:center; }
-.produit-row input{
+.produit-row{ display:grid; grid-template-columns:1fr 1.4fr 1.6fr .9fr auto; gap:.6rem; margin-bottom:.6rem; align-items:center; }
+.produit-row input, .produit-row select{
   font-family:var(--font-body); font-size:.88rem; padding:.55em .7em;
   border:1.5px solid var(--sand); border-radius:var(--radius); background:var(--cream); color:var(--ink);
 }

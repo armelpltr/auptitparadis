@@ -51,11 +51,15 @@ function applySettings(s) {
       setText(`specText${n}`, item.text);
       const container = document.getElementById(`specProduits${n}`);
       if (container && Array.isArray(item.produits) && item.produits.length) {
+        const TAG_LABELS = { 'top-vente': '⭐ Top vente', 'selection': '✦ Sélection du moment', 'nouveaute': '🆕 Nouveauté' };
         container.innerHTML = item.produits.map(p => `
           <div class="spec-produit">
             ${p.imageUrl ? `<img class="spec-produit-img" src="${escapeHTML(p.imageUrl)}" alt="${escapeHTML(p.nom)}">` : ''}
             <div class="spec-produit-info">
-              <strong>${escapeHTML(p.nom)}</strong>
+              <div class="spec-produit-header">
+                <strong>${escapeHTML(p.nom)}</strong>
+                ${p.tag && TAG_LABELS[p.tag] ? `<span class="produit-tag produit-tag--${escapeHTML(p.tag)}">${TAG_LABELS[p.tag]}</span>` : ''}
+              </div>
               ${p.description ? `<span>${escapeHTML(p.description)}</span>` : ''}
             </div>
           </div>`).join('');
