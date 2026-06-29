@@ -49,6 +49,8 @@ function confirm(title, sub) {
     const overlay = document.getElementById('confirmOverlay');
     document.getElementById('confirmTitle').textContent = title;
     document.getElementById('confirmSub').textContent = sub;
+    document.querySelector('.confirm-actions').hidden = false;
+    document.querySelector('.confirm-actions--success').hidden = true;
     overlay.hidden = false;
 
     const ok = document.getElementById('confirmOk');
@@ -65,6 +67,26 @@ function confirm(title, sub) {
     ok.addEventListener('click', onOk);
     cancel.addEventListener('click', onCancel);
     overlay.addEventListener('click', e => { if (e.target === overlay) close(false); }, { once: true });
+  });
+}
+
+function showSuccess(title, sub = '') {
+  return new Promise(resolve => {
+    const overlay = document.getElementById('confirmOverlay');
+    document.getElementById('confirmTitle').textContent = title;
+    document.getElementById('confirmSub').textContent = sub;
+    document.querySelector('.confirm-actions').hidden = true;
+    document.querySelector('.confirm-actions--success').hidden = false;
+    overlay.hidden = false;
+
+    const closeBtn = document.getElementById('confirmClose');
+    function close() {
+      overlay.hidden = true;
+      closeBtn.removeEventListener('click', close);
+      resolve();
+    }
+    closeBtn.addEventListener('click', close);
+    overlay.addEventListener('click', e => { if (e.target === overlay) close(); }, { once: true });
   });
 }
 
@@ -139,8 +161,9 @@ function addHourRowEl(day = '', hours = '') {
   container.appendChild(row);
 }
 
-function addProduitRow(nom = '', description = '', imageUrl = '', tag = '') {
-  const list = document.getElementById('spec1-produits-list');
+function addProduitRow(specN, nom = '', description = '', imageUrl = '', tag = '') {
+  const list = document.getElementById(`spec${specN}-produits-list`);
+  if (!list) return;
   const row = document.createElement('div');
   row.className = 'produit-row';
   row.innerHTML = `
@@ -159,10 +182,13 @@ function addProduitRow(nom = '', description = '', imageUrl = '', tag = '') {
   list.appendChild(row);
 }
 
-document.getElementById('addSpec1Produit').addEventListener('click', () => addProduitRow());
+[1, 2, 3].forEach(n => {
+  const btn = document.getElementById(`addSpec${n}Produit`);
+  if (btn) btn.addEventListener('click', () => addProduitRow(n));
+});
 
-function collectSpec1Produits() {
-  return Array.from(document.querySelectorAll('#spec1-produits-list .produit-row')).map(row => ({
+function collectSpecProduits(n) {
+  return Array.from(document.querySelectorAll(`#spec${n}-produits-list .produit-row`)).map(row => ({
     nom: row.querySelector('.produit-nom').value.trim(),
     description: row.querySelector('.produit-desc').value.trim(),
     imageUrl: row.querySelector('.produit-img').value.trim(),
@@ -192,8 +218,8 @@ async function loadSettings() {
       const n = i + 1;
       setVal(`set-spec${n}-title`, item.title);
       setVal(`set-spec${n}-text`, item.text);
-      if (n === 1 && Array.isArray(item.produits)) {
-        item.produits.forEach(p => addProduitRow(p.nom, p.description, p.imageUrl, p.tag));
+      if (Array.isArray(item.produits)) {
+        item.produits.forEach(p => addProduitRow(n, p.nom, p.description, p.imageUrl, p.tag));
       }
     });
 
@@ -239,7 +265,7 @@ document.getElementById('saveSettingsBtn').addEventListener('click', async () =>
     specialites: [1, 2, 3].map(n => ({
       title: val(`set-spec${n}-title`),
       text: val(`set-spec${n}-text`),
-      ...(n === 1 ? { produits: collectSpec1Produits() } : {})
+      produits: collectSpecProduits(n)
     })),
     histoire: {
       title: val('set-histoire-title'),
@@ -263,7 +289,7 @@ document.getElementById('saveSettingsBtn').addEventListener('click', async () =>
 
   try {
     await setDoc(doc(db, 'settings', 'site'), data);
-    showStatus('Réglages enregistrés ✓');
+    showSuccess('Réglages enregistrés ✓', 'Les modifications sont en ligne.');
   } catch (err) {
     showStatus("Erreur lors de l'enregistrement : " + err.message, true);
   }
@@ -560,7 +586,7 @@ document.getElementById('saveBlockBtn').addEventListener('click', async () => {
     }
     blockEditor.hidden = true;
     await loadBlocks();
-    showStatus('Section enregistrée ✓');
+    showSuccess('Section enregistrée ✓', 'Les modifications sont en ligne.');
   } catch (err) {
     showStatus("Erreur lors de l'enregistrement : " + err.message, true);
   }
