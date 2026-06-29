@@ -174,13 +174,24 @@ function revealDynamic() {
   document.querySelectorAll('[data-dynamic]').forEach(el => el.classList.add('is-loaded'));
 }
 
+function showLoadError() {
+  document.querySelectorAll('[data-dynamic]').forEach(el => { el.textContent = ''; });
+  const banner = document.createElement('div');
+  banner.style.cssText = 'position:fixed;bottom:1.2rem;left:50%;transform:translateX(-50%);background:#c0392b;color:#fff;padding:.6em 1.4em;border-radius:6px;font-size:.85rem;font-family:sans-serif;z-index:999;';
+  banner.textContent = 'Erreur de chargement';
+  document.body.appendChild(banner);
+  revealDynamic();
+}
+
 /* ---------- Lancement ---------- */
 (async () => {
   try {
     const settingsSnap = await getDoc(doc(db, 'settings', 'site'));
     if (settingsSnap.exists()) applySettings(settingsSnap.data());
+    else showLoadError();
   } catch (err) {
-    console.warn('Contenu par défaut affiché (Firestore indisponible) :', err.message);
+    console.error('Firestore indisponible :', err.message);
+    showLoadError();
   } finally {
     revealDynamic();
   }
