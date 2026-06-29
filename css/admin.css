@@ -175,6 +175,7 @@
 .confirm-title{ font-family:var(--font-display); font-size:1.25rem; font-weight:600; color:var(--ink); margin-bottom:.4rem; }
 .confirm-sub{ font-size:.88rem; color:var(--ink-soft); margin-bottom:1.6rem; }
 .confirm-actions{ display:flex; gap:.8rem; justify-content:flex-end; }
+.confirm-actions[hidden]{ display:none; }
 
 @media (max-width: 720px){
   .form-row-grid, .template-grid{ grid-template-columns:1fr; }
