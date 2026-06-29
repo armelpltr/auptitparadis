@@ -63,7 +63,7 @@ p{ margin:0 0 1em; color:var(--ink-soft); }
   font-size:.78rem; font-weight:600; color:var(--gold-deep); margin-bottom:.8em;
 }
 .eyebrow-script{
-  font-family:var(--font-script); font-size:1.6rem; font-weight:300; color:var(--gold); margin:0 0 .1rem 0; line-height:1; letter-spacing:.12em;
+  font-family:var(--font-script); font-size:2.8rem; font-weight:300; color:var(--gold); margin:0 0 .1rem 0; line-height:1; letter-spacing:.12em;
 }
 .btn{
   display:inline-block; padding:.85em 1.8em; border-radius:var(--radius);
