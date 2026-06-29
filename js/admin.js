@@ -3,16 +3,13 @@
 // Au P'tit Paradis
 // ============================================================
 
-import { auth, db, storage } from "./firebase-config.js";
+import { auth, db } from "./firebase-config.js";
 import {
   signInWithEmailAndPassword, onAuthStateChanged, signOut
 } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
 import {
   doc, getDoc, setDoc, collection, getDocs, addDoc, updateDoc, deleteDoc, query, orderBy
 } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
-import {
-  ref, uploadBytes, getDownloadURL
-} from "https://www.gstatic.com/firebasejs/10.13.0/firebase-storage.js";
 
 /* ============================================================
    Bibliothèque d'icônes pour le bloc "Grille de cartes"
@@ -99,19 +96,8 @@ document.querySelectorAll('.admin-tab').forEach(tab => {
 });
 
 /* ============================================================
-   Upload d'image vers Firebase Storage
-   ============================================================ */
-async function uploadImage(file, folder) {
-  const path = `${folder}/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.\-]/g, '_')}`;
-  const storageRef = ref(storage, path);
-  await uploadBytes(storageRef, file);
-  return getDownloadURL(storageRef);
-}
-
-/* ============================================================
    ONGLET RÉGLAGES
    ============================================================ */
-let histoireImageUrl = '';
 
 function addHourRowEl(day = '', hours = '') {
   const container = document.getElementById('hoursRowsContainer');
@@ -135,19 +121,6 @@ function collectHourRows() {
   })).filter(r => r.day || r.hours);
 }
 
-document.getElementById('file-histoire').addEventListener('change', async (e) => {
-  const file = e.target.files[0];
-  if (!file) return;
-  const statusSpan = document.getElementById('status-histoire');
-  statusSpan.textContent = 'Téléversement…';
-  try {
-    histoireImageUrl = await uploadImage(file, 'images/histoire');
-    document.getElementById('preview-histoire').src = histoireImageUrl;
-    statusSpan.textContent = 'Image mise à jour ✓';
-  } catch (err) {
-    statusSpan.textContent = "Échec de l'envoi, réessaie.";
-  }
-});
 
 async function loadSettings() {
   try {
@@ -166,10 +139,7 @@ async function loadSettings() {
       setVal('set-histoire-title', s.histoire.title);
       setVal('set-histoire-text1', s.histoire.text1);
       setVal('set-histoire-text2', s.histoire.text2);
-      if (s.histoire.imageUrl) {
-        histoireImageUrl = s.histoire.imageUrl;
-        document.getElementById('preview-histoire').src = histoireImageUrl;
-      }
+      setVal('set-histoire-imageUrl', s.histoire.imageUrl);
     }
 
     const container = document.getElementById('hoursRowsContainer');
@@ -210,7 +180,7 @@ document.getElementById('saveSettingsBtn').addEventListener('click', async () =>
       title: val('set-histoire-title'),
       text1: val('set-histoire-text1'),
       text2: val('set-histoire-text2'),
-      imageUrl: histoireImageUrl
+      imageUrl: val('set-histoire-imageUrl')
     },
     horaires: {
       rows: collectHourRows(),
@@ -401,12 +371,8 @@ function buildFieldsHTML(type, data) {
       <div class="form-row"><label>Titre</label><input type="text" id="f-title" value="${escapeAttr(data.title)}"></div>
       <div class="form-row"><label>Texte</label><textarea id="f-text" rows="4">${escapeAttr(data.text)}</textarea></div>
       <div class="form-row">
-        <label>Image</label>
-        <div class="image-upload">
-          <img class="image-upload-preview" id="f-image-preview" src="${escapeAttr(data.imageUrl || '')}" alt="">
-          <input type="file" accept="image/*" id="f-image-file">
-          <span class="image-upload-status" id="f-image-status"></span>
-        </div>
+        <label>URL de l'image</label>
+        <input type="url" id="f-imageUrl" value="${escapeAttr(data.imageUrl || '')}" placeholder="https://...">
       </div>
       <div class="form-row">
         <label>Position de l'image</label>
@@ -421,10 +387,9 @@ function buildFieldsHTML(type, data) {
     return `
       <div class="form-row"><label>Titre</label><input type="text" id="f-title" value="${escapeAttr(data.title)}"></div>
       <div class="form-row">
-        <label>Photos</label>
-        <input type="file" accept="image/*" id="f-gallery-file" multiple>
-        <span class="image-upload-status" id="f-gallery-status"></span>
-        <div class="gallery-thumbs" id="galleryThumbs"></div>
+        <label>URLs des photos</label>
+        <div id="galleryThumbs"></div>
+        <button type="button" class="btn btn-ghost btn-small" id="addGalleryUrl">+ Ajouter une URL</button>
       </div>`;
   }
 
@@ -441,40 +406,11 @@ function wireFieldEvents(type) {
     });
   }
 
-  if (type === 'text-image') {
-    document.getElementById('f-image-file').addEventListener('change', async (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
-      const status = document.getElementById('f-image-status');
-      status.textContent = 'Téléversement…';
-      try {
-        const url = await uploadImage(file, 'images/blocks');
-        document.getElementById('f-image-preview').src = url;
-        document.getElementById('f-image-preview').dataset.url = url;
-        status.textContent = 'Image mise à jour ✓';
-      } catch (err) {
-        status.textContent = "Échec de l'envoi, réessaie.";
-      }
-    });
-  }
-
   if (type === 'gallery') {
     renderGalleryThumbs();
-    document.getElementById('f-gallery-file').addEventListener('change', async (e) => {
-      const files = Array.from(e.target.files);
-      if (!files.length) return;
-      const status = document.getElementById('f-gallery-status');
-      status.textContent = `Téléversement de ${files.length} photo(s)…`;
-      try {
-        for (const file of files) {
-          const url = await uploadImage(file, 'images/gallery');
-          galleryImagesState.push(url);
-        }
-        renderGalleryThumbs();
-        status.textContent = 'Photos ajoutées ✓';
-      } catch (err) {
-        status.textContent = "Échec de l'envoi, réessaie.";
-      }
+    document.getElementById('addGalleryUrl').addEventListener('click', () => {
+      galleryImagesState.push('');
+      renderGalleryThumbs();
     });
   }
 }
@@ -511,8 +447,8 @@ function renderCardItems() {
 function renderGalleryThumbs() {
   const container = document.getElementById('galleryThumbs');
   container.innerHTML = galleryImagesState.map((url, i) => `
-    <div class="gallery-thumb">
-      <img src="${escapeAttr(url)}" alt="">
+    <div class="hour-row">
+      <input type="url" class="gallery-url-input" data-index="${i}" value="${escapeAttr(url)}" placeholder="https://...">
       <button type="button" class="row-remove" data-remove="${i}" title="Retirer">✕</button>
     </div>
   `).join('');
@@ -520,6 +456,11 @@ function renderGalleryThumbs() {
     btn.addEventListener('click', () => {
       galleryImagesState.splice(Number(btn.dataset.remove), 1);
       renderGalleryThumbs();
+    });
+  });
+  container.querySelectorAll('.gallery-url-input').forEach(input => {
+    input.addEventListener('input', () => {
+      galleryImagesState[Number(input.dataset.index)] = input.value.trim();
     });
   });
 }
@@ -534,10 +475,9 @@ document.getElementById('saveBlockBtn').addEventListener('click', async () => {
   } else if (type === 'cards') {
     data = { ...data, title: val('f-title'), eyebrow: val('f-eyebrow'), items: cardItemsState };
   } else if (type === 'text-image') {
-    const preview = document.getElementById('f-image-preview');
     data = {
       ...data, title: val('f-title'), text: val('f-text'),
-      imageUrl: preview.dataset.url || preview.getAttribute('src') || '',
+      imageUrl: val('f-imageUrl'),
       imagePosition: val('f-imagePosition')
     };
   } else if (type === 'gallery') {
