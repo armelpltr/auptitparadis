@@ -155,8 +155,7 @@ p{ margin:0 0 1em; color:var(--ink-soft); }
 /* ---------- Dividers (motif vague récurrent) ---------- */
 .divider{
   line-height:0; color:var(--gold-pale);
-  -webkit-mask-image:linear-gradient(to right, transparent, black 22%, black 78%, transparent);
-  mask-image:linear-gradient(to right, transparent, black 22%, black 78%, transparent);
+  overflow:hidden;
 }
 .divider svg{
   width:100%; height:80px; display:block;
