@@ -160,7 +160,7 @@ p{ margin:0 0 1em; color:var(--ink-soft); }
   animation:wave-breathe 4s ease-in-out infinite;
   will-change:transform;
 }
-.divider path{ fill:none; stroke:currentColor; stroke-width:2.5; }
+.divider path{ fill:none; stroke:currentColor; stroke-width:3.5; vector-effect:non-scaling-stroke; }
 .divider-flip{ transform:scaleY(-1); }
 .divider-flip svg{ animation-duration:5.5s; animation-delay:-2s; }
 
