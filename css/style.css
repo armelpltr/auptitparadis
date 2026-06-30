@@ -138,7 +138,7 @@ p{ margin:0 0 1em; color:var(--ink-soft); }
 @keyframes draw{ to{ stroke-dashoffset:0; } }
 
 .hero-inner{ position:relative; z-index:1; max-width:720px; }
-.hero-logo{ width:480px; max-width:88vw; mix-blend-mode:multiply; }
+.hero-logo{ width:960px; max-width:95vw; mix-blend-mode:multiply; }
 .hero h1{
   font-size:clamp(3rem, 8vw, 5.2rem); letter-spacing:.01em; margin-top:0;
 }
