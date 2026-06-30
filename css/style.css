@@ -154,18 +154,19 @@ p{ margin:0 0 1em; color:var(--ink-soft); }
 
 /* ---------- Dividers (motif vague récurrent) ---------- */
 .divider{ line-height:0; color:var(--gold-pale); }
-.divider svg{ width:100%; height:50px; display:block; }
-.divider path{
-  fill:none; stroke:currentColor; stroke-width:2.5;
-  transform-box:fill-box; transform-origin:center;
+.divider svg{
+  width:100%; height:50px; display:block;
+  transform-origin:center center;
   animation:wave-breathe 4s ease-in-out infinite;
+  will-change:transform;
 }
+.divider path{ fill:none; stroke:currentColor; stroke-width:2.5; }
 .divider-flip{ transform:scaleY(-1); }
-.divider-flip path{ animation-duration:5.5s; animation-delay:-2s; }
+.divider-flip svg{ animation-duration:5.5s; animation-delay:-2s; }
 
 @keyframes wave-breathe{
-  0%,100%{ transform:scaleY(.7); }
-  50%{ transform:scaleY(1.2); }
+  0%,100%{ transform:scaleY(.75); }
+  50%{ transform:scaleY(1.18); }
 }
 
 /* ---------- Reveal on scroll ---------- */
