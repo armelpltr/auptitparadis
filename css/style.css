@@ -91,9 +91,8 @@ p{ margin:0 0 1em; color:var(--ink-soft); }
   max-width:var(--max-w); margin:0 auto; padding:.75rem 1.5rem;
   display:flex; align-items:center; justify-content:space-between;
 }
-.brand{ display:flex; align-items:center; gap:.75rem; text-decoration:none; }
-.brand-logo{ height:44px; width:44px; object-fit:contain; border-radius:50%; background:var(--white); padding:3px; box-shadow:0 2px 8px -2px rgba(33,28,23,.14); }
-.brand-name{ font-family:var(--font-display); font-size:1.05rem; font-weight:600; color:var(--ink); letter-spacing:.01em; }
+.brand{ display:flex; align-items:center; text-decoration:none; }
+.brand-logo-header{ height:52px; width:auto; object-fit:contain; }
 .main-nav ul{ display:flex; align-items:center; gap:2.4rem; }
 .main-nav a{
   font-size:.88rem; font-weight:500; color:var(--ink-soft); position:relative; padding:.3em 0; letter-spacing:.02em;
