@@ -123,6 +123,11 @@ p{ margin:0 0 1em; color:var(--ink-soft); }
   background:url('../assets/hero-bg.jpg') center/cover no-repeat;
   opacity:.12; pointer-events:none;
 }
+.hero::before{
+  content:""; position:absolute; bottom:0; left:0; right:0; z-index:1;
+  height:180px; pointer-events:none;
+  background:linear-gradient(to bottom, transparent, var(--cream));
+}
 .hero-wave{
   position:absolute; inset:0; width:100%; height:100%; z-index:0; opacity:.9;
 }
