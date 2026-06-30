@@ -153,9 +153,13 @@ p{ margin:0 0 1em; color:var(--ink-soft); }
 @keyframes scrollcue{ 0%{ opacity:1; top:6px; } 70%{ opacity:0; top:22px; } 100%{ opacity:0; top:6px; } }
 
 /* ---------- Dividers (motif vague récurrent) ---------- */
-.divider{ line-height:0; color:var(--gold-pale); }
+.divider{
+  line-height:0; color:var(--gold-pale);
+  -webkit-mask-image:linear-gradient(to right, transparent, black 8%, black 92%, transparent);
+  mask-image:linear-gradient(to right, transparent, black 8%, black 92%, transparent);
+}
 .divider svg{
-  width:100%; height:50px; display:block;
+  width:100%; height:80px; display:block;
   transform-origin:center center;
   animation:wave-breathe 4s ease-in-out infinite;
   will-change:transform;
@@ -163,6 +167,12 @@ p{ margin:0 0 1em; color:var(--ink-soft); }
 .divider path{ fill:none; stroke:currentColor; stroke-width:3.5; vector-effect:non-scaling-stroke; }
 .divider-flip{ transform:scaleY(-1); }
 .divider-flip svg{ animation-duration:5.5s; animation-delay:-2s; }
+
+/* Dégradés inter-sections — couleurs inversées pour les .divider-flip */
+.hero       + .divider{ background:linear-gradient(to bottom, var(--cream), var(--cream)); }
+.specialites + .divider{ background:linear-gradient(to bottom, var(--sand),  var(--cream)); }
+.histoire    + .divider{ background:linear-gradient(to bottom, var(--sand),  var(--sea-pale)); }
+.horaires    + .divider{ background:linear-gradient(to bottom, var(--white), var(--sea-pale)); }
 
 @keyframes wave-breathe{
   0%,100%{ transform:scaleY(.75); }
