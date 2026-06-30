@@ -128,7 +128,7 @@ p{ margin:0 0 1em; color:var(--ink-soft); }
   background:linear-gradient(to bottom, transparent, var(--cream));
 }
 .hero-wave{
-  position:absolute; inset:0; width:100%; height:100%; z-index:0; opacity:.3;
+  position:absolute; inset:0; width:100%; height:100%; z-index:0; opacity:.1;
 }
 .wave-path{
   fill:none; stroke:var(--gold-pale); stroke-width:3; stroke-linecap:round;
