@@ -322,10 +322,13 @@ address a{ color:var(--gold-deep); font-weight:600; }
 
 /* "Notre sélection" dans les fiches spécialités */
 .spec-selection-label{
-  font-size:.76rem; font-style:italic; font-weight:400;
-  color:var(--gold-deep); opacity:.85;
-  margin:1.1rem 0 .4rem; padding-top:.9rem;
-  border-top:1px solid rgba(200,133,58,.22);
+  display:flex; align-items:center; gap:.55rem;
+  font-size:.68rem; font-style:italic; font-weight:400; letter-spacing:.04em;
+  color:var(--gold-deep); opacity:.8;
+  margin:1.3rem 0 .6rem; white-space:nowrap;
+}
+.spec-selection-label::before,.spec-selection-label::after{
+  content:''; flex:1; height:1px; background:rgba(200,133,58,.28);
 }
 .spec-produits{ display:flex; flex-direction:column; gap:.75rem; margin-top:0; }
 
