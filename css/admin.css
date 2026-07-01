@@ -137,9 +137,12 @@
 .block-row-actions{ display:flex; gap:.4rem; flex-shrink:0; }
 .icon-btn{
   width:32px; height:32px; border-radius:6px; border:1.5px solid var(--sand); background:var(--white);
-  cursor:pointer; font-size:.9rem; color:var(--ink-soft);
+  cursor:pointer; color:var(--ink-soft);
+  display:inline-flex; align-items:center; justify-content:center;
+  transition:background .18s, color .18s, border-color .18s;
 }
-.icon-btn:hover{ background:var(--sand); }
+.icon-btn:hover{ background:var(--sand); color:var(--ink); }
+.icon-btn[data-action="delete"]:hover{ background:#fbe4e0; color:#a13a25; border-color:#fbe4e0; }
 .icon-btn:disabled{ opacity:.3; cursor:default; }
 .empty-hint{ color:var(--ink-soft); font-size:.92rem; }
 

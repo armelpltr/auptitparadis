@@ -50,11 +50,6 @@
     </div>
   </header>
 
-  <nav class="admin-tabs">
-    <button class="admin-tab is-active" data-tab="settings">Réglages du site</button>
-    <button class="admin-tab" data-tab="sections">Sections</button>
-  </nav>
-
   <main class="admin-main">
 
     <p class="admin-status" id="adminStatus" hidden></p>
@@ -75,6 +70,13 @@
         <p class="admin-card-hint">Fiches affichées juste sous l'accueil — 3 par ligne sur le site.</p>
         <div id="specList"></div>
         <button type="button" class="btn btn-ghost btn-small" id="addSpecBtn">+ Ajouter une fiche</button>
+      </div>
+
+      <div class="admin-card">
+        <h2>Sections de la page</h2>
+        <p class="admin-card-hint">Elles s'affichent entre "Nos spécialités" et "Notre histoire". Réordonne-les avec les flèches ↑ ↓.</p>
+        <div id="blocksList" class="blocks-list"></div>
+        <button type="button" class="btn btn-ghost btn-small" id="addBlockBtn">+ Ajouter une section</button>
       </div>
 
       <div class="admin-card">
@@ -119,16 +121,6 @@
       <button type="button" class="btn btn-primary admin-save" id="saveSettingsBtn">Enregistrer les réglages</button>
     </section>
 
-    <!-- ===================== ONGLET SECTIONS ===================== -->
-    <section class="admin-panel" id="panel-sections">
-
-      <div class="admin-card">
-        <h2>Sections de la page</h2>
-        <p class="admin-card-hint">Elles s'affichent entre "Nos spécialités" et "Notre histoire", dans cet ordre.</p>
-        <div id="blocksList" class="blocks-list"></div>
-        <button type="button" class="btn btn-primary btn-small" id="addBlockBtn">+ Ajouter une section</button>
-      </div>
-
       <!-- Sélecteur de modèle -->
       <div class="modal-overlay" id="templatePicker" hidden>
         <div class="modal">
@@ -166,8 +158,6 @@
           </div>
         </div>
       </div>
-
-    </section>
 
   </main>
 </div>
