@@ -58,7 +58,8 @@ function applySettings(s) {
   if (Array.isArray(s.specialites) && s.specialites.length) {
     const specCards = document.getElementById('specCards');
     if (specCards) {
-      specCards.innerHTML = s.specialites.map(item => {
+      const SLOT_ICONS = ['bread', 'pastry', 'icecream'];
+      specCards.innerHTML = s.specialites.map((item, idx) => {
         const produitHTML = Array.isArray(item.produits) && item.produits.length
           ? `<p class="spec-selection-label">Notre sélection</p><div class="spec-produits">${item.produits.map(p => `
               <div class="spec-produit">
@@ -73,7 +74,7 @@ function applySettings(s) {
               </div>`).join('')}</div>`
           : '';
         const ICON_SLUGS = { bread:'baguette', pastry:'cake', icecream:'ice-cream-2', cake:'cake', gift:'gift', star:'star' };
-        const slug = ICON_SLUGS[item.icon] || 'star';
+        const slug = ICON_SLUGS[item.icon] || ICON_SLUGS[SLOT_ICONS[idx]] || 'star';
         return `
           <article class="card">
             <span class="card-icon" aria-hidden="true">
