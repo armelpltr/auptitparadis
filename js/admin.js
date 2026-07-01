@@ -474,11 +474,12 @@ async function toggleVisible(id) {
 }
 
 async function deleteBlock(id) {
-  if (!confirm('Supprimer définitivement cette section ?')) return;
+  const ok = await confirm('Retirer cette section ?', 'Elle sera supprimée du site immédiatement. Action irréversible.');
+  if (!ok) return;
   try {
     await deleteDoc(doc(db, 'blocks', id));
     await loadBlocks();
-    showStatus('Section supprimée ✓');
+    showSuccess('Section retirée', 'Elle n\'apparaît plus sur le site.');
   } catch (err) {
     showStatus('Erreur : ' + err.message, true);
   }
