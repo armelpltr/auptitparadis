@@ -194,12 +194,14 @@ async function loadDynamicBlocks() {
   const container = document.getElementById('dynamicSections');
   if (!container) return;
 
-  const q = query(collection(db, 'blocks'), where('visible', '==', true), orderBy('order', 'asc'));
-  const snap = await getDocs(q);
+  // Pas de where+orderBy combiné : évite l'exigence d'index composite Firestore.
+  // On récupère tout et on filtre/trie côté client.
+  const snap = await getDocs(collection(db, 'blocks'));
 
   const html = snap.docs
     .map(d => d.data())
-    .filter(b => RENDERERS[b.type])
+    .filter(b => b.visible !== false && RENDERERS[b.type])
+    .sort((a, b) => (a.order || 0) - (b.order || 0))
     .map(b => RENDERERS[b.type](b))
     .join('');
 
