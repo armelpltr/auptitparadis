@@ -101,17 +101,19 @@ p{ margin:0 0 1em; color:var(--ink-soft); }
 .site-header.is-scrolled .scroll-progress{ opacity:1; }
 
 .header-inner{
-  max-width:var(--max-w); margin:0 auto; padding:1rem 1.5rem;
+  max-width:var(--max-w); margin:0 auto; padding:1.1rem 1.5rem;
   display:flex; align-items:center; justify-content:space-between;
+  transition:padding .4s var(--ease);
 }
+.site-header.is-scrolled .header-inner{ padding:.4rem 1.5rem; }
 
 /* Brand — gauche */
-.brand{
-  display:flex; align-items:center; text-decoration:none;
-  transition:transform .45s cubic-bezier(.34,1.26,.64,1);
+.brand{ display:flex; align-items:center; text-decoration:none; }
+.brand-logo-header{
+  height:54px; width:auto; object-fit:contain;
+  transition:height .4s var(--ease);
 }
-.site-header.is-scrolled .brand{ transform:scale(.88); }
-.brand-logo-header{ height:52px; width:auto; object-fit:contain; }
+.site-header.is-scrolled .brand-logo-header{ height:34px; }
 
 /* Nav droite */
 .nav-right-group{ display:flex; align-items:center; }
