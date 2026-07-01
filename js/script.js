@@ -4,10 +4,19 @@
 
 document.addEventListener('DOMContentLoaded', () => {
 
-  /* ---- Header : fond au scroll ---- */
+  /* ---- Header : scroll ---- */
   const header = document.querySelector('.site-header');
+  const scrollProgress = header.querySelector('.scroll-progress');
+
   const onScroll = () => {
-    header.classList.toggle('is-scrolled', window.scrollY > 30);
+    const scrolled = window.scrollY;
+    header.classList.toggle('is-scrolled', scrolled > 50);
+
+    if (scrollProgress) {
+      const docH = document.documentElement.scrollHeight - window.innerHeight;
+      const pct = docH > 0 ? Math.min((scrolled / docH) * 100, 100) : 0;
+      scrollProgress.style.width = pct + '%';
+    }
   };
   onScroll();
   window.addEventListener('scroll', onScroll, { passive: true });
