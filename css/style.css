@@ -85,7 +85,9 @@ p{ margin:0 0 1em; color:var(--ink-soft); }
   transition:background .4s var(--ease), box-shadow .4s var(--ease);
 }
 .site-header.is-scrolled{
-  background:none;
+  background:rgba(251,246,238,.35);
+  backdrop-filter:blur(18px) saturate(1.6);
+  -webkit-backdrop-filter:blur(18px) saturate(1.6);
 }
 
 /* Barre de progression scroll */
