@@ -322,9 +322,10 @@ address a{ color:var(--gold-deep); font-weight:600; }
 
 /* "Notre sélection" dans les fiches spécialités */
 .spec-selection-label{
-  font-size:.7rem; font-weight:700; text-transform:uppercase; letter-spacing:.14em;
-  color:var(--gold-deep); margin:1.2rem 0 .5rem 0;
-  padding-top:1rem; border-top:1px solid var(--sand);
+  font-size:.76rem; font-style:italic; font-weight:400;
+  color:var(--gold-deep); opacity:.85;
+  margin:1.1rem 0 .4rem; padding-top:.9rem;
+  border-top:1px solid rgba(200,133,58,.22);
 }
 .spec-produits{ display:flex; flex-direction:column; gap:.75rem; margin-top:0; }
 

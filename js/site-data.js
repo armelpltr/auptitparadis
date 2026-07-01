@@ -72,10 +72,12 @@ function applySettings(s) {
                 </div>
               </div>`).join('')}</div>`
           : '';
+        const ICON_SLUGS = { bread:'baguette', pastry:'cake', icecream:'ice-cream-2', cake:'cake', gift:'gift', star:'star' };
+        const slug = ICON_SLUGS[item.icon] || 'star';
         return `
           <article class="card">
             <span class="card-icon" aria-hidden="true">
-              <svg viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">${ICONS[item.icon] || ICONS.star}</svg>
+              <img src="https://cdn.jsdelivr.net/npm/@tabler/icons@2.47.0/icons/${slug}.svg" alt="">
             </span>
             <h3>${escapeHTML(item.title || '')}</h3>
             <p>${escapeHTML(item.text || '')}</p>
