@@ -21,13 +21,13 @@ export const ICONS = {
 };
 
 function setText(id, value) {
-  if (value === undefined || value === null || value === '') return;
+  if (value === undefined || value === null) return;
   const el = document.getElementById(id);
   if (el) el.textContent = value;
 }
 
 function setHTML(id, value) {
-  if (value === undefined || value === null || value === '') return;
+  if (value === undefined || value === null) return;
   const el = document.getElementById(id);
   if (el) el.innerHTML = value;
 }
@@ -84,16 +84,16 @@ function applySettings(s) {
         ).join('');
       }
     }
-    if (h.address1 || h.address2) {
+    if (h.address1 != null || h.address2 != null) {
       setHTML('addressLine', `${escapeHTML(h.address1 || '')}<br>${escapeHTML(h.address2 || '')}`);
     }
-    if (h.phone) {
-      setText('phoneLink', h.phoneDisplay || h.phone);
-      setAttr('phoneLink', 'href', `tel:${h.phone}`);
+    if (h.phone != null) {
+      setText('phoneLink', h.phone ? (h.phoneDisplay || h.phone) : '');
+      if (h.phone) setAttr('phoneLink', 'href', `tel:${h.phone}`);
     }
-    if (h.email) {
+    if (h.email != null) {
       setText('emailLink', h.email);
-      setAttr('emailLink', 'href', `mailto:${h.email}`);
+      if (h.email) setAttr('emailLink', 'href', `mailto:${h.email}`);
     }
     if (h.instagram) setAttr('instagramLink', 'href', h.instagram);
     if (h.facebook) setAttr('facebookLink', 'href', h.facebook);
