@@ -34,9 +34,9 @@ const BLOCK_LABELS = {
 const DEFAULTS = {
   tagline: "Il y a des matins où l'odeur du pain chaud rivalise avec celle de la mer. Les nôtres, c'est tous les jours.",
   specialites: [
-    { title: 'Boulangerie', text: "On se lève à 4h pour que vous ayez du pain chaud à 7h. Baguette de tradition, miche de campagne, pains aux céréales : chaque fournée est une promesse recommencée chaque matin." },
-    { title: 'Pâtisserie',  text: "Pur beurre, sans compromis — c'est la règle depuis le premier jour. Croissants feuilletés, tartes de saison, entremets : le genre de choses qu'on mange lentement, parce qu'on sait que ça ne dure pas." },
-    { title: 'Glaces artisanales', text: "En juillet, la file d'attente commence à 10h. On ne s'en plaint pas. Glaces et sorbets faits maison, aux fruits de saison — le meilleur alibi pour rester cinq minutes de plus à Luc-sur-Mer." }
+    { title: 'Boulangerie',        icon: 'bread',    text: "On se lève à 4h pour que vous ayez du pain chaud à 7h. Baguette de tradition, miche de campagne, pains aux céréales : chaque fournée est une promesse recommencée chaque matin." },
+    { title: 'Pâtisserie',         icon: 'pastry',   text: "Pur beurre, sans compromis — c'est la règle depuis le premier jour. Croissants feuilletés, tartes de saison, entremets : le genre de choses qu'on mange lentement, parce qu'on sait que ça ne dure pas." },
+    { title: 'Glaces artisanales', icon: 'icecream', text: "En juillet, la file d'attente commence à 10h. On ne s'en plaint pas. Glaces et sorbets faits maison, aux fruits de saison — le meilleur alibi pour rester cinq minutes de plus à Luc-sur-Mer." }
   ],
   histoire: {
     title: "On se lève avant vous. Depuis longtemps.",
@@ -169,14 +169,16 @@ function addHourRowEl(day = '', hours = '') {
   row.innerHTML = `
     <input type="text" class="hour-day" placeholder="Jour (ex. Lundi)" value="${escapeAttr(day)}">
     <input type="text" class="hour-hours" placeholder="Horaires (ex. Fermé)" value="${escapeAttr(hours)}">
-    <button type="button" class="row-remove" title="Supprimer cette ligne"<svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M2 2l8 8M10 2l-8 8"/></svg></button>
+    <button type="button" class="row-remove" title="Supprimer cette ligne"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M2 2l8 8M10 2l-8 8"/></svg></button>
   `;
   row.querySelector('.row-remove').addEventListener('click', () => row.remove());
   container.appendChild(row);
 }
 
-function addProduitRow(specN, nom = '', description = '', imageUrl = '', tag = '') {
-  const list = document.getElementById(`spec${specN}-produits-list`);
+const SVG_X = '<svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M2 2l8 8M10 2l-8 8"/></svg>';
+
+function addProduitRowForIndex(i, nom = '', description = '', imageUrl = '', tag = '') {
+  const list = document.getElementById(`spec-produits-${i}`);
   if (!list) return;
   const row = document.createElement('div');
   row.className = 'produit-row';
@@ -190,25 +192,81 @@ function addProduitRow(specN, nom = '', description = '', imageUrl = '', tag = '
       <option value="selection" ${tag === 'selection' ? 'selected' : ''}>Sélection du moment</option>
       <option value="nouveaute" ${tag === 'nouveaute' ? 'selected' : ''}>Nouveauté</option>
     </select>
-    <button type="button" class="row-remove" title="Supprimer"<svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M2 2l8 8M10 2l-8 8"/></svg></button>
+    <button type="button" class="row-remove" title="Supprimer">${SVG_X}</button>
   `;
   row.querySelector('.row-remove').addEventListener('click', () => row.remove());
   list.appendChild(row);
 }
 
-[1, 2, 3].forEach(n => {
-  const btn = document.getElementById(`addSpec${n}Produit`);
-  if (btn) btn.addEventListener('click', () => addProduitRow(n));
-});
-
-function collectSpecProduits(n) {
-  return Array.from(document.querySelectorAll(`#spec${n}-produits-list .produit-row`)).map(row => ({
+function collectSpecProduitsForIndex(i) {
+  return Array.from(document.querySelectorAll(`#spec-produits-${i} .produit-row`)).map(row => ({
     nom: row.querySelector('.produit-nom').value.trim(),
     description: row.querySelector('.produit-desc').value.trim(),
     imageUrl: row.querySelector('.produit-img').value.trim(),
     tag: row.querySelector('.produit-tag').value
   })).filter(p => p.nom);
 }
+
+let specState = [];
+
+function syncSpecStateFromDOM() {
+  document.querySelectorAll('#specList .spec-edit').forEach((el, i) => {
+    specState[i] = {
+      title: el.querySelector('.spec-title').value.trim(),
+      text:  el.querySelector('.spec-text').value.trim(),
+      icon:  el.querySelector('.spec-icon').value,
+      produits: collectSpecProduitsForIndex(i)
+    };
+  });
+}
+
+function renderSpecList() {
+  const container = document.getElementById('specList');
+  if (!container) return;
+  container.innerHTML = specState.map((item, i) => `
+    <div class="spec-edit" data-index="${i}">
+      <div class="spec-edit-header">
+        <h3>Fiche ${i + 1}${item.title ? ' — ' + escapeAttr(item.title) : ''}</h3>
+        ${specState.length > 1 ? `<button type="button" class="row-remove" data-remove="${i}" title="Supprimer cette fiche">${SVG_X}</button>` : ''}
+      </div>
+      <div class="form-row">
+        <label>Icône</label>
+        <select class="spec-icon">
+          ${Object.keys(ICONS).map(k => `<option value="${k}" ${(item.icon || 'bread') === k ? 'selected' : ''}>${ICON_LABELS[k]}</option>`).join('')}
+        </select>
+      </div>
+      <div class="form-row"><label>Titre</label><input type="text" class="spec-title" placeholder="ex. Boulangerie" value="${escapeAttr(item.title || '')}"></div>
+      <div class="form-row"><label>Texte</label><textarea class="spec-text" rows="3">${escapeAttr(item.text || '')}</textarea></div>
+      <div class="form-row">
+        <label>Produits vedettes</label>
+        <div class="produits-list" id="spec-produits-${i}"></div>
+        <button type="button" class="btn btn-ghost btn-small add-spec-produit" data-index="${i}">+ Ajouter un produit</button>
+      </div>
+    </div>
+  `).join('');
+
+  specState.forEach((item, i) => {
+    (item.produits || []).forEach(p => addProduitRowForIndex(i, p.nom, p.description, p.imageUrl, p.tag));
+  });
+
+  container.querySelectorAll('[data-remove]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      syncSpecStateFromDOM();
+      specState.splice(Number(btn.dataset.remove), 1);
+      renderSpecList();
+    });
+  });
+
+  container.querySelectorAll('.add-spec-produit').forEach(btn => {
+    btn.addEventListener('click', () => addProduitRowForIndex(Number(btn.dataset.index)));
+  });
+}
+
+document.getElementById('addSpecBtn').addEventListener('click', () => {
+  syncSpecStateFromDOM();
+  specState.push({ title: '', text: '', icon: 'bread', produits: [] });
+  renderSpecList();
+});
 
 document.getElementById('addHourRow').addEventListener('click', () => addHourRowEl());
 
@@ -221,15 +279,12 @@ function collectHourRows() {
 
 
 async function loadSettings() {
-  // Pré-remplissage avec les valeurs par défaut du site
   setVal('set-tagline', DEFAULTS.tagline);
-  DEFAULTS.specialites.forEach((item, i) => {
-    setVal(`set-spec${i + 1}-title`, item.title);
-    setVal(`set-spec${i + 1}-text`, item.text);
-  });
   setVal('set-histoire-title', DEFAULTS.histoire.title);
   setVal('set-histoire-text1', DEFAULTS.histoire.text1);
   setVal('set-histoire-text2', DEFAULTS.histoire.text2);
+
+  specState = DEFAULTS.specialites.map(s => ({ ...s, produits: [] }));
 
   const container = document.getElementById('hoursRowsContainer');
   container.innerHTML = '';
@@ -242,19 +297,19 @@ async function loadSettings() {
 
   try {
     const snap = await getDoc(doc(db, 'settings', 'site'));
-    if (!snap.exists()) return;
+    if (!snap.exists()) { renderSpecList(); return; }
     const s = snap.data();
 
     if (s.tagline) setVal('set-tagline', s.tagline);
 
-    (s.specialites || []).forEach((item, i) => {
-      const n = i + 1;
-      if (item.title) setVal(`set-spec${n}-title`, item.title);
-      if (item.text)  setVal(`set-spec${n}-text`,  item.text);
-      if (Array.isArray(item.produits)) {
-        item.produits.forEach(p => addProduitRow(n, p.nom, p.description, p.imageUrl, p.tag));
-      }
-    });
+    if (Array.isArray(s.specialites) && s.specialites.length) {
+      specState = s.specialites.map(item => ({
+        title:    item.title    || '',
+        text:     item.text     || '',
+        icon:     item.icon     || 'bread',
+        produits: Array.isArray(item.produits) ? item.produits : []
+      }));
+    }
 
     if (s.histoire) {
       if (s.histoire.title)    setVal('set-histoire-title',    s.histoire.title);
@@ -281,6 +336,8 @@ async function loadSettings() {
   } catch (err) {
     showStatus('Impossible de charger les réglages existants (' + err.message + ')', true);
   }
+
+  renderSpecList();
 }
 
 document.getElementById('saveSettingsBtn').addEventListener('click', async () => {
@@ -288,10 +345,11 @@ document.getElementById('saveSettingsBtn').addEventListener('click', async () =>
   if (!ok) return;
   const data = {
     tagline: val('set-tagline'),
-    specialites: [1, 2, 3].map(n => ({
-      title: val(`set-spec${n}-title`),
-      text: val(`set-spec${n}-text`),
-      produits: collectSpecProduits(n)
+    specialites: Array.from(document.querySelectorAll('#specList .spec-edit')).map((el, i) => ({
+      title:    el.querySelector('.spec-title').value.trim(),
+      text:     el.querySelector('.spec-text').value.trim(),
+      icon:     el.querySelector('.spec-icon').value,
+      produits: collectSpecProduitsForIndex(i)
     })),
     histoire: {
       title: val('set-histoire-title'),

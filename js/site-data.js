@@ -20,6 +20,17 @@ export const ICONS = {
   star:    '<path d="M50,16 L60,40 L86,42 L66,58 L72,84 L50,70 L28,84 L34,58 L14,42 L40,40 Z" />'
 };
 
+const TAG_ICONS = {
+  'top-vente': '<svg width="9" height="9" viewBox="0 0 10 10" fill="currentColor" aria-hidden="true"><path d="M5 1l1.2 2.8 2.8.3-2 1.9.6 3L5 7.5 2.4 9 3 6 1 4.1l2.8-.3z"/></svg>',
+  'selection': '<svg width="8" height="8" viewBox="0 0 10 10" fill="currentColor" aria-hidden="true"><path d="M5 0L10 5 5 10 0 5z"/></svg>',
+  'nouveaute': '<svg width="9" height="9" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M5 1v8M1 5h8"/></svg>'
+};
+const TAG_LABELS = {
+  'top-vente': `${TAG_ICONS['top-vente']} Top vente`,
+  'selection': `${TAG_ICONS['selection']} Sélection du moment`,
+  'nouveaute': `${TAG_ICONS['nouveaute']} Nouveauté`
+};
+
 function setText(id, value) {
   if (value === undefined || value === null) return;
   const el = document.getElementById(id);
@@ -44,32 +55,34 @@ function applySettings(s) {
 
   setText('heroTagline', s.tagline);
 
-  if (Array.isArray(s.specialites)) {
-    s.specialites.forEach((item, i) => {
-      const n = i + 1;
-      setText(`specTitle${n}`, item.title);
-      setText(`specText${n}`, item.text);
-      const container = document.getElementById(`specProduits${n}`);
-      if (container && Array.isArray(item.produits) && item.produits.length) {
-        const TAG_ICONS = {
-          'top-vente':  '<svg width="9" height="9" viewBox="0 0 10 10" fill="currentColor" aria-hidden="true"><path d="M5 1l1.2 2.8 2.8.3-2 1.9.6 3L5 7.5 2.4 9 3 6 1 4.1l2.8-.3z"/></svg>',
-          'selection':  '<svg width="8" height="8" viewBox="0 0 10 10" fill="currentColor" aria-hidden="true"><path d="M5 0L10 5 5 10 0 5z"/></svg>',
-          'nouveaute':  '<svg width="9" height="9" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M5 1v8M1 5h8"/></svg>'
-        };
-        const TAG_LABELS = { 'top-vente': `${TAG_ICONS['top-vente']} Top vente`, 'selection': `${TAG_ICONS['selection']} Sélection du moment`, 'nouveaute': `${TAG_ICONS['nouveaute']} Nouveauté` };
-        container.innerHTML = item.produits.map(p => `
-          <div class="spec-produit">
-            ${p.imageUrl ? `<img class="spec-produit-img" src="${escapeHTML(p.imageUrl)}" alt="${escapeHTML(p.nom)}">` : ''}
-            <div class="spec-produit-info">
-              <div class="spec-produit-header">
-                <strong>${escapeHTML(p.nom)}</strong>
-                ${p.tag && TAG_LABELS[p.tag] ? `<span class="produit-tag produit-tag--${escapeHTML(p.tag)}">${TAG_LABELS[p.tag]}</span>` : ''}
-              </div>
-              ${p.description ? `<span>${escapeHTML(p.description)}</span>` : ''}
-            </div>
-          </div>`).join('');
-      }
-    });
+  if (Array.isArray(s.specialites) && s.specialites.length) {
+    const specCards = document.getElementById('specCards');
+    if (specCards) {
+      specCards.innerHTML = s.specialites.map(item => {
+        const produitHTML = Array.isArray(item.produits) && item.produits.length
+          ? `<div class="spec-produits">${item.produits.map(p => `
+              <div class="spec-produit">
+                ${p.imageUrl ? `<img class="spec-produit-img" src="${escapeHTML(p.imageUrl)}" alt="${escapeHTML(p.nom)}">` : ''}
+                <div class="spec-produit-info">
+                  <div class="spec-produit-header">
+                    <strong>${escapeHTML(p.nom)}</strong>
+                    ${p.tag && TAG_LABELS[p.tag] ? `<span class="produit-tag produit-tag--${escapeHTML(p.tag)}">${TAG_LABELS[p.tag]}</span>` : ''}
+                  </div>
+                  ${p.description ? `<span>${escapeHTML(p.description)}</span>` : ''}
+                </div>
+              </div>`).join('')}</div>`
+          : '';
+        return `
+          <article class="card">
+            <span class="card-icon" aria-hidden="true">
+              <svg viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">${ICONS[item.icon] || ICONS.star}</svg>
+            </span>
+            <h3>${escapeHTML(item.title || '')}</h3>
+            <p>${escapeHTML(item.text || '')}</p>
+            ${produitHTML}
+          </article>`;
+      }).join('');
+    }
   }
 
   if (s.histoire) {

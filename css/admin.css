@@ -70,8 +70,9 @@
 .admin-card h2{ font-size:1.25rem; margin-bottom:.3em; }
 .admin-card-hint{ font-size:.88rem; color:var(--ink-soft); margin-bottom:1.3rem; }
 .spec-edit{ padding-top:1rem; border-top:1px solid var(--sand); margin-top:1rem; }
-.spec-edit:first-of-type{ border-top:none; margin-top:0; padding-top:0; }
-.spec-edit h3{ font-size:1rem; margin-bottom:.7em; color:var(--gold-deep); }
+.spec-edit:first-child{ border-top:none; margin-top:0; padding-top:0; }
+.spec-edit-header{ display:flex; align-items:center; justify-content:space-between; margin-bottom:.8em; }
+.spec-edit-header h3{ font-size:1rem; margin:0; color:var(--gold-deep); }
 
 .btn-small{ padding:.6em 1.3em; font-size:.88rem; }
 .admin-save{ display:block; margin:0 auto; min-width:240px; text-align:center; }

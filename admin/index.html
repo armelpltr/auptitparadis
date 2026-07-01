@@ -72,38 +72,9 @@
 
       <div class="admin-card">
         <h2>Nos spécialités</h2>
-        <p class="admin-card-hint">Les 3 fiches affichées juste sous l'accueil.</p>
-
-        <div class="spec-edit" data-spec="1">
-          <h3>Fiche 1 — Boulangerie</h3>
-          <div class="form-row"><label>Titre</label><input type="text" id="set-spec1-title"></div>
-          <div class="form-row"><label>Texte</label><textarea id="set-spec1-text" rows="3"></textarea></div>
-          <div class="form-row">
-            <label>Produits vedettes</label>
-            <div id="spec1-produits-list" class="produits-list"></div>
-            <button type="button" class="btn btn-ghost btn-small" id="addSpec1Produit">+ Ajouter un produit</button>
-          </div>
-        </div>
-        <div class="spec-edit" data-spec="2">
-          <h3>Fiche 2 — Pâtisserie</h3>
-          <div class="form-row"><label>Titre</label><input type="text" id="set-spec2-title"></div>
-          <div class="form-row"><label>Texte</label><textarea id="set-spec2-text" rows="3"></textarea></div>
-          <div class="form-row">
-            <label>Produits vedettes</label>
-            <div id="spec2-produits-list" class="produits-list"></div>
-            <button type="button" class="btn btn-ghost btn-small" id="addSpec2Produit">+ Ajouter un produit</button>
-          </div>
-        </div>
-        <div class="spec-edit" data-spec="3">
-          <h3>Fiche 3 — Glaces artisanales</h3>
-          <div class="form-row"><label>Titre</label><input type="text" id="set-spec3-title"></div>
-          <div class="form-row"><label>Texte</label><textarea id="set-spec3-text" rows="3"></textarea></div>
-          <div class="form-row">
-            <label>Produits vedettes</label>
-            <div id="spec3-produits-list" class="produits-list"></div>
-            <button type="button" class="btn btn-ghost btn-small" id="addSpec3Produit">+ Ajouter un produit</button>
-          </div>
-        </div>
+        <p class="admin-card-hint">Fiches affichées juste sous l'accueil — 3 par ligne sur le site.</p>
+        <div id="specList"></div>
+        <button type="button" class="btn btn-ghost btn-small" id="addSpecBtn">+ Ajouter une fiche</button>
       </div>
 
       <div class="admin-card">
