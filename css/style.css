@@ -246,7 +246,7 @@ p{ margin:0 0 1em; color:var(--ink-soft); }
 
 /* ---------- Spécialités ---------- */
 .specialites{ background:var(--cream); }
-.specialites .section-inner{ max-width:1320px; }
+.specialites .section-inner{ max-width:min(96vw, 1560px); }
 .specialites h2, .histoire h2, .horaires h2, .contact h2{ font-size:clamp(2rem, 4vw, 2.6rem); }
 .cards{ display:grid; grid-template-columns:repeat(3, 1fr); gap:2rem; margin-top:2.5rem; }
 .card{
