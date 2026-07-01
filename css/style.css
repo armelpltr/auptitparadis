@@ -246,11 +246,12 @@ p{ margin:0 0 1em; color:var(--ink-soft); }
 
 /* ---------- Spécialités ---------- */
 .specialites{ background:var(--cream); }
+.specialites .section-inner{ max-width:1320px; }
 .specialites h2, .histoire h2, .horaires h2, .contact h2{ font-size:clamp(2rem, 4vw, 2.6rem); }
 .cards{ display:grid; grid-template-columns:repeat(3, 1fr); gap:2rem; margin-top:2.5rem; }
 .card{
   background:var(--white); border:1px solid var(--sand); border-radius:10px;
-  padding:2.4rem 1.8rem; text-align:left; transition:transform .3s var(--ease), box-shadow .3s var(--ease);
+  padding:2.2rem 1.6rem; text-align:left; transition:transform .3s var(--ease), box-shadow .3s var(--ease);
 }
 .card:hover{ transform:translateY(-6px); box-shadow:0 14px 30px -16px rgba(33,28,23,.25); }
 .card-icon{ display:inline-flex; width:48px; height:48px; margin-bottom:1.2rem; }
