@@ -367,8 +367,7 @@ document.getElementById('saveSettingsBtn').addEventListener('click', async () =>
       instagram: val('set-instagram'),
       facebook: val('set-facebook'),
       mapUrl: val('set-mapUrl')
-    },
-    contactIntro: val('set-contactIntro')
+    }
   };
 
   try {
