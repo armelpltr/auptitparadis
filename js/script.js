@@ -14,16 +14,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
   /* ---- Menu mobile ---- */
   const navToggle = document.getElementById('navToggle');
-  const mainNav = document.getElementById('main-nav');
+  const mobileNav = document.getElementById('mobile-nav');
 
   navToggle.addEventListener('click', () => {
-    const isOpen = mainNav.classList.toggle('is-open');
+    const isOpen = mobileNav.classList.toggle('is-open');
+    mobileNav.setAttribute('aria-hidden', String(!isOpen));
     navToggle.setAttribute('aria-expanded', String(isOpen));
   });
 
-  mainNav.querySelectorAll('a').forEach(link => {
+  mobileNav.querySelectorAll('a').forEach(link => {
     link.addEventListener('click', () => {
-      mainNav.classList.remove('is-open');
+      mobileNav.classList.remove('is-open');
+      mobileNav.setAttribute('aria-hidden', 'true');
       navToggle.setAttribute('aria-expanded', 'false');
     });
   });

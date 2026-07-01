@@ -19,22 +19,40 @@
 <!-- ===================== HEADER ===================== -->
 <header class="site-header" id="top">
   <div class="header-inner">
+
+    <nav class="main-nav nav-left" aria-label="Navigation principale">
+      <ul>
+        <li><a href="#specialites">Nos spécialités</a></li>
+        <li><a href="#histoire">Notre histoire</a></li>
+      </ul>
+    </nav>
+
     <a href="#top" class="brand" aria-label="Au P'tit Paradis — Accueil">
       <img src="assets/logo-header.png" alt="Au P'tit Paradis" class="brand-logo-header">
     </a>
 
-    <nav class="main-nav" id="main-nav" aria-label="Navigation principale">
-      <ul>
-        <li><a href="#specialites">Nos spécialités</a></li>
-        <li><a href="#histoire">Notre histoire</a></li>
-        <li><a href="#horaires">Horaires &amp; accès</a></li>
-      </ul>
-    </nav>
+    <div class="nav-right-group">
+      <nav class="main-nav nav-right" aria-label="Navigation secondaire">
+        <ul>
+          <li><a href="#horaires">Horaires &amp; accès</a></li>
+        </ul>
+      </nav>
+      <button class="nav-toggle" id="navToggle" aria-expanded="false" aria-controls="mobile-nav" aria-label="Ouvrir le menu">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
 
-    <button class="nav-toggle" id="navToggle" aria-expanded="false" aria-controls="main-nav" aria-label="Ouvrir le menu">
-      <span></span><span></span><span></span>
-    </button>
   </div>
+
+  <nav class="mobile-nav" id="mobile-nav" aria-label="Navigation mobile" aria-hidden="true">
+    <ul>
+      <li><a href="#specialites">Nos spécialités</a></li>
+      <li><a href="#histoire">Notre histoire</a></li>
+      <li><a href="#horaires">Horaires &amp; accès</a></li>
+    </ul>
+  </nav>
+
+  <div class="header-rule" aria-hidden="true"></div>
 </header>
 
 <main id="main">
