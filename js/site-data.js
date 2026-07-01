@@ -61,7 +61,7 @@ function applySettings(s) {
       const SLOT_ICONS = ['bread', 'pastry', 'icecream'];
       specCards.innerHTML = s.specialites.map((item, idx) => {
         const produitHTML = Array.isArray(item.produits) && item.produits.length
-          ? `<p class="spec-selection-label">Notre sélection</p><div class="spec-produits">${item.produits.map(p => `
+          ? `<div class="spec-selection"><p class="spec-selection-label"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l2.09 4.26L18.8 8l-3.4 3.32.8 4.68L12 13.9 7.8 16l.8-4.68L5.2 8l4.71-.74z"/></svg>Notre sélection</p><div class="spec-produits">${item.produits.map(p => `
               <div class="spec-produit">
                 ${p.imageUrl ? `<img class="spec-produit-img" src="${escapeHTML(p.imageUrl)}" alt="${escapeHTML(p.nom)}">` : ''}
                 <div class="spec-produit-info">
@@ -71,7 +71,7 @@ function applySettings(s) {
                   </div>
                   ${p.description ? `<span>${escapeHTML(p.description)}</span>` : ''}
                 </div>
-              </div>`).join('')}</div>`
+              </div>`).join('')}</div></div>`
           : '';
         const ICON_SLUGS = { bread:'baguette', pastry:'cake', icecream:'ice-cream-2', cake:'cake', gift:'gift', star:'star' };
         const slug = ICON_SLUGS[item.icon] || ICON_SLUGS[SLOT_ICONS[idx]] || 'star';
