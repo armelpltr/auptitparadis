@@ -72,7 +72,7 @@ document.addEventListener('DOMContentLoaded', () => {
   lightbox.setAttribute('aria-modal', 'true');
   lightbox.setAttribute('role', 'dialog');
   lightbox.innerHTML = `
-    <button class="lightbox-close" aria-label="Fermer">✕</button>
+    <button class="lightbox-close" aria-label="Fermer"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M2 2l10 10M12 2l-10 10"/></svg></button>
     <div class="lightbox-inner">
       <img class="lightbox-img" src="" alt="">
       <p class="lightbox-caption"></p>

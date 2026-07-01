@@ -51,7 +51,12 @@ function applySettings(s) {
       setText(`specText${n}`, item.text);
       const container = document.getElementById(`specProduits${n}`);
       if (container && Array.isArray(item.produits) && item.produits.length) {
-        const TAG_LABELS = { 'top-vente': '⭐ Top vente', 'selection': '✦ Sélection du moment', 'nouveaute': '🆕 Nouveauté' };
+        const TAG_ICONS = {
+          'top-vente':  '<svg width="9" height="9" viewBox="0 0 10 10" fill="currentColor" aria-hidden="true"><path d="M5 1l1.2 2.8 2.8.3-2 1.9.6 3L5 7.5 2.4 9 3 6 1 4.1l2.8-.3z"/></svg>',
+          'selection':  '<svg width="8" height="8" viewBox="0 0 10 10" fill="currentColor" aria-hidden="true"><path d="M5 0L10 5 5 10 0 5z"/></svg>',
+          'nouveaute':  '<svg width="9" height="9" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M5 1v8M1 5h8"/></svg>'
+        };
+        const TAG_LABELS = { 'top-vente': `${TAG_ICONS['top-vente']} Top vente`, 'selection': `${TAG_ICONS['selection']} Sélection du moment`, 'nouveaute': `${TAG_ICONS['nouveaute']} Nouveauté` };
         container.innerHTML = item.produits.map(p => `
           <div class="spec-produit">
             ${p.imageUrl ? `<img class="spec-produit-img" src="${escapeHTML(p.imageUrl)}" alt="${escapeHTML(p.nom)}">` : ''}

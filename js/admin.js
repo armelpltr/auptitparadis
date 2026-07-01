@@ -169,7 +169,7 @@ function addHourRowEl(day = '', hours = '') {
   row.innerHTML = `
     <input type="text" class="hour-day" placeholder="Jour (ex. Lundi)" value="${escapeAttr(day)}">
     <input type="text" class="hour-hours" placeholder="Horaires (ex. Fermé)" value="${escapeAttr(hours)}">
-    <button type="button" class="row-remove" title="Supprimer cette ligne">✕</button>
+    <button type="button" class="row-remove" title="Supprimer cette ligne"<svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M2 2l8 8M10 2l-8 8"/></svg></button>
   `;
   row.querySelector('.row-remove').addEventListener('click', () => row.remove());
   container.appendChild(row);
@@ -186,11 +186,11 @@ function addProduitRow(specN, nom = '', description = '', imageUrl = '', tag = '
     <input type="url" class="produit-img" placeholder="URL image" value="${escapeAttr(imageUrl)}">
     <select class="produit-tag">
       <option value="">— Pas de tag —</option>
-      <option value="top-vente" ${tag === 'top-vente' ? 'selected' : ''}>⭐ Top vente</option>
-      <option value="selection" ${tag === 'selection' ? 'selected' : ''}>✦ Sélection du moment</option>
-      <option value="nouveaute" ${tag === 'nouveaute' ? 'selected' : ''}>🆕 Nouveauté</option>
+      <option value="top-vente" ${tag === 'top-vente' ? 'selected' : ''}>Top vente</option>
+      <option value="selection" ${tag === 'selection' ? 'selected' : ''}>Sélection du moment</option>
+      <option value="nouveaute" ${tag === 'nouveaute' ? 'selected' : ''}>Nouveauté</option>
     </select>
-    <button type="button" class="row-remove" title="Supprimer">✕</button>
+    <button type="button" class="row-remove" title="Supprimer"<svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M2 2l8 8M10 2l-8 8"/></svg></button>
   `;
   row.querySelector('.row-remove').addEventListener('click', () => row.remove());
   list.appendChild(row);
@@ -536,7 +536,7 @@ function renderCardItems() {
   const container = document.getElementById('cardItemsContainer');
   container.innerHTML = cardItemsState.map((item, i) => `
     <div class="card-item-edit" data-index="${i}">
-      <button type="button" class="row-remove" data-remove="${i}" title="Supprimer cette carte">✕</button>
+      <button type="button" class="row-remove" data-remove="${i}" title="Supprimer cette carte"<svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M2 2l8 8M10 2l-8 8"/></svg></button>
       <div class="form-row">
         <label>Icône</label>
         <select data-field="icon" data-index="${i}">
@@ -566,7 +566,7 @@ function renderGalleryThumbs() {
   container.innerHTML = galleryImagesState.map((url, i) => `
     <div class="hour-row">
       <input type="url" class="gallery-url-input" data-index="${i}" value="${escapeAttr(url)}" placeholder="https://...">
-      <button type="button" class="row-remove" data-remove="${i}" title="Retirer">✕</button>
+      <button type="button" class="row-remove" data-remove="${i}" title="Retirer"<svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M2 2l8 8M10 2l-8 8"/></svg></button>
     </div>
   `).join('');
   container.querySelectorAll('[data-remove]').forEach(btn => {
