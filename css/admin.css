@@ -24,12 +24,16 @@
 
 /* ---------- Form rows (partagé avec le reste de l'admin) ---------- */
 .form-row{ display:flex; flex-direction:column; gap:.4rem; margin-bottom:1.1rem; }
-.form-row label{ font-size:.85rem; font-weight:600; color:var(--ink); }
+.form-row label{ font-size:.8rem; font-weight:700; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.06em; }
 .form-row input, .form-row textarea, .form-row select{
-  font-family:var(--font-body); font-size:.96rem; padding:.65em .85em;
-  border:1.5px solid var(--sand); border-radius:var(--radius); background:var(--cream); color:var(--ink);
+  font-family:var(--font-body); font-size:.95rem; padding:.7em .9em;
+  border:1.5px solid var(--sand); border-radius:8px; background:var(--white); color:var(--ink);
+  transition:border-color .2s, box-shadow .2s;
 }
-.form-row input:focus, .form-row textarea:focus, .form-row select:focus{ border-color:var(--gold); outline:none; }
+.form-row input:focus, .form-row textarea:focus, .form-row select:focus{
+  border-color:var(--gold); outline:none;
+  box-shadow:0 0 0 3px rgba(200,133,58,.12);
+}
 .form-row-grid{ display:grid; grid-template-columns:1fr 1fr; gap:1.2rem; }
 .field-hint{ font-size:.8rem; color:var(--ink-soft); margin:.3rem 0 0; }
 
@@ -64,15 +68,28 @@
 
 /* ---------- Cards ---------- */
 .admin-card{
-  background:var(--white); border-radius:10px; padding:1.8rem; margin-bottom:1.6rem;
-  box-shadow:0 1px 0 rgba(33,28,23,.06);
+  background:var(--white); border-radius:14px; padding:2rem; margin-bottom:1.6rem;
+  box-shadow:0 2px 16px -6px rgba(33,28,23,.1);
+  border:1px solid rgba(33,28,23,.05);
 }
-.admin-card h2{ font-size:1.25rem; margin-bottom:.3em; }
-.admin-card-hint{ font-size:.88rem; color:var(--ink-soft); margin-bottom:1.3rem; }
-.spec-edit{ padding-top:1rem; border-top:1px solid var(--sand); margin-top:1rem; }
-.spec-edit:first-child{ border-top:none; margin-top:0; padding-top:0; }
-.spec-edit-header{ display:flex; align-items:center; justify-content:space-between; margin-bottom:.8em; }
-.spec-edit-header h3{ font-size:1rem; margin:0; color:var(--gold-deep); }
+.admin-card h2{
+  font-size:1.1rem; margin-bottom:.8em;
+  padding-bottom:.6em; border-bottom:2px solid var(--sand);
+  color:var(--ink); display:flex; align-items:center; gap:.6rem;
+}
+.admin-card h2::before{
+  content:""; display:inline-block; width:3px; height:1.1em;
+  background:var(--gold); border-radius:2px; flex-shrink:0;
+}
+.admin-card-hint{ font-size:.86rem; color:var(--ink-soft); margin-bottom:1.4rem; margin-top:-.4rem; }
+
+.spec-edit{
+  background:var(--cream); border-radius:10px;
+  padding:1rem 1.2rem; margin-top:.8rem;
+}
+.spec-edit:first-child{ margin-top:0; }
+.spec-edit-header{ display:flex; align-items:center; justify-content:space-between; margin-bottom:.9em; }
+.spec-edit-header h3{ font-size:.9rem; margin:0; color:var(--gold-deep); font-weight:700; letter-spacing:.02em; }
 
 .btn-small{ padding:.6em 1.3em; font-size:.88rem; }
 .admin-save{ display:block; margin:0 auto; min-width:240px; text-align:center; }

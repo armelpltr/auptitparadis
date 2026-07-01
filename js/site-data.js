@@ -60,7 +60,7 @@ function applySettings(s) {
     if (specCards) {
       specCards.innerHTML = s.specialites.map(item => {
         const produitHTML = Array.isArray(item.produits) && item.produits.length
-          ? `<div class="spec-produits">${item.produits.map(p => `
+          ? `<p class="spec-selection-label">Notre sélection</p><div class="spec-produits">${item.produits.map(p => `
               <div class="spec-produit">
                 ${p.imageUrl ? `<img class="spec-produit-img" src="${escapeHTML(p.imageUrl)}" alt="${escapeHTML(p.nom)}">` : ''}
                 <div class="spec-produit-info">
