@@ -11,7 +11,7 @@ import {
   doc, getDoc, setDoc, collection, getDocs, addDoc, updateDoc, deleteDoc, query, orderBy
 } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 import {
-  ref as storageRef, uploadBytes, getDownloadURL
+  ref as storageRef, uploadBytesResumable, getDownloadURL
 } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-storage.js";
 
 /* ============================================================
@@ -184,15 +184,109 @@ const SVG_X = '<svg width="12" height="12" viewBox="0 0 12 12" fill="none" strok
    Import de photos (Firebase Storage)
    ============================================================ */
 const MAX_UPLOAD_BYTES = 8 * 1024 * 1024; // doit rester aligné sur storage.rules
+const RING_LENGTH = 339.292;              // 2πr avec r=54, cf. .upload-ring-fill
 
-async function uploadImageFile(file, folder) {
-  if (!file.type.startsWith('image/')) throw new Error("Ce fichier n'est pas une image.");
-  if (file.size > MAX_UPLOAD_BYTES) throw new Error('Photo trop lourde — 8 Mo maximum.');
+/* ---------- Popup de progression ---------- */
+const uploadUI = {
+  overlay:  document.getElementById('uploadOverlay'),
+  modal:    document.querySelector('.upload-modal'),
+  thumb:    document.getElementById('uploadThumb'),
+  ring:     document.getElementById('uploadRing'),
+  percent:  document.getElementById('uploadPercent'),
+  check:    document.getElementById('uploadCheck'),
+  cross:    document.getElementById('uploadCross'),
+  title:    document.getElementById('uploadTitle'),
+  sub:      document.getElementById('uploadSub'),
+  actions:  document.getElementById('uploadActions'),
+  closeBtn: document.getElementById('uploadCloseBtn')
+};
+
+function setUploadProgress(pct) {
+  const clamped = Math.max(0, Math.min(100, Math.round(pct)));
+  uploadUI.ring.style.strokeDashoffset = String(RING_LENGTH * (1 - clamped / 100));
+  uploadUI.percent.firstChild.nodeValue = String(clamped);
+}
+
+let uploadCloseTimer = null;
+
+function openUploadModal(file) {
+  clearTimeout(uploadCloseTimer); // un import relancé ne doit pas hériter du timer précédent
+  uploadUI.modal.classList.remove('is-error');
+  uploadUI.check.hidden = true;
+  uploadUI.cross.hidden = true;
+  uploadUI.percent.hidden = false;
+  uploadUI.actions.hidden = true;
+  uploadUI.title.textContent = 'Import de la photo';
+  uploadUI.sub.textContent = file.name;
+  uploadUI.ring.style.strokeDashoffset = String(RING_LENGTH);
+  setUploadProgress(0);
+
+  // Aperçu local immédiat, sans attendre la fin de l'envoi
+  if (uploadUI.thumb.dataset.blob) URL.revokeObjectURL(uploadUI.thumb.dataset.blob);
+  const blobUrl = URL.createObjectURL(file);
+  uploadUI.thumb.dataset.blob = blobUrl;
+  uploadUI.thumb.src = blobUrl;
+
+  uploadUI.overlay.hidden = false;
+}
+
+function finishUploadModal({ ok, title, sub }) {
+  uploadUI.percent.hidden = true;
+  uploadUI.modal.classList.toggle('is-error', !ok);
+  uploadUI.check.hidden = !ok;
+  uploadUI.cross.hidden = ok;
+  if (ok) setUploadProgress(100);
+  uploadUI.title.textContent = title;
+  uploadUI.sub.textContent = sub;
+
+  if (ok) {
+    uploadCloseTimer = setTimeout(closeUploadModal, 900); // succès : se referme tout seul
+  } else {
+    uploadUI.actions.hidden = false;   // erreur : l'utilisateur doit la lire
+    uploadUI.closeBtn.focus();
+  }
+}
+
+function closeUploadModal() {
+  clearTimeout(uploadCloseTimer);
+  uploadUI.overlay.hidden = true;
+  if (uploadUI.thumb.dataset.blob) {
+    URL.revokeObjectURL(uploadUI.thumb.dataset.blob);
+    delete uploadUI.thumb.dataset.blob;
+  }
+  uploadUI.thumb.removeAttribute('src');
+}
+
+uploadUI.closeBtn.addEventListener('click', closeUploadModal);
+
+/* ---------- Envoi vers Storage ---------- */
+function uploadImageFile(file, folder) {
+  if (!file.type.startsWith('image/')) return Promise.reject(new Error("Ce fichier n'est pas une image."));
+  if (file.size > MAX_UPLOAD_BYTES) return Promise.reject(new Error('Photo trop lourde — 8 Mo maximum.'));
+
   const ext = (file.name.match(/\.([a-zA-Z0-9]+)$/) || [, 'jpg'])[1].toLowerCase();
   const path = `${folder}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
-  const fileRef = storageRef(storage, path);
-  await uploadBytes(fileRef, file, { contentType: file.type });
-  return getDownloadURL(fileRef);
+  const task = uploadBytesResumable(storageRef(storage, path), file, { contentType: file.type });
+
+  return new Promise((resolve, reject) => {
+    task.on('state_changed',
+      snap => setUploadProgress(snap.totalBytes ? (snap.bytesTransferred / snap.totalBytes) * 100 : 0),
+      reject,
+      () => getDownloadURL(task.snapshot.ref).then(resolve, reject)
+    );
+  });
+}
+
+const UPLOAD_ERRORS = {
+  'storage/unauthorized':     "Accès refusé. Vérifie que les règles de storage.rules sont bien publiées dans la console Firebase.",
+  'storage/unauthenticated':  'Session expirée. Reconnecte-toi et réessaie.',
+  'storage/retry-limit-exceeded': 'Connexion trop instable, la photo n’a pas pu être envoyée.',
+  'storage/canceled':         "L'import a été annulé.",
+  'storage/unknown':          "Le service de stockage ne répond pas. Storage est-il bien activé dans la console Firebase ?"
+};
+
+function uploadErrorMessage(err) {
+  return UPLOAD_ERRORS[err.code] || err.message || "L'import a échoué.";
 }
 
 /**
@@ -229,9 +323,6 @@ function createImageUploader({ id = '', className = '', value = '', folder = 'im
   clearBtn.title = 'Retirer la photo';
   clearBtn.innerHTML = SVG_X;
 
-  const status = document.createElement('span');
-  status.className = 'image-upload-status';
-
   function refresh() {
     const url = hidden.value.trim();
     if (url) preview.src = url; else preview.removeAttribute('src');
@@ -243,7 +334,6 @@ function createImageUploader({ id = '', className = '', value = '', folder = 'im
 
   clearBtn.addEventListener('click', () => {
     hidden.value = '';
-    status.textContent = '';
     hidden.dispatchEvent(new Event('input', { bubbles: true }));
   });
 
@@ -252,13 +342,13 @@ function createImageUploader({ id = '', className = '', value = '', folder = 'im
     fileInput.value = ''; // permet de re-choisir le même fichier ensuite
     if (!file) return;
     pickBtn.disabled = true;
-    status.textContent = 'Import en cours…';
+    openUploadModal(file);
     try {
       hidden.value = await uploadImageFile(file, folder);
-      status.textContent = 'Photo importée.';
       hidden.dispatchEvent(new Event('input', { bubbles: true }));
+      finishUploadModal({ ok: true, title: 'Photo importée', sub: 'Elle est prête à être enregistrée.' });
     } catch (err) {
-      status.textContent = err.message || "L'import a échoué.";
+      finishUploadModal({ ok: false, title: "L'import a échoué", sub: uploadErrorMessage(err) });
     }
     pickBtn.disabled = false;
   });
@@ -266,7 +356,7 @@ function createImageUploader({ id = '', className = '', value = '', folder = 'im
   // setVal() émet un 'input' : l'aperçu se met à jour au chargement des réglages
   hidden.addEventListener('input', refresh);
 
-  wrap.append(preview, pickBtn, clearBtn, status, hidden, fileInput);
+  wrap.append(preview, pickBtn, clearBtn, hidden, fileInput);
   refresh();
   return wrap;
 }

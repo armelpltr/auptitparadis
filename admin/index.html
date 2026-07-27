@@ -177,6 +177,30 @@
   </div>
 </div>
 
+<div class="upload-overlay" id="uploadOverlay" hidden>
+  <div class="upload-modal" role="dialog" aria-modal="true" aria-labelledby="uploadTitle">
+    <div class="upload-visual">
+      <img class="upload-thumb" id="uploadThumb" alt="">
+      <svg class="upload-ring" viewBox="0 0 120 120" aria-hidden="true">
+        <circle class="upload-ring-track" cx="60" cy="60" r="54"></circle>
+        <circle class="upload-ring-fill" id="uploadRing" cx="60" cy="60" r="54"></circle>
+      </svg>
+      <span class="upload-percent" id="uploadPercent">0<small>%</small></span>
+      <svg class="upload-check" id="uploadCheck" viewBox="0 0 52 52" aria-hidden="true" hidden>
+        <path d="M14 27l9 9 16-18"></path>
+      </svg>
+      <svg class="upload-cross" id="uploadCross" viewBox="0 0 52 52" aria-hidden="true" hidden>
+        <path d="M18 18l16 16M34 18L18 34"></path>
+      </svg>
+    </div>
+    <p class="upload-title" id="uploadTitle">Import de la photo</p>
+    <p class="upload-sub" id="uploadSub">Envoi en cours…</p>
+    <div class="upload-actions" id="uploadActions" hidden>
+      <button class="btn btn-primary" id="uploadCloseBtn">OK</button>
+    </div>
+  </div>
+</div>
+
 <script type="module" src="../js/admin.js"></script>
 </body>
 </html>

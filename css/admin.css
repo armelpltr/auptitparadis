@@ -101,7 +101,6 @@
   display:block; flex-shrink:0;
 }
 .image-upload-preview:not([src]), .image-upload-preview[src=""]{ visibility:hidden; }
-.image-upload-status{ font-size:.85rem; color:var(--ink-soft); }
 .image-upload .btn{ white-space:nowrap; }
 .image-upload .btn[disabled]{ opacity:.55; cursor:progress; }
 
@@ -110,7 +109,6 @@
 .image-upload--compact .image-upload-preview{ width:46px; height:46px; border-radius:6px; }
 .image-upload--compact .btn{ padding:.45em .8em; font-size:.8rem; }
 .image-upload--compact .row-remove{ width:26px; height:26px; }
-.image-upload--compact .image-upload-status{ font-size:.75rem; flex-basis:100%; }
 
 /* ---------- Produits vedettes ---------- */
 .produits-list{ margin-bottom:.7rem; }
@@ -208,6 +206,76 @@
 .confirm-actions{ display:flex; gap:.8rem; justify-content:flex-end; }
 .confirm-actions[hidden]{ display:none; }
 
+/* ---------- Popup d'import de photo ---------- */
+.upload-overlay{
+  position:fixed; inset:0; z-index:600;
+  display:flex; align-items:center; justify-content:center; padding:1.5rem;
+  background:rgba(33,28,23,.55); backdrop-filter:blur(3px);
+  animation:uploadFade .18s ease;
+}
+.upload-overlay[hidden]{ display:none; }
+@keyframes uploadFade{ from{ opacity:0; } to{ opacity:1; } }
+
+.upload-modal{
+  background:var(--white); border-radius:16px; padding:2.2rem 2.4rem 1.9rem;
+  max-width:340px; width:100%; text-align:center;
+  box-shadow:0 24px 60px -20px rgba(33,28,23,.45);
+  animation:uploadPop .22s var(--ease);
+}
+@keyframes uploadPop{ from{ transform:translateY(14px) scale(.96); opacity:0; } to{ transform:none; opacity:1; } }
+
+/* Vignette + anneau de progression */
+.upload-visual{ position:relative; width:120px; height:120px; margin:0 auto 1.4rem; }
+.upload-thumb{
+  position:absolute; inset:12px; width:96px; height:96px;
+  object-fit:cover; border-radius:50%; background:var(--sand);
+}
+.upload-thumb:not([src]), .upload-thumb[src=""]{ visibility:hidden; }
+
+.upload-ring{ position:absolute; inset:0; width:120px; height:120px; transform:rotate(-90deg); }
+.upload-ring circle{ fill:none; stroke-width:6; stroke-linecap:round; }
+.upload-ring-track{ stroke:var(--sand); }
+.upload-ring-fill{
+  stroke:var(--gold);
+  stroke-dasharray:339.292;            /* 2πr, r=54 */
+  stroke-dashoffset:339.292;
+  transition:stroke-dashoffset .3s var(--ease), stroke .25s var(--ease);
+}
+
+.upload-percent{
+  position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+  font-family:var(--font-display); font-size:1.6rem; font-weight:600; color:var(--ink);
+  text-shadow:0 1px 6px rgba(255,255,255,.85);
+}
+.upload-percent small{ font-size:.8rem; margin-left:.1em; color:var(--ink-soft); }
+.upload-percent[hidden]{ display:none; }
+
+/* Coche de succès / croix d'échec */
+.upload-check, .upload-cross{
+  position:absolute; inset:0; margin:auto; width:56px; height:56px;
+  fill:none; stroke-width:4; stroke-linecap:round; stroke-linejoin:round;
+  stroke-dasharray:80; stroke-dashoffset:80;
+  animation:uploadDraw .4s var(--ease) forwards;
+}
+.upload-check{ stroke:var(--gold-deep); }
+.upload-cross{ stroke:#a13a25; }
+.upload-check[hidden], .upload-cross[hidden]{ display:none; }
+@keyframes uploadDraw{ to{ stroke-dashoffset:0; } }
+
+.upload-title{ font-family:var(--font-display); font-size:1.2rem; font-weight:600; color:var(--ink); margin-bottom:.35rem; }
+.upload-sub{ font-size:.88rem; color:var(--ink-soft); margin-bottom:0; }
+.upload-actions{ display:flex; justify-content:center; margin-top:1.5rem; }
+.upload-actions[hidden]{ display:none; }
+
+/* État erreur */
+.upload-modal.is-error .upload-ring-fill{ stroke:#a13a25; }
+.upload-modal.is-error .upload-title{ color:#a13a25; }
+
+@media (prefers-reduced-motion: reduce){
+  .upload-overlay, .upload-modal, .upload-check, .upload-cross{ animation:none; }
+  .upload-ring-fill{ transition:none; }
+}
+
 @media (max-width: 720px){
   .form-row-grid, .template-grid{ grid-template-columns:1fr; }
   .hour-row{ grid-template-columns:1fr 1fr; }
@@ -222,4 +290,11 @@
 
   .gallery-row{ grid-template-columns:1fr; }
   .gallery-row > .row-remove{ width:100%; border-radius:6px; }
+
+  .upload-modal{ padding:1.8rem 1.6rem 1.5rem; max-width:300px; }
+  .upload-visual{ width:100px; height:100px; }
+  .upload-ring{ width:100px; height:100px; }
+  .upload-thumb{ inset:10px; width:80px; height:80px; }
+  .upload-percent{ font-size:1.35rem; }
+  .upload-actions .btn{ width:100%; }
 }
