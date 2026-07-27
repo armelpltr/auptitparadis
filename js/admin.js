@@ -417,7 +417,7 @@ function addProduitRowForIndex(i, nom = '', description = '', imageUrl = '', tag
   row.className = 'produit-row';
   row.innerHTML = `
     <input type="text" class="produit-nom" placeholder="Nom du produit" value="${escapeAttr(nom)}">
-    <input type="text" class="produit-desc" placeholder="Description courte" value="${escapeAttr(description)}">
+    <textarea class="produit-desc" rows="3" placeholder="Description courte">${escapeAttr(description)}</textarea>
     <select class="produit-tag">
       <option value="">— Pas de tag —</option>
       <option value="top-vente" ${tag === 'top-vente' ? 'selected' : ''}>Top vente</option>
@@ -478,9 +478,6 @@ function renderSpecList() {
         <label>Produits vedettes</label>
         <div class="produits-list" id="spec-produits-${i}"></div>
         <button type="button" class="btn btn-ghost btn-small add-spec-produit" data-index="${i}">+ Ajouter un produit</button>
-      </div>
-      <div class="card-actions card-actions--inner">
-        <button type="button" class="btn btn-primary btn-small" data-save="specialites">Enregistrer</button>
       </div>
     </div>
   `).join('');
@@ -583,6 +580,9 @@ async function loadSettings() {
   }
 
   renderSpecList();
+  // Les champs sont remplis : les saisies suivantes viennent de l'utilisateur
+  suppressDirty = false;
+  setDirty(false);
 }
 
 /* Chaque carte des réglages s'enregistre séparément. L'écriture se fait en
@@ -641,30 +641,79 @@ const SETTINGS_SECTIONS = {
   }
 };
 
-/* Délégation : les boutons des fiches spécialités sont recréés à chaque
-   renderSpecList(), un écouteur posé au chargement les manquerait. */
-document.addEventListener('click', async (e) => {
-  const btn = e.target.closest('[data-save]');
-  if (!btn) return;
-  const section = SETTINGS_SECTIONS[btn.dataset.save];
-  if (!section) return;
+/* ---------- Suivi des modifications non enregistrées ---------- */
+const saveBar    = document.getElementById('saveBar');
+const saveBarMsg = document.getElementById('saveBarStatus');
+const saveBtn    = document.getElementById('saveSettingsBtn');
 
-  const ok = await confirm(`Enregistrer ${section.label} ?`, section.hint || 'Les modifications seront appliquées sur le site immédiatement.');
+let isDirty = false;
+/* loadSettings() remplit les champs par programme et setVal() émet un 'input' :
+   sans ce verrou, la page s'annoncerait modifiée dès son chargement. */
+let suppressDirty = true;
+
+function setDirty(dirty) {
+  isDirty = dirty;
+  saveBar.classList.toggle('is-dirty', dirty);
+  saveBarMsg.textContent = dirty
+    ? 'Modifications non enregistrées'
+    : 'Tout est enregistré';
+}
+
+function markDirty() {
+  if (suppressDirty || isDirty) return;
+  setDirty(true);
+}
+
+// Capture : attrape aussi les champs créés après coup (fiches, produits, uploads)
+document.getElementById('panel-settings').addEventListener('input', markDirty, true);
+document.getElementById('panel-settings').addEventListener('change', markDirty, true);
+document.getElementById('panel-settings').addEventListener('click', (e) => {
+  // Ajout/suppression de fiche, de produit ou de ligne d'horaire
+  if (e.target.closest('#addSpecBtn, #addHourRow, .add-spec-produit, .row-remove')) markDirty();
+});
+
+// Dernier filet si l'onglet est fermé ou la page rechargée
+window.addEventListener('beforeunload', (e) => {
+  if (!isDirty) return;
+  e.preventDefault();
+  e.returnValue = '';
+});
+
+/* ---------- Enregistrement ---------- */
+saveBtn.addEventListener('click', async () => {
+  const ok = await confirm('Enregistrer les réglages ?', 'Les modifications seront appliquées sur le site immédiatement.');
   if (!ok) return;
 
-  const original = btn.textContent;
-  btn.disabled = true;
-  btn.textContent = 'Enregistrement…';
+  const data = Object.values(SETTINGS_SECTIONS)
+    .reduce((acc, section) => deepMerge(acc, section.collect()), {});
+
+  const original = saveBtn.textContent;
+  saveBtn.disabled = true;
+  saveBtn.textContent = 'Enregistrement…';
   try {
-    await setDoc(doc(db, 'settings', 'site'), section.collect(), { merge: true });
-    await showSuccess('Enregistré ✓', 'Les modifications sont en ligne.');
+    await setDoc(doc(db, 'settings', 'site'), data, { merge: true });
+    setDirty(false);
+    await showSuccess('Réglages enregistrés ✓', 'Les modifications sont en ligne.');
   } catch (err) {
     showStatus("Erreur lors de l'enregistrement : " + err.message, true);
   } finally {
-    btn.disabled = false;
-    btn.textContent = original;
+    saveBtn.disabled = false;
+    saveBtn.textContent = original;
   }
 });
+
+/* "Horaires" et "Adresse & contact" écrivent tous deux dans la map `horaires` :
+   un Object.assign écraserait la première par la seconde. */
+function deepMerge(target, source) {
+  for (const [key, value] of Object.entries(source)) {
+    if (value && typeof value === 'object' && !Array.isArray(value)) {
+      target[key] = deepMerge(target[key] || {}, value);
+    } else {
+      target[key] = value;
+    }
+  }
+  return target;
+}
 
 /* ============================================================
    ONGLET SECTIONS

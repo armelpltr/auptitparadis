@@ -92,17 +92,26 @@
 .spec-edit-header h3{ font-size:.9rem; margin:0; color:var(--gold-deep); font-weight:700; letter-spacing:.02em; }
 
 .btn-small{ padding:.6em 1.3em; font-size:.88rem; }
-.admin-save{ display:block; margin:0 auto; min-width:240px; text-align:center; }
 
-/* Bouton d'enregistrement propre à chaque carte de réglages */
-.card-actions{
-  display:flex; justify-content:flex-end;
-  margin-top:1.4rem; padding-top:1.2rem; border-top:1px solid var(--sand);
+/* ---------- Barre d'enregistrement ---------- */
+/* sticky : reste visible en bas de l'ecran quel que soit le defilement,
+   pour qu'une modification en attente ne passe jamais inapercue. */
+.save-bar{
+  position:sticky; bottom:0; z-index:50;
+  display:flex; align-items:center; justify-content:space-between; gap:1.2rem;
+  margin-top:1.6rem; padding:1rem 1.4rem;
+  background:var(--white); border:1.5px solid var(--sand); border-radius:12px;
+  box-shadow:0 -6px 24px -12px rgba(33,28,23,.35);
+  transition:border-color .25s var(--ease), background .25s var(--ease);
 }
-.card-actions .btn{ min-width:140px; }
-.card-actions .btn[disabled]{ opacity:.6; cursor:progress; }
-/* Version allegee a l'interieur d'une fiche, deja dans un encadre */
-.card-actions--inner{ margin-top:1rem; padding-top:.9rem; }
+.save-bar-status{ font-size:.9rem; color:var(--ink-soft); }
+.save-bar .btn{ min-width:200px; }
+.save-bar .btn[disabled]{ opacity:.6; cursor:progress; }
+
+/* Etat "modifications non enregistrees" */
+.save-bar.is-dirty{ border-color:var(--gold); background:#fdf4e8; }
+.save-bar.is-dirty .save-bar-status{ color:var(--gold-deep); font-weight:600; }
+.save-bar.is-dirty .save-bar-status::before{ content:'⚠ '; }
 
 /* ---------- Import de photos ---------- */
 .image-upload{ display:flex; align-items:center; gap:1rem; flex-wrap:wrap; }
@@ -122,11 +131,16 @@
 
 /* ---------- Produits vedettes ---------- */
 .produits-list{ margin-bottom:.7rem; }
-.produit-row{ display:grid; grid-template-columns:1fr 1.4fr 1.6fr .9fr auto; gap:.6rem; margin-bottom:.6rem; align-items:center; }
-.produit-row input, .produit-row select{
+/* La description est un textarea : on aligne en haut pour que les autres
+   champs restent en tete de ligne quand il s'agrandit. */
+.produit-row{ display:grid; grid-template-columns:1fr 1.8fr 1.5fr .9fr auto; gap:.6rem; margin-bottom:.9rem; align-items:start; }
+.produit-row input, .produit-row select, .produit-row textarea{
   font-family:var(--font-body); font-size:.88rem; padding:.55em .7em;
   border:1.5px solid var(--sand); border-radius:var(--radius); background:var(--cream); color:var(--ink);
 }
+.produit-row textarea{ resize:vertical; min-height:5.2em; line-height:1.45; }
+/* Champs sur une ligne ramenes a la hauteur du textarea */
+.produit-row > input, .produit-row > select, .produit-row > .row-remove{ margin-top:.15rem; }
 
 /* ---------- Liste des horaires ---------- */
 .hour-row{ display:grid; grid-template-columns:1fr 1fr auto; gap:.8rem; margin-bottom:.7rem; align-items:center; }
@@ -315,5 +329,6 @@
   .upload-percent{ font-size:1.35rem; }
   .upload-actions .btn{ width:100%; }
 
-  .card-actions .btn{ width:100%; }
+  .save-bar{ flex-direction:column; align-items:stretch; gap:.8rem; text-align:center; padding:1rem; }
+  .save-bar .btn{ width:100%; min-width:0; }
 }
