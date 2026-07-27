@@ -12,6 +12,7 @@
   --gold:       #c8853a;
   --gold-deep:  #8c5a26;
   --gold-pale:  #e7c79a;
+  --icon-ink:   #635411;   /* couleur rendue par le filtre de .card-icon img */
   --sea:        #5c7a78;
   --sea-pale:   #e7eeec;
   --white:      #ffffff;
@@ -259,10 +260,12 @@ p{ margin:0 0 1em; color:var(--ink-soft); }
 .cards > .card:last-child:nth-child(3n+1){ grid-column:2; }
 
 .card-icon{ display:inline-flex; width:48px; height:48px; margin-bottom:1.2rem; }
-/* Icônes tracées localement (pas d'équivalent Tabler) : même rendu que les img */
+/* Icônes en SVG inline (bloc "Grille de cartes").
+   La couleur est celle que le filtre ci-dessus produit sur du noir — mesurée,
+   pas devinée — pour que les deux modes de rendu soient indiscernables. */
 .card-icon svg{
   width:100%; height:100%;
-  fill:none; stroke:var(--gold-deep); stroke-width:6;
+  fill:none; stroke:var(--icon-ink); stroke-width:6;
   stroke-linecap:round; stroke-linejoin:round;
 }
 .card-icon img{ width:100%; height:100%; filter:brightness(0) saturate(100%) invert(35%) sepia(60%) saturate(500%) hue-rotate(12deg) brightness(82%); }
