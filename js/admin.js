@@ -115,10 +115,32 @@ loginForm.addEventListener('submit', async (e) => {
   try {
     await signInWithEmailAndPassword(auth, email, password);
   } catch (err) {
-    loginError.textContent = "Connexion impossible : vérifie l'e-mail et le mot de passe.";
+    loginError.textContent = loginErrorMessage(err);
     loginError.hidden = false;
   }
 });
+
+/* Un message par cause réelle : "vérifie l'e-mail et le mot de passe" envoyait
+   sur une fausse piste quand le vrai problème était côté configuration. */
+const LOGIN_ERRORS = {
+  'auth/invalid-credential':    "E-mail ou mot de passe incorrect. Si le compte n'a jamais été créé, ajoute-le dans Firebase Console > Authentication > Users.",
+  'auth/user-not-found':        "Aucun compte avec cet e-mail. Crée-le dans Firebase Console > Authentication > Users.",
+  'auth/wrong-password':        'Mot de passe incorrect.',
+  'auth/invalid-email':         "Format d'e-mail invalide.",
+  'auth/user-disabled':         'Ce compte a été désactivé dans Firebase.',
+  'auth/too-many-requests':     'Trop de tentatives. Patiente quelques minutes avant de réessayer.',
+  'auth/operation-not-allowed': "La connexion par e-mail/mot de passe n'est pas activée. Firebase Console > Authentication > Sign-in method > Email/Password > Activer.",
+  'auth/configuration-not-found': "Authentication n'est pas configuré sur ce projet Firebase. Console > Authentication > Get started.",
+  'auth/unauthorized-domain':   "Domaine non autorisé. Ajoute armelpltr.github.io dans Firebase Console > Authentication > Settings > Domaines autorisés.",
+  'auth/network-request-failed': 'Pas de connexion au serveur Firebase. Vérifie ta connexion internet.',
+  'auth/api-key-not-valid':     'Clé API Firebase invalide dans firebase-config.js.'
+};
+
+function loginErrorMessage(err) {
+  const known = LOGIN_ERRORS[err && err.code];
+  if (known) return known;
+  return `Connexion impossible (${(err && err.code) || 'erreur inconnue'}).`;
+}
 
 logoutBtn.addEventListener('click', () => signOut(auth));
 
