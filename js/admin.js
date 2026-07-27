@@ -22,7 +22,7 @@ const ICONS = {
   cake:     '<path d="M20,55 L80,55 L80,80 C80,86 74,90 68,90 L32,90 C26,90 20,86 20,80 Z" /><path d="M20,55 C20,45 30,45 30,55 C30,45 40,45 40,55 C40,45 50,45 50,55 C50,45 60,45 60,55 C60,45 70,45 70,55 C70,45 80,45 80,55" /><path d="M50,40 L50,28 M50,28 C46,28 46,22 50,22 C54,22 54,28 50,28 Z" />',
   gift:     '<rect x="22" y="42" width="56" height="44" rx="4" /><path d="M22,58 L78,58" /><path d="M50,42 L50,86" /><path d="M50,42 C40,30 28,32 30,44 C40,46 46,42 50,42 Z" /><path d="M50,42 C60,30 72,32 70,44 C60,46 54,42 50,42 Z" />',
   star:     '<path d="M50,16 L60,40 L86,42 L66,58 L72,84 L50,70 L28,84 L34,58 L14,42 L40,40 Z" />',
-  snacking: '<g transform="rotate(-25 50 50)"><rect x="14" y="37" width="72" height="26" rx="13" /><path d="M24,58 C31,53 37,61 44,57 C51,53 57,61 64,57 C69,54 73,58 76,57" /><path d="M34,44 L39,38 M50,44 L55,38 M66,44 L71,38" /></g>'
+  snacking: '<g transform="scale(4.1667)" style="stroke-width:1.44"><path d="m2.37 11.223 8.372-6.777a2 2 0 0 1 2.516 0l8.371 6.777" /><path d="M21 15a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1h-5.25" /><path d="M3 15a1 1 0 0 0-1 1v2a1 1 0 0 0 1 1h9" /><path d="m6.67 15 6.13 4.6a2 2 0 0 0 2.8-.4l3.15-4.2" /><rect width="20" height="4" x="2" y="11" rx="1" /></g>'
 };
 const ICON_LABELS = {
   bread: 'Pain / Boulangerie', pastry: 'Pâtisserie', icecream: 'Glace',
