@@ -101,6 +101,8 @@
 }
 .card-actions .btn{ min-width:140px; }
 .card-actions .btn[disabled]{ opacity:.6; cursor:progress; }
+/* Version allegee a l'interieur d'une fiche, deja dans un encadre */
+.card-actions--inner{ margin-top:1rem; padding-top:.9rem; }
 
 /* ---------- Import de photos ---------- */
 .image-upload{ display:flex; align-items:center; gap:1rem; flex-wrap:wrap; }

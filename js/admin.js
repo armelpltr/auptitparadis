@@ -479,6 +479,9 @@ function renderSpecList() {
         <div class="produits-list" id="spec-produits-${i}"></div>
         <button type="button" class="btn btn-ghost btn-small add-spec-produit" data-index="${i}">+ Ajouter un produit</button>
       </div>
+      <div class="card-actions card-actions--inner">
+        <button type="button" class="btn btn-primary btn-small" data-save="specialites">Enregistrer</button>
+      </div>
     </div>
   `).join('');
 
@@ -594,6 +597,9 @@ const SETTINGS_SECTIONS = {
   },
   specialites: {
     label: 'les spécialités',
+    // Firestore ne sait pas fusionner un seul élément d'un tableau : le bouton
+    // d'une fiche réécrit forcément les trois. Autant le dire.
+    hint: 'Toutes les fiches de spécialités sont enregistrées ensemble.',
     collect: () => ({
       specialites: Array.from(document.querySelectorAll('#specList .spec-edit')).map((el, i) => ({
         title:    el.querySelector('.spec-title').value.trim(),
@@ -635,27 +641,29 @@ const SETTINGS_SECTIONS = {
   }
 };
 
-document.querySelectorAll('[data-save]').forEach(btn => {
+/* Délégation : les boutons des fiches spécialités sont recréés à chaque
+   renderSpecList(), un écouteur posé au chargement les manquerait. */
+document.addEventListener('click', async (e) => {
+  const btn = e.target.closest('[data-save]');
+  if (!btn) return;
   const section = SETTINGS_SECTIONS[btn.dataset.save];
   if (!section) return;
 
-  btn.addEventListener('click', async () => {
-    const ok = await confirm(`Enregistrer ${section.label} ?`, 'Les modifications seront appliquées sur le site immédiatement.');
-    if (!ok) return;
+  const ok = await confirm(`Enregistrer ${section.label} ?`, section.hint || 'Les modifications seront appliquées sur le site immédiatement.');
+  if (!ok) return;
 
-    const original = btn.textContent;
-    btn.disabled = true;
-    btn.textContent = 'Enregistrement…';
-    try {
-      await setDoc(doc(db, 'settings', 'site'), section.collect(), { merge: true });
-      await showSuccess('Enregistré ✓', 'Les modifications sont en ligne.');
-    } catch (err) {
-      showStatus("Erreur lors de l'enregistrement : " + err.message, true);
-    } finally {
-      btn.disabled = false;
-      btn.textContent = original;
-    }
-  });
+  const original = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = 'Enregistrement…';
+  try {
+    await setDoc(doc(db, 'settings', 'site'), section.collect(), { merge: true });
+    await showSuccess('Enregistré ✓', 'Les modifications sont en ligne.');
+  } catch (err) {
+    showStatus("Erreur lors de l'enregistrement : " + err.message, true);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = original;
+  }
 });
 
 /* ============================================================
