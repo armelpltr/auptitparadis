@@ -63,6 +63,7 @@
           <label for="set-tagline">Phrase sous le logo</label>
           <input type="text" id="set-tagline">
         </div>
+        <div class="card-actions"><button type="button" class="btn btn-primary btn-small" data-save="tagline">Enregistrer</button></div>
       </div>
 
       <div class="admin-card">
@@ -70,6 +71,7 @@
         <p class="admin-card-hint">Fiches affichées juste sous l'accueil — 3 par ligne sur le site.</p>
         <div id="specList"></div>
         <button type="button" class="btn btn-ghost btn-small" id="addSpecBtn">+ Ajouter une fiche</button>
+        <div class="card-actions"><button type="button" class="btn btn-primary btn-small" data-save="specialites">Enregistrer</button></div>
       </div>
 
       <div class="admin-card">
@@ -88,12 +90,14 @@
           <label>Photo</label>
           <div id="histoireImageMount"></div>
         </div>
+        <div class="card-actions"><button type="button" class="btn btn-primary btn-small" data-save="histoire">Enregistrer</button></div>
       </div>
 
       <div class="admin-card">
         <h2>Horaires</h2>
         <div id="hoursRowsContainer"></div>
         <button type="button" class="btn btn-ghost btn-small" id="addHourRow">+ Ajouter une ligne</button>
+        <div class="card-actions"><button type="button" class="btn btn-primary btn-small" data-save="horaires">Enregistrer</button></div>
       </div>
 
       <div class="admin-card">
@@ -116,9 +120,8 @@
           <input type="text" id="set-mapUrl" placeholder="https://www.google.com/maps?q=...&output=embed">
           <p class="field-hint">Google Maps → rechercher l'adresse → Partager → Intégrer une carte → copier le lien dans la balise <code>src</code>.</p>
         </div>
+        <div class="card-actions"><button type="button" class="btn btn-primary btn-small" data-save="contact">Enregistrer</button></div>
       </div>
-
-      <button type="button" class="btn btn-primary admin-save" id="saveSettingsBtn">Enregistrer les réglages</button>
     </section>
 
       <!-- Sélecteur de modèle -->

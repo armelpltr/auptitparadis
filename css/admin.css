@@ -94,6 +94,14 @@
 .btn-small{ padding:.6em 1.3em; font-size:.88rem; }
 .admin-save{ display:block; margin:0 auto; min-width:240px; text-align:center; }
 
+/* Bouton d'enregistrement propre à chaque carte de réglages */
+.card-actions{
+  display:flex; justify-content:flex-end;
+  margin-top:1.4rem; padding-top:1.2rem; border-top:1px solid var(--sand);
+}
+.card-actions .btn{ min-width:140px; }
+.card-actions .btn[disabled]{ opacity:.6; cursor:progress; }
+
 /* ---------- Import de photos ---------- */
 .image-upload{ display:flex; align-items:center; gap:1rem; flex-wrap:wrap; }
 .image-upload-preview{
@@ -304,4 +312,6 @@
   .upload-thumb{ inset:10px; width:80px; height:80px; }
   .upload-percent{ font-size:1.35rem; }
   .upload-actions .btn{ width:100%; }
+
+  .card-actions .btn{ width:100%; }
 }

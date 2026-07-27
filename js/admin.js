@@ -582,42 +582,80 @@ async function loadSettings() {
   renderSpecList();
 }
 
-document.getElementById('saveSettingsBtn').addEventListener('click', async () => {
-  const ok = await confirm('Enregistrer les réglages ?', 'Les modifications seront appliquées sur le site immédiatement.');
-  if (!ok) return;
-  const data = {
-    tagline: val('set-tagline'),
-    specialites: Array.from(document.querySelectorAll('#specList .spec-edit')).map((el, i) => ({
-      title:    el.querySelector('.spec-title').value.trim(),
-      text:     el.querySelector('.spec-text').value.trim(),
-      icon:     el.querySelector('.spec-icon').value,
-      produits: collectSpecProduitsForIndex(i)
-    })),
-    histoire: {
-      title: val('set-histoire-title'),
-      text1: val('set-histoire-text1'),
-      text2: val('set-histoire-text2'),
-      imageUrl: val('set-histoire-imageUrl')
-    },
-    horaires: {
-      rows: collectHourRows(),
-      address1: val('set-address1'),
-      address2: val('set-address2'),
-      phone: val('set-phone'),
-      phoneDisplay: val('set-phoneDisplay'),
-      email: val('set-email'),
-      instagram: val('set-instagram'),
-      facebook: val('set-facebook'),
-      mapUrl: val('set-mapUrl')
-    }
-  };
-
-  try {
-    await setDoc(doc(db, 'settings', 'site'), data);
-    showSuccess('Réglages enregistrés ✓', 'Les modifications sont en ligne.');
-  } catch (err) {
-    showStatus("Erreur lors de l'enregistrement : " + err.message, true);
+/* Chaque carte des réglages s'enregistre séparément. L'écriture se fait en
+   merge : une carte ne touche que ses propres champs et laisse le reste du
+   document intact — deux parties peuvent donc être modifiées sans risque de
+   s'écraser l'une l'autre. "Horaires" et "Adresse & contact" écrivent dans la
+   même map `horaires`, le merge de Firestore est profond sur les maps. */
+const SETTINGS_SECTIONS = {
+  tagline: {
+    label: "l'accroche",
+    collect: () => ({ tagline: val('set-tagline') })
+  },
+  specialites: {
+    label: 'les spécialités',
+    collect: () => ({
+      specialites: Array.from(document.querySelectorAll('#specList .spec-edit')).map((el, i) => ({
+        title:    el.querySelector('.spec-title').value.trim(),
+        text:     el.querySelector('.spec-text').value.trim(),
+        icon:     el.querySelector('.spec-icon').value,
+        produits: collectSpecProduitsForIndex(i)
+      }))
+    })
+  },
+  histoire: {
+    label: '« Notre histoire »',
+    collect: () => ({
+      histoire: {
+        title: val('set-histoire-title'),
+        text1: val('set-histoire-text1'),
+        text2: val('set-histoire-text2'),
+        imageUrl: val('set-histoire-imageUrl')
+      }
+    })
+  },
+  horaires: {
+    label: 'les horaires',
+    collect: () => ({ horaires: { rows: collectHourRows() } })
+  },
+  contact: {
+    label: "l'adresse et les contacts",
+    collect: () => ({
+      horaires: {
+        address1: val('set-address1'),
+        address2: val('set-address2'),
+        phone: val('set-phone'),
+        phoneDisplay: val('set-phoneDisplay'),
+        email: val('set-email'),
+        instagram: val('set-instagram'),
+        facebook: val('set-facebook'),
+        mapUrl: val('set-mapUrl')
+      }
+    })
   }
+};
+
+document.querySelectorAll('[data-save]').forEach(btn => {
+  const section = SETTINGS_SECTIONS[btn.dataset.save];
+  if (!section) return;
+
+  btn.addEventListener('click', async () => {
+    const ok = await confirm(`Enregistrer ${section.label} ?`, 'Les modifications seront appliquées sur le site immédiatement.');
+    if (!ok) return;
+
+    const original = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = 'Enregistrement…';
+    try {
+      await setDoc(doc(db, 'settings', 'site'), section.collect(), { merge: true });
+      await showSuccess('Enregistré ✓', 'Les modifications sont en ligne.');
+    } catch (err) {
+      showStatus("Erreur lors de l'enregistrement : " + err.message, true);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = original;
+    }
+  });
 });
 
 /* ============================================================
