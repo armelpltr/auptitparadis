@@ -3,16 +3,13 @@
 // Au P'tit Paradis
 // ============================================================
 
-import { auth, db, storage } from "./firebase-config.js";
+import { auth, db } from "./firebase-config.js";
 import {
   signInWithEmailAndPassword, onAuthStateChanged, signOut
 } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
 import {
   doc, getDoc, setDoc, collection, getDocs, addDoc, updateDoc, deleteDoc, query, orderBy
 } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
-import {
-  ref as storageRef, uploadBytesResumable, getDownloadURL
-} from "https://www.gstatic.com/firebasejs/10.13.0/firebase-storage.js";
 
 /* ============================================================
    Bibliothèque d'icônes pour le bloc "Grille de cartes"
@@ -181,9 +178,18 @@ function addHourRowEl(day = '', hours = '') {
 const SVG_X = '<svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M2 2l8 8M10 2l-8 8"/></svg>';
 
 /* ============================================================
-   Import de photos (Firebase Storage)
+   Import de photos (Cloudinary)
    ============================================================ */
-const MAX_UPLOAD_BYTES = 8 * 1024 * 1024; // doit rester aligné sur storage.rules
+/* Cloudinary — hébergement des photos.
+   Ces deux valeurs sont publiques par nature : le cloud name apparaît dans
+   chaque URL d'image, et le preset est "unsigned" (envoi sans signature).
+   Aucun secret ici — l'API Secret du compte ne doit jamais arriver dans ce
+   fichier, qui est téléchargé par tous les visiteurs du site. */
+const CLOUDINARY_CLOUD_NAME = 'erbyexpc';
+const CLOUDINARY_PRESET     = 'auptitparadis';
+const CLOUDINARY_ENDPOINT   = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`;
+
+const MAX_UPLOAD_BYTES = 8 * 1024 * 1024; // doit rester aligné sur le preset Cloudinary
 const RING_LENGTH = 339.292;              // 2πr avec r=54, cf. .upload-ring-fill
 
 /* ---------- Popup de progression ---------- */
@@ -259,34 +265,55 @@ function closeUploadModal() {
 
 uploadUI.closeBtn.addEventListener('click', closeUploadModal);
 
-/* ---------- Envoi vers Storage ---------- */
+/* ---------- Envoi vers Cloudinary ---------- */
+/* XMLHttpRequest plutôt que fetch : c'est le seul moyen d'avoir la
+   progression d'un envoi, fetch ne l'expose pas. */
 function uploadImageFile(file, folder) {
   if (!file.type.startsWith('image/')) return Promise.reject(new Error("Ce fichier n'est pas une image."));
   if (file.size > MAX_UPLOAD_BYTES) return Promise.reject(new Error('Photo trop lourde — 8 Mo maximum.'));
 
-  const ext = (file.name.match(/\.([a-zA-Z0-9]+)$/) || [, 'jpg'])[1].toLowerCase();
-  const path = `${folder}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
-  const task = uploadBytesResumable(storageRef(storage, path), file, { contentType: file.type });
+  const form = new FormData();
+  form.append('file', file);
+  form.append('upload_preset', CLOUDINARY_PRESET);
+  form.append('folder', `auptitparadis/${folder}`);
 
   return new Promise((resolve, reject) => {
-    task.on('state_changed',
-      snap => setUploadProgress(snap.totalBytes ? (snap.bytesTransferred / snap.totalBytes) * 100 : 0),
-      reject,
-      () => getDownloadURL(task.snapshot.ref).then(resolve, reject)
-    );
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', CLOUDINARY_ENDPOINT);
+
+    xhr.upload.addEventListener('progress', e => {
+      if (e.lengthComputable) setUploadProgress((e.loaded / e.total) * 100);
+    });
+
+    xhr.addEventListener('load', () => {
+      let body = {};
+      try { body = JSON.parse(xhr.responseText); } catch { /* réponse illisible */ }
+      if (xhr.status >= 200 && xhr.status < 300 && body.secure_url) resolve(body.secure_url);
+      else reject(new Error(cloudinaryError(xhr.status, body)));
+    });
+
+    xhr.addEventListener('error', () => reject(new Error('Connexion impossible à Cloudinary. Vérifie ta connexion internet.')));
+    xhr.addEventListener('abort', () => reject(new Error("L'import a été annulé.")));
+
+    xhr.send(form);
   });
 }
 
-const UPLOAD_ERRORS = {
-  'storage/unauthorized':     "Accès refusé. Vérifie que les règles de storage.rules sont bien publiées dans la console Firebase.",
-  'storage/unauthenticated':  'Session expirée. Reconnecte-toi et réessaie.',
-  'storage/retry-limit-exceeded': 'Connexion trop instable, la photo n’a pas pu être envoyée.',
-  'storage/canceled':         "L'import a été annulé.",
-  'storage/unknown':          "Le service de stockage ne répond pas. Storage est-il bien activé dans la console Firebase ?"
-};
+function cloudinaryError(statusCode, body) {
+  const raw = body && body.error && body.error.message ? body.error.message : '';
+  if (/upload preset not found/i.test(raw)) {
+    return `Le preset « ${CLOUDINARY_PRESET} » est introuvable. Vérifie son nom exact dans Cloudinary (Settings > Upload).`;
+  }
+  if (/unsigned|whitelist/i.test(raw)) {
+    return `Le preset « ${CLOUDINARY_PRESET} » n'est pas en mode Unsigned, ou les envois non signés sont bloqués (Settings > Security).`;
+  }
+  if (/file size|too large/i.test(raw)) return 'Photo refusée par Cloudinary : fichier trop lourd.';
+  if (/format/i.test(raw)) return 'Format refusé par Cloudinary. Utilise un JPG, PNG ou WebP.';
+  return raw || `Cloudinary a renvoyé une erreur (code ${statusCode}).`;
+}
 
 function uploadErrorMessage(err) {
-  return UPLOAD_ERRORS[err.code] || err.message || "L'import a échoué.";
+  return err.message || "L'import a échoué.";
 }
 
 /**
