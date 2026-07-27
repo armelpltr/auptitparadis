@@ -3,13 +3,16 @@
 // Au P'tit Paradis
 // ============================================================
 
-import { auth, db } from "./firebase-config.js";
+import { auth, db, storage } from "./firebase-config.js";
 import {
   signInWithEmailAndPassword, onAuthStateChanged, signOut
 } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
 import {
   doc, getDoc, setDoc, collection, getDocs, addDoc, updateDoc, deleteDoc, query, orderBy
 } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+import {
+  ref as storageRef, uploadBytes, getDownloadURL
+} from "https://www.gstatic.com/firebasejs/10.13.0/firebase-storage.js";
 
 /* ============================================================
    Bibliothèque d'icônes pour le bloc "Grille de cartes"
@@ -177,6 +180,97 @@ function addHourRowEl(day = '', hours = '') {
 
 const SVG_X = '<svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M2 2l8 8M10 2l-8 8"/></svg>';
 
+/* ============================================================
+   Import de photos (Firebase Storage)
+   ============================================================ */
+const MAX_UPLOAD_BYTES = 8 * 1024 * 1024; // doit rester aligné sur storage.rules
+
+async function uploadImageFile(file, folder) {
+  if (!file.type.startsWith('image/')) throw new Error("Ce fichier n'est pas une image.");
+  if (file.size > MAX_UPLOAD_BYTES) throw new Error('Photo trop lourde — 8 Mo maximum.');
+  const ext = (file.name.match(/\.([a-zA-Z0-9]+)$/) || [, 'jpg'])[1].toLowerCase();
+  const path = `${folder}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+  const fileRef = storageRef(storage, path);
+  await uploadBytes(fileRef, file, { contentType: file.type });
+  return getDownloadURL(fileRef);
+}
+
+/**
+ * Bloc "Importer une photo" qui remplace un ancien champ URL.
+ * L'URL finale reste dans un <input type="hidden"> qui garde l'id/la classe
+ * d'origine, pour que le code de collecte existant continue de marcher.
+ */
+function createImageUploader({ id = '', className = '', value = '', folder = 'images', compact = false } = {}) {
+  const wrap = document.createElement('div');
+  wrap.className = 'image-upload' + (compact ? ' image-upload--compact' : '');
+
+  const hidden = document.createElement('input');
+  hidden.type = 'hidden';
+  if (id) hidden.id = id;
+  if (className) hidden.className = className;
+  hidden.value = value || '';
+
+  const preview = document.createElement('img');
+  preview.className = 'image-upload-preview';
+  preview.alt = '';
+
+  const fileInput = document.createElement('input');
+  fileInput.type = 'file';
+  fileInput.accept = 'image/*';
+  fileInput.hidden = true;
+
+  const pickBtn = document.createElement('button');
+  pickBtn.type = 'button';
+  pickBtn.className = 'btn btn-ghost btn-small';
+
+  const clearBtn = document.createElement('button');
+  clearBtn.type = 'button';
+  clearBtn.className = 'row-remove';
+  clearBtn.title = 'Retirer la photo';
+  clearBtn.innerHTML = SVG_X;
+
+  const status = document.createElement('span');
+  status.className = 'image-upload-status';
+
+  function refresh() {
+    const url = hidden.value.trim();
+    if (url) preview.src = url; else preview.removeAttribute('src');
+    pickBtn.textContent = url ? 'Changer la photo' : 'Importer une photo';
+    clearBtn.hidden = !url;
+  }
+
+  pickBtn.addEventListener('click', () => fileInput.click());
+
+  clearBtn.addEventListener('click', () => {
+    hidden.value = '';
+    status.textContent = '';
+    hidden.dispatchEvent(new Event('input', { bubbles: true }));
+  });
+
+  fileInput.addEventListener('change', async () => {
+    const file = fileInput.files && fileInput.files[0];
+    fileInput.value = ''; // permet de re-choisir le même fichier ensuite
+    if (!file) return;
+    pickBtn.disabled = true;
+    status.textContent = 'Import en cours…';
+    try {
+      hidden.value = await uploadImageFile(file, folder);
+      status.textContent = 'Photo importée.';
+      hidden.dispatchEvent(new Event('input', { bubbles: true }));
+    } catch (err) {
+      status.textContent = err.message || "L'import a échoué.";
+    }
+    pickBtn.disabled = false;
+  });
+
+  // setVal() émet un 'input' : l'aperçu se met à jour au chargement des réglages
+  hidden.addEventListener('input', refresh);
+
+  wrap.append(preview, pickBtn, clearBtn, status, hidden, fileInput);
+  refresh();
+  return wrap;
+}
+
 function addProduitRowForIndex(i, nom = '', description = '', imageUrl = '', tag = '') {
   const list = document.getElementById(`spec-produits-${i}`);
   if (!list) return;
@@ -185,7 +279,6 @@ function addProduitRowForIndex(i, nom = '', description = '', imageUrl = '', tag
   row.innerHTML = `
     <input type="text" class="produit-nom" placeholder="Nom du produit" value="${escapeAttr(nom)}">
     <input type="text" class="produit-desc" placeholder="Description courte" value="${escapeAttr(description)}">
-    <input type="url" class="produit-img" placeholder="URL image" value="${escapeAttr(imageUrl)}">
     <select class="produit-tag">
       <option value="">— Pas de tag —</option>
       <option value="top-vente" ${tag === 'top-vente' ? 'selected' : ''}>Top vente</option>
@@ -194,7 +287,12 @@ function addProduitRowForIndex(i, nom = '', description = '', imageUrl = '', tag
     </select>
     <button type="button" class="row-remove" title="Supprimer">${SVG_X}</button>
   `;
-  row.querySelector('.row-remove').addEventListener('click', () => row.remove());
+  row.insertBefore(
+    createImageUploader({ className: 'produit-img', value: imageUrl, folder: 'produits', compact: true }),
+    row.querySelector('.produit-tag')
+  );
+  // :scope > pour ne pas attraper le bouton "retirer la photo" de l'uploader
+  row.querySelector(':scope > .row-remove').addEventListener('click', () => row.remove());
   list.appendChild(row);
 }
 
@@ -261,6 +359,11 @@ function renderSpecList() {
     btn.addEventListener('click', () => addProduitRowForIndex(Number(btn.dataset.index)));
   });
 }
+
+// Monté tout de suite : loadSettings() appelle setVal('set-histoire-imageUrl', …)
+document.getElementById('histoireImageMount').appendChild(
+  createImageUploader({ id: 'set-histoire-imageUrl', folder: 'histoire' })
+);
 
 document.getElementById('addSpecBtn').addEventListener('click', () => {
   syncSpecStateFromDOM();
@@ -556,8 +659,8 @@ function buildFieldsHTML(type, data) {
       <div class="form-row"><label>Titre</label><input type="text" id="f-title" value="${escapeAttr(data.title)}"></div>
       <div class="form-row"><label>Texte</label><textarea id="f-text" rows="4">${escapeAttr(data.text)}</textarea></div>
       <div class="form-row">
-        <label>URL de l'image</label>
-        <input type="url" id="f-imageUrl" value="${escapeAttr(data.imageUrl || '')}" placeholder="https://...">
+        <label>Photo</label>
+        <div id="imageUrlMount" data-value="${escapeAttr(data.imageUrl || '')}"></div>
       </div>
       <div class="form-row">
         <label>Position de l'image</label>
@@ -572,9 +675,9 @@ function buildFieldsHTML(type, data) {
     return `
       <div class="form-row"><label>Titre</label><input type="text" id="f-title" value="${escapeAttr(data.title)}"></div>
       <div class="form-row">
-        <label>URLs des photos</label>
+        <label>Photos</label>
         <div id="galleryThumbs"></div>
-        <button type="button" class="btn btn-ghost btn-small" id="addGalleryUrl">+ Ajouter une URL</button>
+        <button type="button" class="btn btn-ghost btn-small" id="addGalleryUrl">+ Ajouter une photo</button>
       </div>`;
   }
 
@@ -582,6 +685,13 @@ function buildFieldsHTML(type, data) {
 }
 
 function wireFieldEvents(type) {
+  if (type === 'text-image') {
+    const mount = document.getElementById('imageUrlMount');
+    mount.appendChild(createImageUploader({
+      id: 'f-imageUrl', value: mount.dataset.value, folder: 'sections'
+    }));
+  }
+
   if (type === 'cards') {
     renderCardItems();
     document.getElementById('addCardItem').addEventListener('click', () => {
@@ -631,22 +741,28 @@ function renderCardItems() {
 
 function renderGalleryThumbs() {
   const container = document.getElementById('galleryThumbs');
-  container.innerHTML = galleryImagesState.map((url, i) => `
-    <div class="hour-row">
-      <input type="url" class="gallery-url-input" data-index="${i}" value="${escapeAttr(url)}" placeholder="https://...">
-      <button type="button" class="row-remove" data-remove="${i}" title="Retirer"<svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M2 2l8 8M10 2l-8 8"/></svg></button>
-    </div>
-  `).join('');
-  container.querySelectorAll('[data-remove]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      galleryImagesState.splice(Number(btn.dataset.remove), 1);
+  container.innerHTML = '';
+
+  galleryImagesState.forEach((url, i) => {
+    const row = document.createElement('div');
+    row.className = 'gallery-row';
+
+    const uploader = createImageUploader({ value: url, folder: 'galerie' });
+    const hidden = uploader.querySelector('input[type="hidden"]');
+    hidden.addEventListener('input', () => { galleryImagesState[i] = hidden.value.trim(); });
+
+    const removeBtn = document.createElement('button');
+    removeBtn.type = 'button';
+    removeBtn.className = 'row-remove';
+    removeBtn.title = 'Retirer cette photo';
+    removeBtn.innerHTML = SVG_X;
+    removeBtn.addEventListener('click', () => {
+      galleryImagesState.splice(i, 1);
       renderGalleryThumbs();
     });
-  });
-  container.querySelectorAll('.gallery-url-input').forEach(input => {
-    input.addEventListener('input', () => {
-      galleryImagesState[Number(input.dataset.index)] = input.value.trim();
-    });
+
+    row.append(uploader, removeBtn);
+    container.appendChild(row);
   });
 }
 
@@ -668,7 +784,7 @@ document.getElementById('saveBlockBtn').addEventListener('click', async () => {
       imagePosition: val('f-imagePosition')
     };
   } else if (type === 'gallery') {
-    data = { ...data, title: val('f-title'), images: galleryImagesState };
+    data = { ...data, title: val('f-title'), images: galleryImagesState.filter(Boolean) };
   }
 
   try {
@@ -690,5 +806,11 @@ document.getElementById('saveBlockBtn').addEventListener('click', async () => {
    Petits utilitaires
    ============================================================ */
 function val(id) { const el = document.getElementById(id); return el ? el.value.trim() : ''; }
-function setVal(id, value) { const el = document.getElementById(id); if (el && value !== undefined) el.value = value; }
+function setVal(id, value) {
+  const el = document.getElementById(id);
+  if (!el || value === undefined) return;
+  el.value = value;
+  // les uploaders écoutent 'input' pour rafraîchir leur aperçu
+  el.dispatchEvent(new Event('input', { bubbles: true }));
+}
 function escapeAttr(str) { return String(str ?? '').replace(/"/g, '&quot;'); }
