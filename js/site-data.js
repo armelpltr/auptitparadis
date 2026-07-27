@@ -18,7 +18,7 @@ export const ICONS = {
   cake:    '<path d="M20,55 L80,55 L80,80 C80,86 74,90 68,90 L32,90 C26,90 20,86 20,80 Z" /><path d="M20,55 C20,45 30,45 30,55 C30,45 40,45 40,55 C40,45 50,45 50,55 C50,45 60,45 60,55 C60,45 70,45 70,55 C70,45 80,45 80,55" /><path d="M50,40 L50,28 M50,28 C46,28 46,22 50,22 C54,22 54,28 50,28 Z" />',
   gift:    '<rect x="22" y="42" width="56" height="44" rx="4" /><path d="M22,58 L78,58" /><path d="M50,42 L50,86" /><path d="M50,42 C40,30 28,32 30,44 C40,46 46,42 50,42 Z" /><path d="M50,42 C60,30 72,32 70,44 C60,46 54,42 50,42 Z" />',
   star:    '<path d="M50,16 L60,40 L86,42 L66,58 L72,84 L50,70 L28,84 L34,58 L14,42 L40,40 Z" />',
-  snacking:'<path d="M14,46 C14,30 30,20 50,20 C70,20 86,30 86,46 Z" /><path d="M12,52 C22,46 30,56 40,50 C50,44 58,56 68,50 C78,44 84,54 88,50" /><path d="M14,58 L86,58 C86,70 76,78 64,78 L36,78 C24,78 14,70 14,58 Z" />'
+  snacking:'<path d="M12,76 L50,20 L88,76 Z" /><path d="M26,60 C32,54 38,64 46,58 C54,52 60,62 68,58 L74,60" />'
 };
 
 const TAG_ICONS = {
@@ -74,13 +74,16 @@ function applySettings(s) {
                 </div>
               </div>`).join('')}</div></div>`
           : '';
-        const ICON_SLUGS = { bread:'baguette', pastry:'cake', icecream:'ice-cream-2', cake:'cake', gift:'gift', star:'star', snacking:'burger' };
-        const slug = ICON_SLUGS[item.icon] || ICON_SLUGS[SLOT_ICONS[idx]] || 'star';
+        /* Tabler 2.47.0 n'a pas de sandwich : les icônes sans équivalent chez eux
+           sont rendues avec le tracé local de ICONS. */
+        const ICON_SLUGS = { bread:'baguette', pastry:'cake', icecream:'ice-cream-2', cake:'cake', gift:'gift', star:'star' };
+        const slug = ICON_SLUGS[item.icon] || (ICONS[item.icon] ? null : ICON_SLUGS[SLOT_ICONS[idx]] || 'star');
+        const iconHTML = slug
+          ? `<img src="https://cdn.jsdelivr.net/npm/@tabler/icons@2.47.0/icons/${slug}.svg" alt="">`
+          : `<svg viewBox="0 0 100 100">${ICONS[item.icon]}</svg>`;
         return `
           <article class="card">
-            <span class="card-icon" aria-hidden="true">
-              <img src="https://cdn.jsdelivr.net/npm/@tabler/icons@2.47.0/icons/${slug}.svg" alt="">
-            </span>
+            <span class="card-icon" aria-hidden="true">${iconHTML}</span>
             <h3>${escapeHTML(item.title || '')}</h3>
             <p>${escapeHTML(item.text || '')}</p>
             ${produitHTML}
