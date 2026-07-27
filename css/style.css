@@ -432,6 +432,13 @@ p{ margin:0 0 1em; color:var(--ink-soft); }
   color:var(--gold-deep); text-decoration:underline; text-underline-offset:3px;
 }
 
+/* ---------- Avis Google (widget Featurable) ---------- */
+.avis{ background:var(--cream); }
+.avis .section-inner{ padding-top:4rem; padding-bottom:4rem; }
+/* Le widget s'injecte après coup : on réserve la place pour éviter que la
+   page ne saute quand il arrive. */
+.avis [data-featurable-async]{ min-height:260px; margin-top:2rem; }
+
 /* ---------- Footer ---------- */
 .site-footer{ background:var(--ink); color:var(--sand); }
 
