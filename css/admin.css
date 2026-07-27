@@ -229,6 +229,9 @@
 .upload-thumb{
   position:absolute; inset:12px; width:96px; height:96px;
   object-fit:cover; border-radius:50%; background:var(--sand);
+  /* Assombrie en permanence : le pourcentage puis la coche s'affichent par
+     dessus, et doivent rester lisibles quelle que soit la photo. */
+  filter:brightness(.5) saturate(.85);
 }
 .upload-thumb:not([src]), .upload-thumb[src=""]{ visibility:hidden; }
 
@@ -244,10 +247,11 @@
 
 .upload-percent{
   position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
-  font-family:var(--font-display); font-size:1.6rem; font-weight:600; color:var(--ink);
-  text-shadow:0 1px 6px rgba(255,255,255,.85);
+  font-family:var(--font-display); font-size:1.6rem; font-weight:600;
+  color:var(--white); text-shadow:0 1px 10px rgba(33,28,23,.8);
+  letter-spacing:.01em;
 }
-.upload-percent small{ font-size:.8rem; margin-left:.1em; color:var(--ink-soft); }
+.upload-percent small{ font-size:.8rem; margin-left:.1em; opacity:.75; }
 .upload-percent[hidden]{ display:none; }
 
 /* Coche de succès / croix d'échec */
@@ -257,13 +261,16 @@
   stroke-dasharray:80; stroke-dashoffset:80;
   animation:uploadDraw .4s var(--ease) forwards;
 }
-.upload-check{ stroke:var(--gold-deep); }
-.upload-cross{ stroke:#a13a25; }
+.upload-check{ stroke:var(--white); filter:drop-shadow(0 1px 5px rgba(33,28,23,.55)); }
+.upload-cross{ stroke:#ff8b74; filter:drop-shadow(0 1px 5px rgba(33,28,23,.55)); }
 .upload-check[hidden], .upload-cross[hidden]{ display:none; }
 @keyframes uploadDraw{ to{ stroke-dashoffset:0; } }
 
 .upload-title{ font-family:var(--font-display); font-size:1.2rem; font-weight:600; color:var(--ink); margin-bottom:.35rem; }
-.upload-sub{ font-size:.88rem; color:var(--ink-soft); margin-bottom:0; }
+.upload-sub{
+  font-size:.88rem; color:var(--ink-soft); margin-bottom:0;
+  overflow-wrap:anywhere;   /* les noms de fichiers longs ne debordent pas */
+}
 .upload-actions{ display:flex; justify-content:center; margin-top:1.5rem; }
 .upload-actions[hidden]{ display:none; }
 
