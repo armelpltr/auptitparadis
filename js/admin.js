@@ -314,7 +314,7 @@ async function changeRole(select, email) {
 /* Supprimer le compte de quelqu'un d'autre demande les droits admin, que le SDK
    navigateur n'a pas. Le Worker les détient et refait toutes les vérifications
    côté serveur : le client peut mentir. */
-const WORKER_URL = 'https://auptitparadis-worker.armelpltr.workers.dev';
+const WORKER_URL = 'https://auptitparadis-worker.armelpltr14-ad6.workers.dev';
 
 async function revokeAdmin(uid, email) {
   const ok = await confirm(`Supprimer le compte de ${email} ?`,
