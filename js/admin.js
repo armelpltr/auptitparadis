@@ -240,7 +240,6 @@ async function loadTeam() {
       <div class="team-row">
         <div class="team-info">
           <strong>${escapeAttr(r.email || '(sans e-mail)')}</strong>
-          <span>${isMe ? 'Vous' : 'Ajouté le ' + escapeAttr(fmtDate(r.addedAt))}</span>
         </div>
         <div class="team-actions">
           ${isOwner && !lastOwner
