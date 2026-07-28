@@ -393,7 +393,7 @@ document.getElementById('inviteForm').addEventListener('submit', async (e) => {
 
   acceptingInvite = true;
   try {
-    const cred = await createUserWithEmailAndPassword(auth, pendingInvite.email, password);
+    const cred = await accountForInvite(pendingInvite.email, password);
 
     // Le rôle vient de l'invitation, pas du client : les règles vérifient qu'il
     // correspond. Lisible seulement maintenant, une fois l'invité authentifié.
@@ -426,9 +426,22 @@ document.getElementById('inviteForm').addEventListener('submit', async (e) => {
   }
 });
 
+/* Le lien doit marcher que la personne ait déjà un compte ou non. Si l'adresse
+   est connue de Firebase, on se connecte au compte existant au lieu d'en créer
+   un : l'entrée `admins` se crée ensuite de la même façon, le jeton reste
+   vérifié par les règles. */
+async function accountForInvite(email, password) {
+  try {
+    return await createUserWithEmailAndPassword(auth, email, password);
+  } catch (err) {
+    if (err.code !== 'auth/email-already-in-use') throw err;
+    return await signInWithEmailAndPassword(auth, email, password);
+  }
+}
+
 function inviteErrorMessage(err) {
-  if (err.code === 'auth/email-already-in-use') {
-    return "Un compte existe déjà avec cette adresse. Connectez-vous plutôt, puis demandez à un administrateur de vous ajouter.";
+  if (err.code === 'auth/invalid-credential' || err.code === 'auth/wrong-password') {
+    return "Un compte existe déjà avec cette adresse, mais ce mot de passe ne correspond pas. Saisissez celui de votre compte existant.";
   }
   if (err.code === 'auth/weak-password') return 'Mot de passe trop court — 8 caractères minimum.';
   if (err.code === 'permission-denied') {
