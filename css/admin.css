@@ -93,6 +93,33 @@
 
 .btn-small{ padding:.6em 1.3em; font-size:.88rem; }
 
+/* ---------- Équipe & invitations ---------- */
+.team-list{ display:flex; flex-direction:column; gap:.6rem; }
+.team-row{
+  display:flex; align-items:center; justify-content:space-between; gap:1rem;
+  padding:.9rem 1.1rem; background:var(--cream);
+  border:1.5px solid var(--sand); border-radius:var(--radius);
+}
+.team-info{ display:flex; flex-direction:column; gap:.15rem; min-width:0; }
+.team-info strong{ font-size:.95rem; color:var(--ink); overflow-wrap:anywhere; }
+.team-info span{ font-size:.8rem; color:var(--ink-soft); }
+.team-you{ font-size:.78rem; color:var(--gold-deep); font-weight:600; white-space:nowrap; }
+.team-revoke:hover, .invite-cancel:hover{ background:#fbe4e0; color:#a13a25; border-color:#fbe4e0; }
+
+.invite-result{ margin-top:1.4rem; padding-top:1.2rem; border-top:1px solid var(--sand); }
+.invite-result[hidden]{ display:none; }
+.invite-result > label{
+  display:block; margin-bottom:.4rem;
+  font-size:.8rem; font-weight:700; color:var(--ink-soft);
+  text-transform:uppercase; letter-spacing:.06em;
+}
+.invite-link-row{ display:grid; grid-template-columns:1fr auto; gap:.6rem; }
+.invite-link-row input{
+  font-family:var(--font-body); font-size:.85rem; padding:.6em .8em;
+  border:1.5px solid var(--sand); border-radius:var(--radius);
+  background:var(--white); color:var(--ink-soft);
+}
+
 /* ---------- Barre d'enregistrement ---------- */
 /* sticky : reste visible en bas de l'ecran quel que soit le defilement,
    pour qu'une modification en attente ne passe jamais inapercue. */
@@ -331,4 +358,8 @@
 
   .save-bar{ flex-direction:column; align-items:stretch; gap:.8rem; text-align:center; padding:1rem; }
   .save-bar .btn{ width:100%; min-width:0; }
+
+  .team-row{ flex-direction:column; align-items:stretch; gap:.7rem; }
+  .team-row .btn{ width:100%; }
+  .invite-link-row{ grid-template-columns:1fr; }
 }

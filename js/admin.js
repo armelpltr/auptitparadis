@@ -5,7 +5,8 @@
 
 import { auth, db } from "./firebase-config.js";
 import {
-  signInWithEmailAndPassword, onAuthStateChanged, signOut
+  signInWithEmailAndPassword, createUserWithEmailAndPassword,
+  onAuthStateChanged, signOut
 } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
 import {
   doc, getDoc, setDoc, collection, getDocs, addDoc, updateDoc, deleteDoc, query, orderBy
@@ -56,6 +57,19 @@ const loginForm = document.getElementById('loginForm');
 const loginError = document.getElementById('loginError');
 const logoutBtn = document.getElementById('logoutBtn');
 const statusEl = document.getElementById('adminStatus');
+const inviteScreen = document.getElementById('inviteScreen');
+
+/* Déclaré ici, et pas dans la section Équipe plus bas : onAuthStateChanged
+   s'en sert, et une déclaration postérieure le mettrait en zone morte. */
+const inviteParams = new URLSearchParams(location.search);
+const pendingInvite = inviteParams.get('invite') && inviteParams.get('token')
+  ? { email: inviteParams.get('invite').toLowerCase(), token: inviteParams.get('token') }
+  : null;
+
+/* Créer le compte connecte aussitôt la personne, donc onAuthStateChanged part
+   vérifier son appartenance aux admins — alors que l'entrée n'est écrite que
+   juste après. Ce drapeau met la vérification en pause le temps de l'écriture. */
+let acceptingInvite = false;
 
 /* ============================================================
    Modal de confirmation
@@ -146,17 +160,212 @@ function loginErrorMessage(err) {
 
 logoutBtn.addEventListener('click', () => signOut(auth));
 
-onAuthStateChanged(auth, (user) => {
-  if (user) {
+/* Être connecté ne donne plus accès : il faut figurer dans `admins`.
+   Les règles Firestore appliquent la même condition côté serveur — cette
+   vérification-ci ne fait qu'éviter d'afficher un panel inutilisable. */
+async function isCurrentUserAdmin(user) {
+  try {
+    return (await getDoc(doc(db, 'admins', user.uid))).exists();
+  } catch {
+    return false;   // règles refusant la lecture = pas admin
+  }
+}
+
+onAuthStateChanged(auth, async (user) => {
+  if (acceptingInvite) return;   // l'accès est en cours de création
+  if (!user) {
+    loginScreen.hidden = pendingInvite ? true : false;
+    adminApp.hidden = true;
+    return;
+  }
+
+  if (!(await isCurrentUserAdmin(user))) {
+    await signOut(auth);
+    loginScreen.hidden = false;
+    adminApp.hidden = true;
+    loginError.textContent = "Ce compte n'a pas accès à l'administration. Demandez une invitation.";
+    loginError.hidden = false;
+    return;
+  }
+
+  loginScreen.hidden = true;
+  inviteScreen.hidden = true;
+  adminApp.hidden = false;
+  loadSettings();
+  loadBlocks();
+  loadTeam();
+});
+
+/* ============================================================
+   ÉQUIPE — accès au panel, invitations
+   ============================================================ */
+const invitesCol = () => collection(db, 'invites');
+
+function fmtDate(ts) {
+  if (!ts) return '';
+  const d = ts.toDate ? ts.toDate() : new Date(ts);
+  return d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+}
+
+async function loadTeam() {
+  const listEl = document.getElementById('adminsList');
+  const invEl  = document.getElementById('invitesList');
+  const me = auth.currentUser;
+
+  try {
+    const snap = await getDocs(collection(db, 'admins'));
+    const rows = snap.docs.map(d => ({ uid: d.id, ...d.data() }));
+    listEl.innerHTML = rows.map(r => `
+      <div class="team-row">
+        <div class="team-info">
+          <strong>${escapeAttr(r.email || '(sans e-mail)')}</strong>
+          <span>${r.uid === me.uid ? 'Vous' : 'Ajouté le ' + escapeAttr(fmtDate(r.addedAt))}</span>
+        </div>
+        ${r.uid === me.uid
+          ? '<span class="team-you">compte actuel</span>'
+          : `<button type="button" class="btn btn-ghost btn-small team-revoke" data-uid="${escapeAttr(r.uid)}" data-email="${escapeAttr(r.email || '')}">Retirer l'accès</button>`}
+      </div>`).join('') || '<p class="admin-card-hint">Personne pour l\'instant.</p>';
+
+    listEl.querySelectorAll('.team-revoke').forEach(btn => {
+      btn.addEventListener('click', () => revokeAdmin(btn.dataset.uid, btn.dataset.email));
+    });
+  } catch (err) {
+    listEl.innerHTML = `<p class="admin-card-hint">Liste illisible : ${escapeAttr(err.message)}</p>`;
+  }
+
+  try {
+    const snap = await getDocs(invitesCol());
+    invEl.innerHTML = snap.docs.map(d => `
+      <div class="team-row">
+        <div class="team-info">
+          <strong>${escapeAttr(d.id)}</strong>
+          <span>Invitée le ${escapeAttr(fmtDate(d.data().createdAt))}</span>
+        </div>
+        <button type="button" class="btn btn-ghost btn-small invite-cancel" data-email="${escapeAttr(d.id)}">Annuler</button>
+      </div>`).join('') || '<p class="admin-card-hint">Aucune invitation en attente.</p>';
+
+    invEl.querySelectorAll('.invite-cancel').forEach(btn => {
+      btn.addEventListener('click', () => cancelInvite(btn.dataset.email));
+    });
+  } catch (err) {
+    invEl.innerHTML = `<p class="admin-card-hint">Invitations illisibles : ${escapeAttr(err.message)}</p>`;
+  }
+}
+
+async function revokeAdmin(uid, email) {
+  const ok = await confirm(`Retirer l'accès de ${email} ?`, "Cette personne ne pourra plus modifier le site. Son compte Firebase continue d'exister mais devient inutile.");
+  if (!ok) return;
+  try {
+    await deleteDoc(doc(db, 'admins', uid));
+    showStatus('Accès retiré.');
+    loadTeam();
+  } catch (err) {
+    showStatus('Impossible de retirer cet accès : ' + err.message, true);
+  }
+}
+
+async function cancelInvite(email) {
+  const ok = await confirm(`Annuler l'invitation de ${email} ?`, 'Le lien déjà transmis cessera de fonctionner.');
+  if (!ok) return;
+  try {
+    await deleteDoc(doc(db, 'invites', email));
+    showStatus('Invitation annulée.');
+    loadTeam();
+  } catch (err) {
+    showStatus("Impossible d'annuler : " + err.message, true);
+  }
+}
+
+document.getElementById('inviteBtn').addEventListener('click', async () => {
+  const email = val('inviteEmail').toLowerCase();
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
+    showStatus('Adresse e-mail invalide.', true);
+    return;
+  }
+
+  const token = crypto.randomUUID();
+  const btn = document.getElementById('inviteBtn');
+  btn.disabled = true;
+  try {
+    await setDoc(doc(db, 'invites', email), {
+      token,
+      createdAt: new Date(),
+      createdBy: auth.currentUser.email
+    });
+
+    const link = `${location.origin}${location.pathname}?invite=${encodeURIComponent(email)}&token=${token}`;
+    document.getElementById('inviteLink').value = link;
+    document.getElementById('inviteResult').hidden = false;
+    setVal('inviteEmail', '');
+    loadTeam();
+  } catch (err) {
+    showStatus("Création de l'invitation impossible : " + err.message, true);
+  }
+  btn.disabled = false;
+});
+
+document.getElementById('copyInviteBtn').addEventListener('click', async () => {
+  const input = document.getElementById('inviteLink');
+  try {
+    await navigator.clipboard.writeText(input.value);
+    showStatus('Lien copié.');
+  } catch {
+    input.select();   // clipboard refusé : au moins le lien est sélectionné
+    showStatus('Copie automatique refusée par le navigateur — faites Ctrl+C.', true);
+  }
+});
+
+/* ---------- Acceptation d'une invitation ---------- */
+if (pendingInvite) {
+  loginScreen.hidden = true;
+  inviteScreen.hidden = false;
+  setVal('inviteFormEmail', pendingInvite.email);
+}
+
+document.getElementById('inviteForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const errEl = document.getElementById('inviteError');
+  errEl.hidden = true;
+  const password = document.getElementById('inviteFormPassword').value;
+
+  acceptingInvite = true;
+  try {
+    const cred = await createUserWithEmailAndPassword(auth, pendingInvite.email, password);
+    // Le jeton est vérifié par les règles Firestore, pas seulement ici.
+    await setDoc(doc(db, 'admins', cred.user.uid), {
+      email: pendingInvite.email,
+      inviteToken: pendingInvite.token,
+      addedAt: new Date()
+    });
+    await deleteDoc(doc(db, 'invites', pendingInvite.email));
+    history.replaceState({}, '', location.pathname);   // le jeton quitte la barre d'adresse
+
+    acceptingInvite = false;
+    inviteScreen.hidden = true;
     loginScreen.hidden = true;
     adminApp.hidden = false;
     loadSettings();
     loadBlocks();
-  } else {
-    loginScreen.hidden = false;
-    adminApp.hidden = true;
+    loadTeam();
+  } catch (err) {
+    acceptingInvite = false;
+    errEl.textContent = inviteErrorMessage(err);
+    errEl.hidden = false;
+    // Compte créé mais accès refusé : on ne laisse pas de session orpheline
+    if (auth.currentUser) await signOut(auth);
   }
 });
+
+function inviteErrorMessage(err) {
+  if (err.code === 'auth/email-already-in-use') {
+    return "Un compte existe déjà avec cette adresse. Connectez-vous plutôt, puis demandez à un administrateur de vous ajouter.";
+  }
+  if (err.code === 'auth/weak-password') return 'Mot de passe trop court — 8 caractères minimum.';
+  if (err.code === 'permission-denied') {
+    return "Cette invitation n'est plus valable. Elle a peut-être déjà été utilisée ou annulée.";
+  }
+  return err.message || "La création de l'accès a échoué.";
+}
 
 /* ============================================================
    Message de statut

@@ -38,6 +38,29 @@
   </form>
 </div>
 
+<!-- ===================== ÉCRAN D'INVITATION ===================== -->
+<div class="login-screen" id="inviteScreen" hidden>
+  <form class="login-card" id="inviteForm">
+    <img src="../assets/logo.jpg" alt="Au P'tit Paradis" class="login-logo">
+    <h1>Créer votre accès</h1>
+    <p class="login-sub">Vous avez été invité à administrer le site.</p>
+
+    <div class="form-row">
+      <label for="inviteFormEmail">E-mail</label>
+      <input type="email" id="inviteFormEmail" readonly autocomplete="username">
+    </div>
+    <div class="form-row">
+      <label for="inviteFormPassword">Choisissez un mot de passe</label>
+      <input type="password" id="inviteFormPassword" required minlength="8" autocomplete="new-password">
+    </div>
+
+    <p class="login-error" id="inviteError" hidden></p>
+
+    <button type="submit" class="btn btn-primary login-submit">Créer mon accès</button>
+    <a href="../index.html" class="back-to-site">← Retour au site</a>
+  </form>
+</div>
+
 <!-- ===================== APPLICATION ADMIN ===================== -->
 <div class="admin-app" id="adminApp" hidden>
 
@@ -53,6 +76,11 @@
   <main class="admin-main">
 
     <p class="admin-status" id="adminStatus" hidden></p>
+
+    <nav class="admin-tabs">
+      <button type="button" class="admin-tab is-active" data-tab="settings">Réglages du site</button>
+      <button type="button" class="admin-tab" data-tab="team">Équipe</button>
+    </nav>
 
     <!-- ===================== ONGLET RÉGLAGES ===================== -->
     <section class="admin-panel is-active" id="panel-settings">
@@ -121,6 +149,42 @@
       <div class="save-bar" id="saveBar">
         <span class="save-bar-status" id="saveBarStatus">Tout est enregistré</span>
         <button type="button" class="btn btn-primary" id="saveSettingsBtn">Enregistrer les réglages</button>
+      </div>
+    </section>
+
+    <!-- ===================== ONGLET ÉQUIPE ===================== -->
+    <section class="admin-panel" id="panel-team">
+
+      <div class="admin-card">
+        <h2>Personnes ayant accès</h2>
+        <p class="admin-card-hint">Elles peuvent modifier tout le contenu du site.</p>
+        <div id="adminsList" class="team-list"></div>
+      </div>
+
+      <div class="admin-card">
+        <h2>Inviter quelqu'un</h2>
+        <p class="admin-card-hint">Un lien est généré, à transmettre à la personne. Elle choisira son mot de passe.</p>
+        <div class="form-row">
+          <label for="inviteEmail">Adresse e-mail</label>
+          <input type="email" id="inviteEmail" placeholder="prenom@exemple.fr" autocomplete="off">
+        </div>
+        <div class="card-actions">
+          <button type="button" class="btn btn-primary btn-small" id="inviteBtn">Créer l'invitation</button>
+        </div>
+
+        <div class="invite-result" id="inviteResult" hidden>
+          <label>Lien d'invitation</label>
+          <div class="invite-link-row">
+            <input type="text" id="inviteLink" readonly>
+            <button type="button" class="btn btn-ghost btn-small" id="copyInviteBtn">Copier</button>
+          </div>
+          <p class="field-hint">Ce lien vaut un accès complet : ne le transmettez qu'à la personne concernée.</p>
+        </div>
+      </div>
+
+      <div class="admin-card">
+        <h2>Invitations en attente</h2>
+        <div id="invitesList" class="team-list"></div>
       </div>
     </section>
 

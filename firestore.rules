@@ -1,21 +1,59 @@
 rules_version = '2';
 
 // À copier-coller dans Firebase Console > Firestore Database > Règles > Publier
-// Lecture publique (le site doit pouvoir afficher le contenu à tout le monde).
-// Écriture réservée aux comptes connectés (créés manuellement dans Authentication,
-// pas de page d'inscription publique = personne d'autre ne peut créer de compte).
+//
+// Le contenu du site est lisible par tous, modifiable seulement par les comptes
+// listés dans la collection `admins`. Être connecté ne suffit plus : depuis que
+// des invitations existent, n'importe qui peut se créer un compte Firebase, et
+// un simple `request.auth != null` lui aurait ouvert l'écriture.
 
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    function isAdmin() {
+      return request.auth != null
+          && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+
+    function invite() {
+      return get(/databases/$(database)/documents/invites/$(request.auth.token.email)).data;
+    }
+
     match /settings/{docId} {
-      allow read: if true;
-      allow write: if request.auth != null;
+      allow read:  if true;
+      allow write: if isAdmin();
     }
 
     match /blocks/{blockId} {
-      allow read: if true;
-      allow write: if request.auth != null;
+      allow read:  if true;
+      allow write: if isAdmin();
+    }
+
+    // Liste des personnes ayant accès au panel.
+    match /admins/{uid} {
+      allow read: if isAdmin();
+
+      // Un invité s'ajoute lui-même, à trois conditions : il crée bien sa propre
+      // entrée, avec sa propre adresse, et il présente le jeton de son invitation.
+      // Connaître une adresse invitée ne suffit donc pas.
+      allow create: if request.auth != null
+                    && request.auth.uid == uid
+                    && request.resource.data.email == request.auth.token.email
+                    && exists(/databases/$(database)/documents/invites/$(request.auth.token.email))
+                    && invite().token == request.resource.data.inviteToken;
+
+      allow delete: if isAdmin();
+      // Aucune modification : sinon un admin révoqué pourrait se réintroduire.
+      allow update: if false;
+    }
+
+    // Invitations en attente, une par adresse e-mail.
+    match /invites/{email} {
+      allow read, create: if isAdmin();
+      // Supprimable par un admin (annulation) ou par l'invité une fois son
+      // accès créé, pour que le lien ne resserve pas.
+      allow delete: if isAdmin()
+                    || (request.auth != null && request.auth.token.email == email);
     }
   }
 }
