@@ -251,7 +251,7 @@ async function loadTeam() {
           ${isMe
             ? '<span class="team-you">compte actuel</span>'
             : isOwner && !lastOwner
-              ? `<button type="button" class="btn btn-ghost btn-small team-revoke" data-uid="${escapeAttr(r.uid)}" data-email="${escapeAttr(r.email || '')}">Retirer</button>`
+              ? `<button type="button" class="btn btn-ghost btn-small team-revoke" data-uid="${escapeAttr(r.uid)}" data-email="${escapeAttr(r.email || '')}">Supprimer</button>`
               : ''}
         </div>
       </div>`;
@@ -311,16 +311,31 @@ async function changeRole(select, email) {
   loadTeam();
 }
 
+/* Supprimer le compte de quelqu'un d'autre demande les droits admin, que le SDK
+   navigateur n'a pas. Le Worker les détient et refait toutes les vérifications
+   côté serveur : le client peut mentir. */
+const WORKER_URL = 'https://auptitparadis-worker.armelpltr.workers.dev';
+
 async function revokeAdmin(uid, email) {
-  const ok = await confirm(`Retirer l'accès de ${email} ?`, "Cette personne ne pourra plus modifier le site. Son compte Firebase continue d'exister mais devient inutile.");
+  const ok = await confirm(`Supprimer le compte de ${email} ?`,
+    'Son accès et son compte seront supprimés définitivement. Cette action est irréversible.');
   if (!ok) return;
+
   try {
-    await deleteDoc(doc(db, 'admins', uid));
-    showStatus('Accès retiré.');
-    loadTeam();
+    const idToken = await auth.currentUser.getIdToken();
+    const res = await fetch(`${WORKER_URL}/delete-user`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${idToken}` },
+      body: JSON.stringify({ uid })
+    });
+    const body = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(body.error || `Erreur ${res.status}`);
+
+    showStatus('Compte supprimé.');
   } catch (err) {
-    showStatus('Impossible de retirer cet accès : ' + err.message, true);
+    showStatus('Suppression impossible : ' + err.message, true);
   }
+  loadTeam();
 }
 
 async function cancelInvite(email) {

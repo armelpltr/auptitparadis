@@ -1,0 +1,15 @@
+name = "auptitparadis-worker"
+main = "src/index.js"
+compatibility_date = "2024-09-23"
+
+# Supprimer le compte Firebase de quelqu'un d'autre exige des droits admin, que
+# le SDK navigateur n'a pas : il ne sait supprimer que le compte connecté. D'où
+# ce Worker, seul endroit où la clé de service peut vivre sans être publique.
+
+[vars]
+ALLOWED_ORIGIN = "https://armelpltr.github.io"
+FIREBASE_PROJECT_ID = "au-ptit-paradis"
+
+# Secret à injecter : wrangler secret put FIREBASE_SERVICE_ACCOUNT
+#   → JSON complet du compte de service (Firebase Console > Paramètres du projet
+#     > Comptes de service > Générer une nouvelle clé privée)
