@@ -1,0 +1,10 @@
+# Cache local de wrangler (identifiants de compte, état de session)
+.wrangler/
+worker/.wrangler/
+
+# Clés de service Firebase — ne doivent JAMAIS être versionnées.
+# Elles s'injectent via : wrangler secret put FIREBASE_SERVICE_ACCOUNT
+*-firebase-adminsdk-*.json
+serviceAccount*.json
+
+node_modules/
