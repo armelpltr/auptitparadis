@@ -104,6 +104,14 @@
 .team-info strong{ font-size:.95rem; color:var(--ink); overflow-wrap:anywhere; }
 .team-info span{ font-size:.8rem; color:var(--ink-soft); }
 .team-you{ font-size:.78rem; color:var(--gold-deep); font-weight:600; white-space:nowrap; }
+.team-actions{ display:flex; align-items:center; gap:.7rem; flex-shrink:0; }
+.team-role{
+  font-family:var(--font-body); font-size:.85rem; padding:.45em .6em;
+  border:1.5px solid var(--sand); border-radius:var(--radius);
+  background:var(--white); color:var(--ink);
+}
+.team-role-fixed{ font-size:.82rem; color:var(--ink-soft); white-space:nowrap; }
+.admin-card[hidden]{ display:none; }
 .team-revoke:hover, .invite-cancel:hover{ background:#fbe4e0; color:#a13a25; border-color:#fbe4e0; }
 
 .invite-result{ margin-top:1.4rem; padding-top:1.2rem; border-top:1px solid var(--sand); }
@@ -361,5 +369,7 @@
 
   .team-row{ flex-direction:column; align-items:stretch; gap:.7rem; }
   .team-row .btn{ width:100%; }
+  .team-actions{ flex-direction:column; align-items:stretch; gap:.5rem; }
+  .team-role{ width:100%; }
   .invite-link-row{ grid-template-columns:1fr; }
 }

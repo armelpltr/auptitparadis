@@ -207,6 +207,14 @@ function fmtDate(ts) {
   return d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
 }
 
+const ROLE_LABELS = { admin: 'Administrateur', editor: 'Éditeur' };
+/* Le tout premier compte a été créé à la main dans la console, avant que les
+   rôles n'existent : sans rôle inscrit, on le considère administrateur.
+   Les règles Firestore appliquent le même défaut. */
+const roleOf = r => r.role || 'admin';
+
+let myRole = 'editor';
+
 async function loadTeam() {
   const listEl = document.getElementById('adminsList');
   const invEl  = document.getElementById('invitesList');
@@ -215,19 +223,46 @@ async function loadTeam() {
   try {
     const snap = await getDocs(collection(db, 'admins'));
     const rows = snap.docs.map(d => ({ uid: d.id, ...d.data() }));
-    listEl.innerHTML = rows.map(r => `
+
+    myRole = roleOf(rows.find(r => r.uid === me.uid) || {});
+    const isOwner = myRole === 'admin';
+    // Ne pas laisser retirer ou rétrograder le dernier administrateur :
+    // plus personne ne pourrait gérer les accès.
+    const ownerCount = rows.filter(r => roleOf(r) === 'admin').length;
+
+    applyRoleToUI(isOwner);
+
+    listEl.innerHTML = rows.map(r => {
+      const role = roleOf(r);
+      const isMe = r.uid === me.uid;
+      const lastOwner = role === 'admin' && ownerCount === 1;
+      return `
       <div class="team-row">
         <div class="team-info">
           <strong>${escapeAttr(r.email || '(sans e-mail)')}</strong>
-          <span>${r.uid === me.uid ? 'Vous' : 'Ajouté le ' + escapeAttr(fmtDate(r.addedAt))}</span>
+          <span>${isMe ? 'Vous' : 'Ajouté le ' + escapeAttr(fmtDate(r.addedAt))}</span>
         </div>
-        ${r.uid === me.uid
-          ? '<span class="team-you">compte actuel</span>'
-          : `<button type="button" class="btn btn-ghost btn-small team-revoke" data-uid="${escapeAttr(r.uid)}" data-email="${escapeAttr(r.email || '')}">Retirer l'accès</button>`}
-      </div>`).join('') || '<p class="admin-card-hint">Personne pour l\'instant.</p>';
+        <div class="team-actions">
+          ${isOwner && !lastOwner
+            ? `<select class="team-role" data-uid="${escapeAttr(r.uid)}" data-email="${escapeAttr(r.email || '')}">
+                 <option value="editor" ${role === 'editor' ? 'selected' : ''}>Éditeur</option>
+                 <option value="admin"  ${role === 'admin'  ? 'selected' : ''}>Administrateur</option>
+               </select>`
+            : `<span class="team-role-fixed">${ROLE_LABELS[role]}</span>`}
+          ${isMe
+            ? '<span class="team-you">compte actuel</span>'
+            : isOwner && !lastOwner
+              ? `<button type="button" class="btn btn-ghost btn-small team-revoke" data-uid="${escapeAttr(r.uid)}" data-email="${escapeAttr(r.email || '')}">Retirer</button>`
+              : ''}
+        </div>
+      </div>`;
+    }).join('') || '<p class="admin-card-hint">Personne pour l\'instant.</p>';
 
     listEl.querySelectorAll('.team-revoke').forEach(btn => {
       btn.addEventListener('click', () => revokeAdmin(btn.dataset.uid, btn.dataset.email));
+    });
+    listEl.querySelectorAll('.team-role').forEach(sel => {
+      sel.addEventListener('change', () => changeRole(sel, sel.dataset.email));
     });
   } catch (err) {
     listEl.innerHTML = `<p class="admin-card-hint">Liste illisible : ${escapeAttr(err.message)}</p>`;
@@ -250,6 +285,31 @@ async function loadTeam() {
   } catch (err) {
     invEl.innerHTML = `<p class="admin-card-hint">Invitations illisibles : ${escapeAttr(err.message)}</p>`;
   }
+}
+
+/* Un éditeur garde l'onglet Équipe pour voir qui a accès, mais rien pour agir :
+   les règles refuseraient de toute façon, autant ne pas afficher les boutons. */
+function applyRoleToUI(isOwner) {
+  document.getElementById('teamInviteCard').hidden = !isOwner;
+  document.getElementById('teamInvitesCard').hidden = !isOwner;
+}
+
+async function changeRole(select, email) {
+  const role = select.value;
+  const label = role === 'admin' ? 'administrateur' : 'éditeur';
+  const ok = await confirm(`Passer ${email} en ${label} ?`,
+    role === 'admin'
+      ? 'Cette personne pourra aussi inviter et révoquer des accès.'
+      : "Cette personne pourra toujours modifier le contenu, mais plus gérer les accès.");
+  if (!ok) { loadTeam(); return; }   // annulation : on remet le select à l'état réel
+
+  try {
+    await updateDoc(doc(db, 'admins', select.dataset.uid), { role });
+    showStatus('Rôle mis à jour.');
+  } catch (err) {
+    showStatus('Changement de rôle refusé : ' + err.message, true);
+  }
+  loadTeam();
 }
 
 async function revokeAdmin(uid, email) {
@@ -287,8 +347,11 @@ document.getElementById('inviteBtn').addEventListener('click', async () => {
   const btn = document.getElementById('inviteBtn');
   btn.disabled = true;
   try {
+    // Le rôle est fixé ici, pas au moment où l'invité crée son compte : les
+    // règles vérifient que celui qu'il se donne correspond à l'invitation.
     await setDoc(doc(db, 'invites', email), {
       token,
+      role: val('inviteRole') || 'editor',
       createdAt: new Date(),
       createdBy: auth.currentUser.email
     });
@@ -331,9 +394,16 @@ document.getElementById('inviteForm').addEventListener('submit', async (e) => {
   acceptingInvite = true;
   try {
     const cred = await createUserWithEmailAndPassword(auth, pendingInvite.email, password);
+
+    // Le rôle vient de l'invitation, pas du client : les règles vérifient qu'il
+    // correspond. Lisible seulement maintenant, une fois l'invité authentifié.
+    const inviteSnap = await getDoc(doc(db, 'invites', pendingInvite.email));
+    const role = inviteSnap.exists() ? (inviteSnap.data().role || 'editor') : 'editor';
+
     // Le jeton est vérifié par les règles Firestore, pas seulement ici.
     await setDoc(doc(db, 'admins', cred.user.uid), {
       email: pendingInvite.email,
+      role,
       inviteToken: pendingInvite.token,
       addedAt: new Date()
     });

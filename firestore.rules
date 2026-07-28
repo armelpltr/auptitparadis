@@ -3,16 +3,32 @@ rules_version = '2';
 // À copier-coller dans Firebase Console > Firestore Database > Règles > Publier
 //
 // Le contenu du site est lisible par tous, modifiable seulement par les comptes
-// listés dans la collection `admins`. Être connecté ne suffit plus : depuis que
+// listés dans la collection `admins`. Être connecté ne suffit pas : depuis que
 // des invitations existent, n'importe qui peut se créer un compte Firebase, et
 // un simple `request.auth != null` lui aurait ouvert l'écriture.
+//
+// Deux rôles :
+//   admin   — modifie le contenu ET gère les accès
+//   editor  — modifie le contenu uniquement
 
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    function isAdmin() {
+    function memberDoc() {
+      return get(/databases/$(database)/documents/admins/$(request.auth.uid)).data;
+    }
+
+    // Accès au panel, quel que soit le rôle.
+    function isMember() {
       return request.auth != null
           && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+
+    // Rôle admin. Le défaut à 'admin' couvre le tout premier compte, créé à la
+    // main dans la console avant que les rôles n'existent : sans lui, il perdrait
+    // la main sur les accès.
+    function isOwner() {
+      return isMember() && memberDoc().get('role', 'admin') == 'admin';
     }
 
     function invite() {
@@ -21,38 +37,47 @@ service cloud.firestore {
 
     match /settings/{docId} {
       allow read:  if true;
-      allow write: if isAdmin();
+      allow write: if isMember();
     }
 
     match /blocks/{blockId} {
       allow read:  if true;
-      allow write: if isAdmin();
+      allow write: if isMember();
     }
 
-    // Liste des personnes ayant accès au panel.
+    // Personnes ayant accès au panel.
     match /admins/{uid} {
-      allow read: if isAdmin();
+      allow read: if isMember();
 
-      // Un invité s'ajoute lui-même, à trois conditions : il crée bien sa propre
-      // entrée, avec sa propre adresse, et il présente le jeton de son invitation.
-      // Connaître une adresse invitée ne suffit donc pas.
+      // Un invité s'ajoute lui-même, à quatre conditions : il crée bien sa propre
+      // entrée, avec sa propre adresse, il présente le jeton de son invitation,
+      // et il prend le rôle qui y était inscrit — pas celui qu'il voudrait.
       allow create: if request.auth != null
                     && request.auth.uid == uid
                     && request.resource.data.email == request.auth.token.email
                     && exists(/databases/$(database)/documents/invites/$(request.auth.token.email))
-                    && invite().token == request.resource.data.inviteToken;
+                    && invite().token == request.resource.data.inviteToken
+                    && request.resource.data.role == invite().get('role', 'editor');
 
-      allow delete: if isAdmin();
-      // Aucune modification : sinon un admin révoqué pourrait se réintroduire.
-      allow update: if false;
+      // Seul un admin change les rôles, et rien d'autre que le rôle : sinon on
+      // pourrait réécrire l'e-mail d'une entrée pour se l'approprier.
+      allow update: if isOwner()
+                    && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['role'])
+                    && request.resource.data.role in ['admin', 'editor'];
+
+      allow delete: if isOwner();
     }
 
     // Invitations en attente, une par adresse e-mail.
     match /invites/{email} {
-      allow read, create: if isAdmin();
+      allow list:   if isOwner();
+      // L'invité lit la sienne, et seulement la sienne, pour connaître son rôle.
+      allow get:    if isOwner()
+                    || (request.auth != null && request.auth.token.email == email);
+      allow create: if isOwner();
       // Supprimable par un admin (annulation) ou par l'invité une fois son
       // accès créé, pour que le lien ne resserve pas.
-      allow delete: if isAdmin()
+      allow delete: if isOwner()
                     || (request.auth != null && request.auth.token.email == email);
     }
   }
