@@ -89,6 +89,11 @@ function setUrlAttr(id, attr, value) {
   setAttr(id, attr, safeUrl(value));
 }
 
+function setHidden(id, hidden) {
+  const el = document.getElementById(id);
+  if (el) el.hidden = hidden;
+}
+
 /* ---------- Application des réglages fixes ---------- */
 function applySettings(s) {
   if (!s) return;
@@ -159,13 +164,16 @@ function applySettings(s) {
         setAttr('maCall', 'href', `tel:${h.phone}`);
       }
     }
-    if (h.email != null) {
-      setText('emailLink', h.email);
-      setText('footerEmailText', h.email);
-      if (h.email) {
-        setAttr('emailLink', 'href', `mailto:${h.email}`);
-        setAttr('footerEmailLink', 'href', `mailto:${h.email}`);
-      }
+    // Pas d'adresse e-mail renseignée = pas de ligne du tout, ni ici ni dans
+    // le pied de page. Les deux blocs restent masqués par défaut.
+    const email = (h.email || '').trim();
+    setHidden('emailRow', !email);
+    setHidden('footerEmailLink', !email);
+    if (email) {
+      setText('emailLink', email);
+      setText('footerEmailText', email);
+      setAttr('emailLink', 'href', `mailto:${email}`);
+      setAttr('footerEmailLink', 'href', `mailto:${email}`);
     }
     if (h.instagram) {
       setUrlAttr('instagramLink', 'href', h.instagram);

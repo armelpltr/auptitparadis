@@ -556,6 +556,8 @@ p{ margin:0 0 1em; color:var(--ink-soft); }
   opacity:.85; transition:opacity .2s;
 }
 .footer-contact-line span{ overflow-wrap:anywhere; }
+/* le display ci-dessus l'emporterait sur [hidden] */
+.footer-contact-line[hidden]{ display:none; }
 .footer-contact-line:hover{ color:var(--cream); }
 .footer-contact-line:hover svg{ opacity:1; }
 
