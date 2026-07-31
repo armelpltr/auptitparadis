@@ -123,19 +123,39 @@ function applySettings(s) {
       }
     }
     if (h.address1 != null || h.address2 != null) {
-      setHTML('addressLine', `${escapeHTML(h.address1 || '')}<br>${escapeHTML(h.address2 || '')}`);
+      const addressHTML = `${escapeHTML(h.address1 || '')}<br>${escapeHTML(h.address2 || '')}`;
+      setHTML('addressLine', addressHTML);
+      setHTML('footerAddress', addressHTML);
     }
     if (h.phone != null) {
-      setText('phoneLink', h.phone ? (h.phoneDisplay || h.phone) : '');
-      if (h.phone) setAttr('phoneLink', 'href', `tel:${h.phone}`);
+      const phoneLabel = h.phone ? (h.phoneDisplay || h.phone) : '';
+      setText('phoneLink', phoneLabel);
+      setText('footerPhoneText', phoneLabel);
+      if (h.phone) {
+        setAttr('phoneLink', 'href', `tel:${h.phone}`);
+        setAttr('footerPhoneLink', 'href', `tel:${h.phone}`);
+      }
     }
     if (h.email != null) {
       setText('emailLink', h.email);
-      if (h.email) setAttr('emailLink', 'href', `mailto:${h.email}`);
+      setText('footerEmailText', h.email);
+      if (h.email) {
+        setAttr('emailLink', 'href', `mailto:${h.email}`);
+        setAttr('footerEmailLink', 'href', `mailto:${h.email}`);
+      }
     }
-    if (h.instagram) setAttr('instagramLink', 'href', h.instagram);
-    if (h.facebook) setAttr('facebookLink', 'href', h.facebook);
+    if (h.instagram) {
+      setAttr('instagramLink', 'href', h.instagram);
+      setAttr('footerInstagram', 'href', h.instagram);
+    }
+    if (h.facebook) {
+      setAttr('facebookLink', 'href', h.facebook);
+      setAttr('footerFacebook', 'href', h.facebook);
+    }
     if (h.mapUrl) setAttr('mapIframe', 'src', h.mapUrl);
+
+    // Le footer recopie le tableau d'horaires : il doit être régénéré après coup.
+    if (typeof window.syncFooterHours === 'function') window.syncFooterHours();
   }
 
   setText('contactIntro', s.contactIntro);

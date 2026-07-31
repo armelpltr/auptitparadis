@@ -66,6 +66,62 @@ document.addEventListener('DOMContentLoaded', () => {
   const yearEl = document.getElementById('year');
   if (yearEl) yearEl.textContent = new Date().getFullYear();
 
+  /* ---- Horaires du footer : recopiés du tableau + jour courant mis en avant ----
+     Appelé aussi par site-data.js une fois les horaires de l'admin chargés. */
+  window.syncFooterHours = function syncFooterHours() {
+    const tbody = document.getElementById('hoursTableBody');
+    const list  = document.getElementById('footerHours');
+    if (!tbody || !list) return;
+
+    const rows = [...tbody.querySelectorAll('tr')].map(tr => ({
+      day:  tr.querySelector('th')?.textContent.trim() || '',
+      time: tr.querySelector('td')?.textContent.trim() || ''
+    })).filter(r => r.day);
+    if (!rows.length) return;
+
+    const today = todayIndex();
+    list.innerHTML = rows.map(r => {
+      const cls = matchesDay(r.day, today) ? ' class="is-today"' : '';
+      return `<li${cls}><span class="fh-day">${escapeHTML(r.day)}</span>` +
+             `<span class="fh-time">${escapeHTML(r.time)}</span></li>`;
+    }).join('');
+  };
+
+  const DAYS = ['dimanche','lundi','mardi','mercredi','jeudi','vendredi','samedi'];
+
+  function todayIndex() { return new Date().getDay(); }
+
+  function normalize(s) {
+    return s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  }
+
+  /* Gère « Mardi », « Mardi — Vendredi », « Samedi et dimanche », « Lundi, jeudi »… */
+  function matchesDay(label, dayIdx) {
+    const txt = normalize(label);
+    const found = DAYS
+      .map((d, i) => ({ i, pos: txt.indexOf(d) }))
+      .filter(d => d.pos !== -1)
+      .sort((a, b) => a.pos - b.pos);
+    if (!found.length) return false;
+
+    const isRange = /[–—-]|\ba\b|\bau\b|\bjusqu/.test(txt);
+    if (isRange && found.length >= 2) {
+      let start = found[0].i, end = found[found.length - 1].i;
+      // La semaine commence lundi : un intervalle peut passer par dimanche.
+      const span = (end - start + 7) % 7;
+      return ((dayIdx - start + 7) % 7) <= span;
+    }
+    return found.some(d => d.i === dayIdx);
+  }
+
+  function escapeHTML(str) {
+    return String(str ?? '').replace(/[&<>"']/g, c => ({
+      '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'
+    }[c]));
+  }
+
+  window.syncFooterHours();
+
   /* ---- Lightbox photos produits ---- */
   const lightbox = document.createElement('div');
   lightbox.className = 'lightbox';
