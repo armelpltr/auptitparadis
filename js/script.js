@@ -122,6 +122,92 @@ document.addEventListener('DOMContentLoaded', () => {
 
   window.syncFooterHours();
 
+  /* ---- Ouvert / fermé en temps réel ----
+     Même source que le reste : le tableau des horaires. Rien à saisir en plus
+     dans l'admin, le badge suit automatiquement les horaires publiés. */
+  const badge = document.getElementById('openBadge');
+
+  /* « 7h00 – 13h30 · 15h30 – 19h30 » -> [{start:420,end:810},{start:930,end:1170}] */
+  function parseRanges(timeStr) {
+    if (!timeStr || /ferm/i.test(normalize(timeStr))) return [];
+    return timeStr.split(/[·,;]| et /i).map(seg => {
+      const t = [...seg.matchAll(/(\d{1,2})\s*[h:]\s*(\d{2})?/g)]
+        .map(m => Number(m[1]) * 60 + Number(m[2] || 0));
+      return t.length >= 2 ? { start: t[0], end: t[t.length - 1] } : null;
+    }).filter(Boolean);
+  }
+
+  /* Horaires par jour de la semaine (0 = dimanche, comme Date#getDay) */
+  function weekSchedule() {
+    const tbody = document.getElementById('hoursTableBody');
+    if (!tbody) return null;
+    const week = [[], [], [], [], [], [], []];
+    tbody.querySelectorAll('tr').forEach(tr => {
+      const day = tr.querySelector('th')?.textContent.trim() || '';
+      const ranges = parseRanges(tr.querySelector('td')?.textContent.trim());
+      if (!day || !ranges.length) return;
+      for (let d = 0; d < 7; d++) if (matchesDay(day, d)) week[d].push(...ranges);
+    });
+    week.forEach(r => r.sort((a, b) => a.start - b.start));
+    return week.some(r => r.length) ? week : null;
+  }
+
+  function fmtTime(mins) {
+    return `${Math.floor(mins / 60)}h${String(mins % 60).padStart(2, '0')}`;
+  }
+
+  window.refreshOpenStatus = function refreshOpenStatus() {
+    if (!badge) return;
+    const week = weekSchedule();
+    if (!week) { badge.hidden = true; return; }
+
+    const now = new Date();
+    const day = now.getDay();
+    const mins = now.getHours() * 60 + now.getMinutes();
+
+    let state = '', detail = '';
+    const current = week[day].find(r => mins >= r.start && mins < r.end);
+
+    if (current) {
+      state = 'Ouvert';
+      detail = `ferme à ${fmtTime(current.end)}`;
+    } else {
+      state = 'Fermé';
+      const laterToday = week[day].find(r => r.start > mins);
+      if (laterToday) {
+        detail = `ouvre à ${fmtTime(laterToday.start)}`;
+      } else {
+        for (let i = 1; i <= 7; i++) {
+          const d = (day + i) % 7;
+          if (!week[d].length) continue;
+          const when = i === 1 ? 'demain' : DAYS[d];
+          detail = `ouvre ${when} à ${fmtTime(week[d][0].start)}`;
+          break;
+        }
+      }
+    }
+
+    badge.classList.toggle('is-open', !!current);
+    badge.classList.toggle('is-closed', !current);
+    badge.querySelector('.open-label').innerHTML =
+      `${escapeHTML(state)}${detail ? `<span class="open-detail"> · ${escapeHTML(detail)}</span>` : ''}`;
+    badge.setAttribute('aria-label', `${state}${detail ? ' — ' + detail : ''} — voir les horaires`);
+    badge.hidden = false;
+  };
+
+  window.refreshOpenStatus();
+  setInterval(() => window.refreshOpenStatus(), 60000);
+
+  /* ---- Barre d'action mobile : apparaît une fois le hero passé ---- */
+  const mobileActions = document.getElementById('mobileActions');
+  if (mobileActions) {
+    const toggleActions = () => {
+      mobileActions.classList.toggle('is-visible', window.scrollY > window.innerHeight * 0.6);
+    };
+    toggleActions();
+    window.addEventListener('scroll', toggleActions, { passive: true });
+  }
+
   /* ---- Lightbox photos produits ---- */
   const lightbox = document.createElement('div');
   lightbox.className = 'lightbox';

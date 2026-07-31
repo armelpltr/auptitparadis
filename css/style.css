@@ -118,6 +118,30 @@ p{ margin:0 0 1em; color:var(--ink-soft); }
 
 /* Nav droite */
 .nav-right-group{ display:flex; align-items:center; }
+
+/* Badge ouvert / fermé */
+.open-badge{
+  display:inline-flex; align-items:center; gap:.45rem;
+  padding:.34em .8em; margin-right:1.2rem;
+  border-radius:999px; border:1px solid rgba(33,28,23,.14);
+  background:rgba(251,246,238,.7); backdrop-filter:blur(6px);
+  font-size:.78rem; font-weight:600; letter-spacing:.01em; color:var(--ink);
+  white-space:nowrap; transition:border-color .25s var(--ease), background .25s var(--ease);
+}
+.open-badge:hover{ border-color:rgba(33,28,23,.3); }
+.open-dot{
+  width:7px; height:7px; border-radius:50%; background:#9aa0a6; flex-shrink:0;
+}
+.open-badge.is-open .open-dot{
+  background:#3f9142; box-shadow:0 0 0 0 rgba(63,145,66,.55); animation:pulse-dot 2.4s infinite;
+}
+.open-badge.is-closed .open-dot{ background:#c0563f; }
+.open-badge .open-detail{ font-weight:400; color:var(--ink-soft); }
+@keyframes pulse-dot{
+  70%{ box-shadow:0 0 0 7px rgba(63,145,66,0); }
+  100%{ box-shadow:0 0 0 0 rgba(63,145,66,0); }
+}
+@media (prefers-reduced-motion: reduce){ .open-badge.is-open .open-dot{ animation:none; } }
 .main-nav ul{ display:flex; align-items:center; gap:2.4rem; }
 .main-nav a{
   font-size:.74rem; font-weight:700; letter-spacing:.14em; text-transform:uppercase;
@@ -566,6 +590,31 @@ p{ margin:0 0 1em; color:var(--ink-soft); }
 .footer-top-link:hover{ color:var(--gold-pale); }
 .footer-top-link:hover svg{ transform:translateY(-3px); }
 
+/* ---------- Barre d'action mobile (appel / itinéraire) ---------- */
+.mobile-actions{
+  display:none;
+  position:fixed; left:0; right:0; bottom:0; z-index:90;
+  gap:.6rem; padding:.7rem .9rem calc(.7rem + env(safe-area-inset-bottom));
+  background:rgba(251,246,238,.92);
+  backdrop-filter:blur(14px) saturate(1.4); -webkit-backdrop-filter:blur(14px) saturate(1.4);
+  border-top:1px solid rgba(33,28,23,.1);
+  transform:translateY(110%); transition:transform .32s var(--ease);
+}
+.mobile-actions.is-visible{ transform:translateY(0); }
+.ma-btn{
+  flex:1; display:inline-flex; align-items:center; justify-content:center; gap:.5rem;
+  padding:.78em 1em; border-radius:var(--radius);
+  font-weight:600; font-size:.92rem; letter-spacing:.01em;
+}
+.ma-btn svg{
+  width:17px; height:17px; fill:none; stroke:currentColor;
+  stroke-width:1.7; stroke-linecap:round; stroke-linejoin:round;
+}
+.ma-call{ background:var(--gold); color:var(--white); }
+.ma-call:active{ background:var(--gold-deep); }
+.ma-route{ background:none; border:1.5px solid var(--ink); color:var(--ink); }
+.ma-route:active{ background:var(--ink); color:var(--cream); }
+
 /* =========================================================
    Responsive
    ========================================================= */
@@ -580,6 +629,12 @@ p{ margin:0 0 1em; color:var(--ink-soft); }
 @media (max-width: 720px){
   .nav-right-group .main-nav{ display:none; }
   .nav-toggle{ display:flex; }
+  /* Badge compact : le détail (« ferme à 13h30 ») passerait sur deux lignes */
+  .open-badge{ margin-right:.7rem; font-size:.72rem; padding:.3em .65em; }
+  .open-badge .open-detail{ display:none; }
+  /* Place pour la barre d'action fixe */
+  .mobile-actions{ display:flex; }
+  body{ padding-bottom:70px; }
   .cards{ grid-template-columns:1fr; }
   /* Une seule colonne : plus de milieu où centrer */
   .cards > .card:last-child:nth-child(3n+1){ grid-column:auto; }

@@ -134,6 +134,7 @@ function applySettings(s) {
       if (h.phone) {
         setAttr('phoneLink', 'href', `tel:${h.phone}`);
         setAttr('footerPhoneLink', 'href', `tel:${h.phone}`);
+        setAttr('maCall', 'href', `tel:${h.phone}`);
       }
     }
     if (h.email != null) {
@@ -154,8 +155,18 @@ function applySettings(s) {
     }
     if (h.mapUrl) setAttr('mapIframe', 'src', h.mapUrl);
 
-    // Le footer recopie le tableau d'horaires : il doit être régénéré après coup.
+    // Itinéraire de la barre mobile : construit depuis l'adresse publiée.
+    const dest = [h.address1, h.address2].filter(Boolean).join(' ');
+    if (dest) {
+      setAttr('maRoute', 'href',
+        `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(dest)}`);
+      setAttr('footerMapsLink', 'href',
+        `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(dest)}`);
+    }
+
+    // Footer et badge ouvert/fermé dérivent du tableau d'horaires : à régénérer.
     if (typeof window.syncFooterHours === 'function') window.syncFooterHours();
+    if (typeof window.refreshOpenStatus === 'function') window.refreshOpenStatus();
   }
 
   setText('contactIntro', s.contactIntro);
