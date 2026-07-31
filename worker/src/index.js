@@ -187,9 +187,15 @@ async function verifyIdToken(idToken, env) {
   const payload = JSON.parse(new TextDecoder().decode(b64urlDecode(parts[1])));
   const now = Math.floor(Date.now() / 1000);
 
+  // L'algorithme est imposé, pas lu dans le jeton : sans ça on suivrait ce que
+  // l'appelant déclare, et c'est ainsi qu'on se fait passer un « alg: none ».
+  if (header.alg !== 'RS256') throw new Error('Algorithme non autorisé');
   if (payload.exp < now)       throw new Error('Jeton expiré');
   if (payload.iat > now + 300) throw new Error('Jeton émis dans le futur');
   if (payload.aud !== env.FIREBASE_PROJECT_ID) throw new Error('Audience invalide');
+  if (payload.iss !== `https://securetoken.google.com/${env.FIREBASE_PROJECT_ID}`) {
+    throw new Error('Émetteur invalide');
+  }
   if (!payload.sub)            throw new Error('Identifiant manquant');
 
   const jwks = await getGoogleJwks();

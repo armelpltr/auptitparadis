@@ -1355,4 +1355,25 @@ function setVal(id, value) {
   // les uploaders écoutent 'input' pour rafraîchir leur aperçu
   el.dispatchEvent(new Event('input', { bubbles: true }));
 }
-function escapeAttr(str) { return String(str ?? '').replace(/"/g, '&quot;'); }
+/* Échappe tout, pas seulement les guillemets : ce helper sert aussi bien dans
+   un attribut que dans du texte (`<h3>${escapeAttr(titre)}</h3>`,
+   `<textarea>${escapeAttr(desc)}</textarea>`). Un titre de fiche contenant
+   `</textarea><img src=x onerror=...>` s'exécutait dans le panel, et donc avec
+   la session d'un administrateur — un éditeur pouvait s'en servir pour prendre
+   la main. */
+function escapeAttr(str) {
+  return String(str ?? '').replace(/[&<>"']/g, c => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  }[c]));
+}
+
+/* N'accepte qu'une URL affichable sans risque : une valeur `javascript:...`
+   placée dans un href s'exécuterait au clic. */
+function safeUrl(url) {
+  const raw = String(url ?? '').trim();
+  if (!raw) return '';
+  if (/^(https?:|mailto:|tel:)/i.test(raw)) return raw;
+  if (/^[./#?]/.test(raw)) return raw;          // chemin relatif ou ancre
+  if (/^[a-z][a-z0-9+.-]*:/i.test(raw)) return '';  // tout autre schéma
+  return raw;
+}

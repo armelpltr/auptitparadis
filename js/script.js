@@ -131,7 +131,8 @@ document.addEventListener('DOMContentLoaded', () => {
   function parseRanges(timeStr) {
     if (!timeStr || /ferm/i.test(normalize(timeStr))) return [];
     return timeStr.split(/[·,;]| et /i).map(seg => {
-      const t = [...seg.matchAll(/(\d{1,2})\s*[h:]\s*(\d{2})?/g)]
+      // insensible à la casse : l'admin écrit aussi bien « 20h00 » que « 20H00 »
+      const t = [...seg.matchAll(/(\d{1,2})\s*[h:]\s*(\d{2})?/gi)]
         .map(m => Number(m[1]) * 60 + Number(m[2] || 0));
       return t.length >= 2 ? { start: t[0], end: t[t.length - 1] } : null;
     }).filter(Boolean);

@@ -6,6 +6,23 @@
 <title>Administration — Au P'tit Paradis</title>
 <meta name="robots" content="noindex, nofollow">
 
+<!-- GitHub Pages ne permet pas d'en-têtes HTTP : la politique passe par une
+     balise. Aucun script inline ici, donc pas de 'unsafe-inline' pour les
+     scripts — un contenu injecté ne peut pas s'exécuter. -->
+<meta http-equiv="Content-Security-Policy" content="
+  default-src 'self';
+  base-uri 'self';
+  object-src 'none';
+  form-action 'self';
+  script-src 'self' https://www.gstatic.com;
+  style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+  font-src 'self' https://fonts.gstatic.com data:;
+  img-src 'self' data: blob: https:;
+  connect-src 'self' https://firestore.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://www.googleapis.com https://api.cloudinary.com https://auptitparadis-worker.armelpltr14-ad6.workers.dev;
+  frame-src 'none';
+">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+
 <link rel="icon" href="../assets/logo.jpg" type="image/jpeg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>

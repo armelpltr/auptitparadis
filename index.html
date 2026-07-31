@@ -6,6 +6,22 @@
 <title>Au P'tit Paradis — Boulangerie · Pâtisserie · Glaces artisanales à Luc-sur-Mer</title>
 <meta name="description" content="Au P'tit Paradis, boulangerie-pâtisserie artisanale à Luc-sur-Mer. Pain frais, viennoiseries, pâtisseries gourmandes et glaces maison, à deux pas de la plage.">
 
+<!-- GitHub Pages ne permet pas d'en-têtes HTTP : la politique passe par une
+     balise. Le widget d'avis Featurable impose ses domaines dans la liste. -->
+<meta http-equiv="Content-Security-Policy" content="
+  default-src 'self';
+  base-uri 'self';
+  object-src 'none';
+  form-action 'self';
+  script-src 'self' https://www.gstatic.com https://cdn.featurable.com https://*.featurable.com;
+  style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://*.featurable.com;
+  font-src 'self' https://fonts.gstatic.com data:;
+  img-src 'self' data: blob: https:;
+  connect-src 'self' https://firestore.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://www.googleapis.com https://*.featurable.com;
+  frame-src https://www.google.com https://*.featurable.com;
+">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+
 <link rel="icon" href="assets/logo.jpg" type="image/jpeg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>

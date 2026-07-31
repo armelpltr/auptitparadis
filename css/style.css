@@ -128,6 +128,9 @@ p{ margin:0 0 1em; color:var(--ink-soft); }
   font-size:.78rem; font-weight:600; letter-spacing:.01em; color:var(--ink);
   white-space:nowrap; transition:border-color .25s var(--ease), background .25s var(--ease);
 }
+/* sinon le display de la règle ci-dessus l'emporte sur [hidden] et le badge
+   reste affiché avec un état périmé quand les horaires sont illisibles */
+.open-badge[hidden]{ display:none; }
 .open-badge:hover{ border-color:rgba(33,28,23,.3); }
 .open-dot{
   width:7px; height:7px; border-radius:50%; background:#9aa0a6; flex-shrink:0;
@@ -274,6 +277,10 @@ p{ margin:0 0 1em; color:var(--ink-soft); }
 .specialites .section-inner{ max-width:min(96vw, 1560px); }
 .specialites h2, .histoire h2, .horaires h2, .contact h2{ font-size:clamp(2rem, 4vw, 2.6rem); }
 .cards{ display:grid; grid-template-columns:repeat(3, 1fr); gap:2rem; margin-top:2.5rem; }
+/* Une colonne de grille ne descend pas sous la largeur min-content de son
+   contenu : sans ça, la photo d'un produit élargit la carte au-delà de l'écran
+   et toute la page se met à défiler horizontalement. */
+.cards > *{ min-width:0; }
 .card{
   background:var(--white); border:1px solid var(--sand); border-radius:10px;
   padding:2.2rem 1.6rem; text-align:left; transition:transform .3s var(--ease), box-shadow .3s var(--ease);

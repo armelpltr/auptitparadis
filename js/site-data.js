@@ -67,6 +67,28 @@ function setAttr(id, attr, value) {
   if (el) el.setAttribute(attr, value);
 }
 
+/* Une URL venue de l'admin finit dans un href ou un src. `javascript:...`
+   s'exécuterait au clic, avec la même origine que le panel d'administration :
+   on n'accepte donc que les schémas inoffensifs. */
+function safeUrl(url) {
+  const raw = String(url ?? '').trim();
+  if (!raw) return '';
+  if (/^(https?:|mailto:|tel:)/i.test(raw)) return raw;
+  if (/^[./#?]/.test(raw)) return raw;              // chemin relatif ou ancre
+  if (/^[a-z][a-z0-9+.-]*:/i.test(raw)) return '';  // tout autre schéma
+  return raw;
+}
+
+/* Une iframe est plus sensible qu'un lien : seul https passe. */
+function safeFrameUrl(url) {
+  const raw = String(url ?? '').trim();
+  return /^https:\/\//i.test(raw) ? raw : '';
+}
+
+function setUrlAttr(id, attr, value) {
+  setAttr(id, attr, safeUrl(value));
+}
+
 /* ---------- Application des réglages fixes ---------- */
 function applySettings(s) {
   if (!s) return;
@@ -81,7 +103,7 @@ function applySettings(s) {
         const produitHTML = Array.isArray(item.produits) && item.produits.length
           ? `<div class="spec-selection"><p class="spec-selection-label"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l2.09 4.26L18.8 8l-3.4 3.32.8 4.68L12 13.9 7.8 16l.8-4.68L5.2 8l4.71-.74z"/></svg>Notre sélection</p><div class="spec-produits">${item.produits.map(p => `
               <div class="spec-produit">
-                ${p.imageUrl ? `<img class="spec-produit-img" src="${escapeHTML(p.imageUrl)}" alt="${escapeHTML(p.nom)}">` : ''}
+                ${p.imageUrl ? `<img class="spec-produit-img" src="${escapeHTML(safeUrl(p.imageUrl))}" alt="${escapeHTML(p.nom)}">` : ''}
                 <div class="spec-produit-info">
                   <div class="spec-produit-header">
                     <strong>${escapeHTML(p.nom)}</strong>
@@ -109,7 +131,7 @@ function applySettings(s) {
     setText('histoireTitle', s.histoire.title);
     setText('histoireText1', s.histoire.text1);
     setText('histoireText2', s.histoire.text2);
-    setAttr('histoireImage', 'src', s.histoire.imageUrl);
+    setUrlAttr('histoireImage', 'src', s.histoire.imageUrl);
   }
 
   if (s.horaires) {
@@ -146,14 +168,14 @@ function applySettings(s) {
       }
     }
     if (h.instagram) {
-      setAttr('instagramLink', 'href', h.instagram);
-      setAttr('footerInstagram', 'href', h.instagram);
+      setUrlAttr('instagramLink', 'href', h.instagram);
+      setUrlAttr('footerInstagram', 'href', h.instagram);
     }
     if (h.facebook) {
-      setAttr('facebookLink', 'href', h.facebook);
-      setAttr('footerFacebook', 'href', h.facebook);
+      setUrlAttr('facebookLink', 'href', h.facebook);
+      setUrlAttr('footerFacebook', 'href', h.facebook);
     }
-    if (h.mapUrl) setAttr('mapIframe', 'src', h.mapUrl);
+    if (h.mapUrl) setAttr('mapIframe', 'src', safeFrameUrl(h.mapUrl));
 
     // Itinéraire de la barre mobile : construit depuis l'adresse publiée.
     const dest = [h.address1, h.address2].filter(Boolean).join(' ');
@@ -182,7 +204,7 @@ function escapeHTML(str) {
 function renderBanner(b) {
   const styleClass = b.style === 'highlight' ? 'style-highlight' : 'style-info';
   const btn = (b.linkText && b.linkUrl)
-    ? `<a href="${escapeHTML(b.linkUrl)}" class="btn btn-primary">${escapeHTML(b.linkText)}</a>`
+    ? `<a href="${escapeHTML(safeUrl(b.linkUrl))}" class="btn btn-primary">${escapeHTML(b.linkText)}</a>`
     : '';
   return `<section class="block-banner ${styleClass}"><p>${escapeHTML(b.text)}</p>${btn}</section>`;
 }
@@ -210,7 +232,7 @@ function renderTextImage(b) {
     <section class="block-text-image">
       <div class="section-inner text-image-grid ${rightClass}">
         <div class="text-image-visual">
-          <div class="text-image-frame"><img src="${escapeHTML(b.imageUrl || '')}" alt=""></div>
+          <div class="text-image-frame"><img src="${escapeHTML(safeUrl(b.imageUrl))}" alt=""></div>
         </div>
         <div class="text-image-text">
           <h2>${escapeHTML(b.title)}</h2>
@@ -221,7 +243,7 @@ function renderTextImage(b) {
 }
 
 function renderGallery(b) {
-  const imgs = (b.images || []).map(url => `<img src="${escapeHTML(url)}" alt="">`).join('');
+  const imgs = (b.images || []).map(url => `<img src="${escapeHTML(safeUrl(url))}" alt="">`).join('');
   return `
     <section class="block-gallery">
       <div class="section-inner">
