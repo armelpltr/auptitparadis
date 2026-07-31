@@ -241,6 +241,9 @@ p{ margin:0 0 1em; color:var(--ink-soft); }
   background:var(--gold); border-radius:2px; animation:scrollcue 1.8s ease-in-out infinite;
 }
 @keyframes scrollcue{ 0%{ opacity:1; top:6px; } 70%{ opacity:0; top:22px; } 100%{ opacity:0; top:6px; } }
+/* Écran très court (téléphone en paysage, petit mobile) : il n'y a plus de
+   place sous les boutons, et l'invitation à défiler n'apprend rien de plus. */
+@media (max-height: 700px){ .scroll-cue{ display:none; } }
 
 /* ---------- Dividers (motif vague récurrent) ---------- */
 .divider{
@@ -636,6 +639,11 @@ p{ margin:0 0 1em; color:var(--ink-soft); }
 @media (max-width: 720px){
   .nav-right-group .main-nav{ display:none; }
   .nav-toggle{ display:flex; }
+  /* La pastille de défilement est en absolu en bas du hero, dont le contenu
+     est centré : sur un écran court elle passait par-dessus les deux boutons.
+     On lui réserve sa place en remontant le contenu. */
+  .hero{ padding-bottom:7rem; }
+  .scroll-cue{ bottom:1.6rem; }
   /* Badge compact : le détail (« ferme à 13h30 ») passerait sur deux lignes */
   .open-badge{ margin-right:.7rem; font-size:.72rem; padding:.3em .65em; }
   .open-badge .open-detail{ display:none; }
