@@ -723,3 +723,174 @@ p{ margin:0 0 1em; color:var(--ink-soft); }
   .section-inner{ padding:3.8rem 1.2rem; }
   .hero h1{ font-size:2.8rem; }
 }
+
+/* =========================================================
+   Page « Commander » (réservations de Noël)
+   ========================================================= */
+
+/* Pas de hero plein écran ici : le header, qui est en position fixe,
+   passerait par-dessus le titre. Il garde donc son fond en permanence,
+   et le contenu commence sous lui. */
+.page-commander .site-header{
+  background:rgba(251,246,238,.92);
+  backdrop-filter:blur(18px) saturate(1.6);
+  -webkit-backdrop-filter:blur(18px) saturate(1.6);
+}
+.page-commander .header-rule{ opacity:1; transform:scaleX(1); }
+.commande-main{ padding-top:5.5rem; }
+
+/* Lien « Commander » de la barre de navigation : c'est l'action de la page,
+   elle se distingue des autres entrées. */
+.nav-cta{ color:var(--gold-deep) !important; }
+.nav-cta::after{ left:0; right:0; }
+
+/* ---------- En-tête de page ---------- */
+.commande-head{ background:var(--cream); }
+.commande-head .section-inner{ padding-bottom:2.5rem; max-width:780px; }
+.commande-head h1{ font-size:clamp(2.2rem, 5vw, 3.4rem); margin-bottom:.35em; }
+.commande-intro{ font-size:1.05rem; max-width:620px; }
+.commande-message{
+  background:var(--sand); border-left:3px solid var(--gold);
+  padding:.9rem 1.2rem; margin:1.6rem 0 0; color:var(--ink); font-weight:500;
+}
+.commande-head + .divider{ background:linear-gradient(to bottom, var(--cream), var(--sand)); }
+
+/* ---------- Commandes fermées ---------- */
+.commande-closed{ background:var(--sand); }
+.commande-closed .section-inner{ max-width:640px; text-align:center; }
+
+/* ---------- Corps ---------- */
+.commande-body{ background:var(--sand); }
+.commande-grid{
+  display:grid; grid-template-columns:1fr 380px; gap:3rem; align-items:start;
+}
+.commande-grid h2{ font-size:1.6rem; margin-bottom:.6em; }
+.commande-hint{ color:var(--ink-soft); }
+
+/* ---------- Cartes produit ---------- */
+.produits-grid{ display:grid; grid-template-columns:repeat(2, 1fr); gap:1.4rem; }
+.produit-carte{
+  display:flex; flex-direction:column;
+  background:var(--white); border-radius:12px; overflow:hidden;
+  box-shadow:0 14px 30px -22px rgba(33,28,23,.45);
+}
+.produit-photo{ width:100%; aspect-ratio:4/3; object-fit:cover; }
+.produit-photo--vide{ background:var(--sand); }
+.produit-corps{ padding:1.1rem 1.2rem .6rem; flex:1; }
+.produit-corps h3{ font-size:1.15rem; margin-bottom:.25em; }
+.produit-corps p{ font-size:.92rem; margin-bottom:.6em; }
+.produit-prix{ font-weight:600; color:var(--gold-deep); font-size:1.05rem; margin:0; }
+
+.produit-carte.is-rupture{ opacity:.62; }
+.produit-rupture{
+  margin:0; padding:.9rem 1.2rem; text-align:center;
+  font-size:.85rem; font-weight:600; color:var(--ink-soft);
+  border-top:1px solid var(--sand);
+}
+
+.produit-stepper{
+  display:flex; align-items:center; justify-content:space-between;
+  padding:.7rem 1.2rem 1.1rem; gap:.8rem;
+}
+.stepper-btn{
+  width:38px; height:38px; flex-shrink:0;
+  border:1.5px solid var(--gold); border-radius:50%;
+  background:none; color:var(--gold-deep);
+  font-size:1.25rem; line-height:1; font-family:var(--font-body);
+  cursor:pointer; transition:background .2s var(--ease), color .2s var(--ease);
+}
+.stepper-btn:hover{ background:var(--gold); color:var(--white); }
+.stepper-valeur{ font-size:1.1rem; font-weight:600; min-width:2ch; text-align:center; }
+
+/* ---------- Panier et coordonnées ---------- */
+.commande-panier{
+  position:sticky; top:6rem;
+  background:var(--white); border-radius:12px; padding:1.6rem 1.5rem;
+  box-shadow:0 18px 40px -26px rgba(33,28,23,.5);
+}
+.panier-lignes{ margin-bottom:1rem; }
+.panier-vide{ font-size:.92rem; color:var(--ink-soft); margin:0; }
+.panier-ligne{
+  display:grid; grid-template-columns:auto 1fr auto; gap:.6rem;
+  padding:.5rem 0; border-bottom:1px solid var(--sand); font-size:.94rem;
+}
+.panier-qte{ font-weight:600; color:var(--gold-deep); }
+.panier-nom{ min-width:0; overflow-wrap:anywhere; }
+.panier-prix{ white-space:nowrap; }
+.panier-total{
+  display:flex; align-items:baseline; justify-content:space-between; gap:1rem;
+  padding:.9rem 0 1.2rem; border-bottom:1px solid var(--sand); margin-bottom:1.4rem;
+}
+.panier-total span{ font-size:.85rem; color:var(--ink-soft); }
+.panier-total strong{ font-size:1.3rem; font-family:var(--font-display); color:var(--ink); }
+
+/* ---------- Champs ---------- */
+.form-field{ display:flex; flex-direction:column; gap:.35rem; margin-bottom:1.1rem; }
+.form-field label{
+  font-size:.78rem; font-weight:700; text-transform:uppercase; letter-spacing:.08em;
+  color:var(--ink-soft);
+}
+.form-optional{ font-weight:500; text-transform:none; letter-spacing:0; opacity:.75; }
+.form-field input, .form-field select, .form-field textarea{
+  width:100%; padding:.7em .85em;
+  border:1px solid var(--sand); border-radius:var(--radius); background:var(--cream);
+  font-family:var(--font-body); font-size:.98rem; color:var(--ink);
+}
+.form-field input:focus, .form-field select:focus, .form-field textarea:focus{
+  outline:none; border-color:var(--gold); background:var(--white);
+}
+.form-field textarea{ resize:vertical; }
+.form-hint{ font-size:.8rem; color:var(--ink-soft); margin:0; }
+
+/* Piège à robots : hors de l'écran plutôt que display:none, que certains
+   remplisseurs automatiques savent reconnaître et ignorer. */
+.form-honeypot{
+  position:absolute; left:-9999px; width:1px; height:1px;
+  overflow:hidden; opacity:0;
+}
+
+.commande-turnstile{ margin-bottom:1rem; }
+.commande-erreur{
+  background:#fbeae6; border-left:3px solid #c0563f; color:#8c3423;
+  padding:.75rem 1rem; font-size:.9rem; margin:0 0 1rem;
+}
+.commande-submit{ width:100%; }
+.commande-submit[disabled]{ opacity:.5; cursor:not-allowed; transform:none; }
+.commande-legal{ margin-top:.9rem; text-align:center; }
+
+/* ---------- Confirmation ---------- */
+.commande-succes{ background:var(--sand); }
+.commande-succes .section-inner{ max-width:620px; text-align:center; }
+.succes-code-label{
+  font-size:.78rem; font-weight:700; text-transform:uppercase; letter-spacing:.14em;
+  color:var(--ink-soft); margin:2rem 0 .3rem;
+}
+.succes-code{
+  font-family:var(--font-display); font-size:clamp(2.4rem, 9vw, 3.6rem);
+  font-weight:700; letter-spacing:.22em; color:var(--gold-deep);
+  margin:0 0 .4em; user-select:all;
+}
+.succes-detail{ font-weight:600; color:var(--ink); }
+
+@media (max-width: 980px){
+  .commande-grid{ grid-template-columns:1fr; gap:2.4rem; }
+  /* Le panier n'a plus de colonne à suivre : il repasse dans le flux, sous
+     le catalogue, là où on l'a rempli. */
+  .commande-panier{ position:static; }
+}
+
+@media (max-width: 720px){
+  .commande-main{ padding-top:4.5rem; }
+  .produits-grid{ grid-template-columns:1fr; gap:1.1rem; }
+  .produit-photo{ aspect-ratio:16/9; }
+  .commande-panier{ padding:1.3rem 1.1rem; }
+  /* Cibles tactiles : les steppers passent en pleine largeur */
+  .produit-stepper{ justify-content:space-between; }
+  .stepper-btn{ width:44px; height:44px; }
+}
+
+@media (max-width: 480px){
+  .commande-head .section-inner{ padding-bottom:2rem; }
+  .commande-intro{ font-size:1rem; }
+  .succes-code{ letter-spacing:.16em; }
+}

@@ -195,7 +195,11 @@ function applySettings(s) {
     }
 
     // Footer et badge ouvert/fermé dérivent du tableau d'horaires : à régénérer.
-    if (typeof window.syncFooterHours === 'function') window.syncFooterHours();
+    // Les lignes sont passées telles quelles, car la page « Commander » n'a
+    // pas de tableau d'horaires d'où les relire.
+    if (typeof window.syncFooterHours === 'function') {
+      window.syncFooterHours(Array.isArray(h.rows) && h.rows.length ? h.rows : undefined);
+    }
     if (typeof window.refreshOpenStatus === 'function') window.refreshOpenStatus();
   }
 

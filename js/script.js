@@ -67,16 +67,26 @@ document.addEventListener('DOMContentLoaded', () => {
   if (yearEl) yearEl.textContent = new Date().getFullYear();
 
   /* ---- Horaires du footer : recopiés du tableau + jour courant mis en avant ----
-     Appelé aussi par site-data.js une fois les horaires de l'admin chargés. */
-  window.syncFooterHours = function syncFooterHours() {
-    const tbody = document.getElementById('hoursTableBody');
-    const list  = document.getElementById('footerHours');
-    if (!tbody || !list) return;
+     Appelé aussi par site-data.js une fois les horaires de l'admin chargés.
+     Les pages sans tableau d'horaires (« Commander ») ont quand même un pied
+     de page à remplir : elles passent les lignes directement. */
+  window.syncFooterHours = function syncFooterHours(rowsFournies) {
+    const list = document.getElementById('footerHours');
+    if (!list) return;
 
-    const rows = [...tbody.querySelectorAll('tr')].map(tr => ({
-      day:  tr.querySelector('th')?.textContent.trim() || '',
-      time: tr.querySelector('td')?.textContent.trim() || ''
-    })).filter(r => r.day);
+    let rows = rowsFournies;
+    if (!rows) {
+      const tbody = document.getElementById('hoursTableBody');
+      if (!tbody) return;
+      rows = [...tbody.querySelectorAll('tr')].map(tr => ({
+        day:  tr.querySelector('th')?.textContent.trim() || '',
+        time: tr.querySelector('td')?.textContent.trim() || ''
+      }));
+    }
+
+    rows = rows
+      .map(r => ({ day: r.day || '', time: r.time ?? r.hours ?? '' }))
+      .filter(r => r.day);
     if (!rows.length) return;
 
     const today = todayIndex();

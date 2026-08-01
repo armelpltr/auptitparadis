@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Commander pour Noël — Au P'tit Paradis</title>
+<meta name="description" content="Réservez vos bûches et coffrets de Noël à la boulangerie Au P'tit Paradis, à Luc-sur-Mer. Réservation en ligne, retrait et règlement en boutique.">
+
+<!-- GitHub Pages ne permet pas d'en-têtes HTTP : la politique passe par une
+     balise. Turnstile a besoin de son script et de son iframe ; le Worker
+     reçoit la commande. -->
+<meta http-equiv="Content-Security-Policy" content="
+  default-src 'self';
+  base-uri 'self';
+  object-src 'none';
+  form-action 'self';
+  script-src 'self' https://www.gstatic.com https://challenges.cloudflare.com;
+  style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+  font-src 'self' https://fonts.gstatic.com data:;
+  img-src 'self' data: blob: https:;
+  connect-src 'self' https://firestore.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://www.googleapis.com https://auptitparadis-worker.armelpltr14-ad6.workers.dev https://challenges.cloudflare.com;
+  frame-src https://challenges.cloudflare.com;
+">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+
+<link rel="icon" href="assets/logo.jpg" type="image/jpeg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atma:wght@300;400;500;600;700&family=Jost:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body class="page-commander">
+
+<a class="skip-link" href="#main">Aller au contenu</a>
+
+<!-- ===================== HEADER ===================== -->
+<header class="site-header" id="top">
+  <div class="scroll-progress" aria-hidden="true"></div>
+
+  <div class="header-inner">
+    <a href="index.html" class="brand" aria-label="Au P'tit Paradis — Accueil">
+      <img src="assets/logo-header.png" alt="Au P'tit Paradis" class="brand-logo-header">
+    </a>
+
+    <div class="nav-right-group">
+      <nav class="main-nav" aria-label="Navigation principale">
+        <ul>
+          <li><a href="index.html#specialites">Nos spécialités</a></li>
+          <li><a href="index.html#histoire">Notre histoire</a></li>
+          <li><a href="index.html#horaires">Horaires &amp; accès</a></li>
+          <li><a href="commander.html" class="nav-cta" aria-current="page">Commander</a></li>
+        </ul>
+      </nav>
+      <button class="nav-toggle" id="navToggle" aria-expanded="false" aria-controls="mobile-nav" aria-label="Ouvrir le menu">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </div>
+
+  <nav class="mobile-nav" id="mobile-nav" aria-label="Navigation mobile" aria-hidden="true">
+    <ul>
+      <li><a href="index.html#specialites">Nos spécialités</a></li>
+      <li><a href="index.html#histoire">Notre histoire</a></li>
+      <li><a href="index.html#horaires">Horaires &amp; accès</a></li>
+      <li><a href="commander.html" aria-current="page">Commander</a></li>
+    </ul>
+  </nav>
+
+  <div class="header-rule" aria-hidden="true"></div>
+</header>
+
+<main id="main" class="commande-main">
+
+  <!-- ===================== EN-TÊTE DE PAGE ===================== -->
+  <section class="commande-head">
+    <div class="section-inner">
+      <p class="eyebrow">Réservation en ligne</p>
+      <h1>Vos bûches et coffrets de Noël</h1>
+      <p class="commande-intro">
+        Choisissez vos produits, indiquez le jour où vous passerez les chercher.
+        Vous recevrez un code de réservation — présentez-le en boutique pour
+        confirmer votre commande. Le règlement se fait sur place, au retrait.
+      </p>
+      <p class="commande-message" id="commandeMessage" hidden></p>
+    </div>
+  </section>
+
+  <div class="divider" aria-hidden="true">
+    <svg viewBox="0 0 1200 80" preserveAspectRatio="none"><path d="M0,40 C100,40 200,10 400,45 C600,80 700,15 900,40 C1050,62 1150,38 1200,40" /></svg>
+  </div>
+
+  <!-- ===================== COMMANDES FERMÉES ===================== -->
+  <section class="commande-closed" id="commandeClosed" hidden>
+    <div class="section-inner">
+      <h2>Les réservations ne sont pas ouvertes</h2>
+      <p>
+        Les commandes de Noël ouvriront prochainement. En attendant, passez nous
+        voir en boutique ou appelez-nous, on vous renseignera avec plaisir.
+      </p>
+      <a href="index.html#horaires" class="btn btn-ghost">Horaires &amp; adresse</a>
+    </div>
+  </section>
+
+  <!-- ===================== FORMULAIRE ===================== -->
+  <section class="commande-body" id="commandeBody" hidden>
+    <div class="section-inner commande-grid">
+
+      <!-- --- Catalogue --- -->
+      <div class="commande-catalogue">
+        <h2>Le catalogue</h2>
+        <p class="commande-hint" id="catalogueHint">Chargement du catalogue…</p>
+        <div class="produits-grid" id="produitsGrid"></div>
+      </div>
+
+      <!-- --- Panier + coordonnées --- -->
+      <form class="commande-panier" id="commandeForm" novalidate>
+        <h2>Votre réservation</h2>
+
+        <div class="panier-lignes" id="panierLignes">
+          <p class="panier-vide">Votre panier est vide.</p>
+        </div>
+
+        <div class="panier-total" id="panierTotal" hidden>
+          <span>Total à régler en boutique</span>
+          <strong id="panierTotalValeur">0,00 €</strong>
+        </div>
+
+        <div class="form-field">
+          <label for="ordDate">Jour de retrait</label>
+          <select id="ordDate" required></select>
+        </div>
+
+        <div class="form-field">
+          <label for="ordNom">Votre nom</label>
+          <input type="text" id="ordNom" maxlength="80" autocomplete="name" required placeholder="Nom et prénom">
+        </div>
+
+        <div class="form-field">
+          <label for="ordTel">Téléphone</label>
+          <input type="tel" id="ordTel" maxlength="20" autocomplete="tel" required placeholder="06 12 34 56 78">
+          <p class="form-hint">Pour vous joindre si besoin. Aucun démarchage.</p>
+        </div>
+
+        <div class="form-field">
+          <label for="ordEmail">E-mail <span class="form-optional">(facultatif)</span></label>
+          <input type="email" id="ordEmail" maxlength="120" autocomplete="email" placeholder="prenom@exemple.fr">
+        </div>
+
+        <div class="form-field">
+          <label for="ordCommentaire">Précisions <span class="form-optional">(facultatif)</span></label>
+          <textarea id="ordCommentaire" rows="2" maxlength="300" placeholder="Allergies, heure de passage approximative…"></textarea>
+        </div>
+
+        <!-- Piège à robots : masqué en CSS, sans intérêt pour un visiteur.
+             Un formulaire rempli automatiquement le remplit aussi, et la
+             commande est alors ignorée. -->
+        <div class="form-honeypot" aria-hidden="true">
+          <label for="ordWebsite">Site web</label>
+          <input type="text" id="ordWebsite" name="website" tabindex="-1" autocomplete="off">
+        </div>
+
+        <!-- Turnstile s'insère ici et dépose son jeton dans un champ caché -->
+        <div class="cf-turnstile commande-turnstile"
+             data-sitekey="1x00000000000000000000AA"
+             data-language="fr"
+             data-appearance="interaction-only"></div>
+
+        <p class="commande-erreur" id="commandeErreur" hidden></p>
+
+        <button type="submit" class="btn btn-primary commande-submit" id="commandeSubmit" disabled>
+          Réserver
+        </button>
+        <p class="form-hint commande-legal">
+          Réservation sans paiement en ligne. Votre commande est confirmée
+          lorsque vous présentez votre code en boutique.
+        </p>
+      </form>
+
+    </div>
+  </section>
+
+  <!-- ===================== CONFIRMATION ===================== -->
+  <section class="commande-succes" id="commandeSucces" hidden>
+    <div class="section-inner">
+      <p class="eyebrow">C'est noté</p>
+      <h2>Votre réservation est enregistrée</h2>
+      <p class="succes-code-label">Votre code de réservation</p>
+      <p class="succes-code" id="succesCode">——————</p>
+      <p class="succes-detail" id="succesDetail"></p>
+      <p>
+        Notez-le ou gardez cette page ouverte. Présentez-le en boutique pour
+        confirmer votre commande — c'est aussi là que vous réglerez, au retrait.
+      </p>
+      <a href="index.html" class="btn btn-ghost">Retour au site</a>
+    </div>
+  </section>
+
+</main>
+
+<!-- ===================== FOOTER ===================== -->
+<footer class="site-footer">
+
+  <div class="footer-wave" aria-hidden="true">
+    <svg viewBox="0 0 1200 90" preserveAspectRatio="none">
+      <path d="M0,0 L1200,0 L1200,38 C1080,58 990,26 850,16 C700,5 610,30 450,54 C300,77 140,72 0,26 Z" />
+    </svg>
+  </div>
+
+  <div class="footer-top">
+    <div class="footer-grid">
+
+      <div class="footer-brand">
+        <a href="index.html" class="footer-brand-link">
+          <img src="assets/logo.jpg" alt="" class="footer-logo">
+          <span class="footer-brand-text">
+            <span class="footer-brand-name">Au P'tit Paradis</span>
+            <span class="footer-brand-tagline">Boulangerie · Pâtisserie · Glaces</span>
+          </span>
+        </a>
+        <p class="footer-brand-desc">Fait à Luc-sur-Mer, tous les matins, depuis longtemps.</p>
+        <div class="footer-socials">
+          <a href="#" class="footer-social-link" id="footerInstagram" aria-label="Instagram" target="_blank" rel="noopener">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="0.9" fill="currentColor" stroke="none"/></svg>
+          </a>
+          <a href="#" class="footer-social-link" id="footerFacebook" aria-label="Facebook" target="_blank" rel="noopener">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path class="solid" d="M15 8.5h-2c-.6 0-1 .4-1 1V12h3l-.4 3h-2.6v7h-3v-7H7v-3h2V9c0-2.2 1.8-4 4-4h2v3.5Z"/></svg>
+          </a>
+        </div>
+      </div>
+
+      <nav class="footer-col footer-nav" aria-label="Navigation secondaire">
+        <p class="footer-section-label">Le site</p>
+        <ul>
+          <li><a href="index.html#specialites">Nos spécialités</a></li>
+          <li><a href="index.html#histoire">Notre histoire</a></li>
+          <li><a href="index.html#horaires">Horaires &amp; accès</a></li>
+          <li><a href="commander.html">Commander</a></li>
+        </ul>
+      </nav>
+
+      <div class="footer-col footer-hours-col">
+        <p class="footer-section-label">Horaires</p>
+        <ul class="footer-hours" id="footerHours">
+          <li><span class="fh-day">Lundi</span><span class="fh-time">Fermé</span></li>
+          <li><span class="fh-day">Mardi — Vendredi</span><span class="fh-time">7h00 – 13h30 · 15h30 – 19h30</span></li>
+          <li><span class="fh-day">Samedi</span><span class="fh-time">7h00 – 19h30</span></li>
+          <li><span class="fh-day">Dimanche</span><span class="fh-time">7h00 – 13h30</span></li>
+        </ul>
+      </div>
+
+      <div class="footer-col footer-contact">
+        <p class="footer-section-label">Nous trouver</p>
+        <address>
+          <a class="footer-contact-line" id="footerMapsLink" href="https://www.google.com/maps/search/Au+P%27tit+Paradis+1+Place+Petit+Enfer+14530+Luc-sur-Mer" target="_blank" rel="noopener">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s7-5.4 7-11a7 7 0 1 0-14 0c0 5.6 7 11 7 11Z"/><circle cx="12" cy="10" r="2.6"/></svg>
+            <span id="footerAddress">1 Place du Petit Enfer<br>14530 Luc-sur-Mer</span>
+          </a>
+          <a class="footer-contact-line" id="footerPhoneLink" href="tel:+33000000000">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 3.5h3l1.5 4-2 1.4a12 12 0 0 0 5.1 5.1l1.4-2 4 1.5v3a2 2 0 0 1-2.2 2A16.5 16.5 0 0 1 4.5 5.7a2 2 0 0 1 2-2.2Z"/></svg>
+            <span id="footerPhoneText">02 00 00 00 00</span>
+          </a>
+          <a class="footer-contact-line" id="footerEmailLink" href="#" hidden>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="m3.7 6.8 8.3 6 8.3-6"/></svg>
+            <span id="footerEmailText"></span>
+          </a>
+        </address>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="footer-bottom">
+    <div class="footer-bottom-inner">
+      <p>&copy; <span id="year"></span> Au P'tit Paradis — Luc-sur-Mer. Tous droits réservés.</p>
+      <div class="footer-bottom-right">
+        <a href="admin/" class="footer-admin-link">Espace admin</a>
+        <a href="#top" class="footer-top-link">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V5"/><path d="m5.5 11.5 6.5-6.5 6.5 6.5"/></svg>
+          Haut de page
+        </a>
+      </div>
+    </div>
+  </div>
+
+</footer>
+
+<script type="module" src="js/site-data.js"></script>
+<script src="js/script.js"></script>
+<script type="module" src="js/commande.js"></script>
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" defer></script>
+</body>
+</html>
