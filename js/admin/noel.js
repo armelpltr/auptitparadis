@@ -1,0 +1,226 @@
+// ============================================================
+// ONGLET CATALOGUE NOËL — produits proposés à la commande
+// Collection `noel_produits` + période de retrait dans `settings/noel`.
+// ============================================================
+
+import { db } from "../firebase-config.js";
+import {
+  doc, getDoc, setDoc, collection, getDocs, addDoc, updateDoc, deleteDoc, query, orderBy
+} from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+import { IB_ICONS } from "./icons.js";
+import { createImageUploader } from "./uploader.js";
+import { confirmDialog, showSuccess, showStatus, escapeAttr, val, setVal } from "./ui.js";
+
+let produitsCache = [];
+
+/* Le prix est saisi à la main : « 24,50 » est au moins aussi probable que
+   « 24.50 » sur un clavier français, et un <input type="number"> refuse la
+   virgule sans rien dire. On accepte les deux et on stocke un nombre. */
+export function parsePrix(raw) {
+  const n = Number(String(raw ?? '').replace(',', '.').replace(/[^\d.]/g, ''));
+  return Number.isFinite(n) && n >= 0 ? Math.round(n * 100) / 100 : null;
+}
+
+export function fmtPrix(n) {
+  return Number(n || 0).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+/* ---------- Chargement ---------- */
+export async function loadNoel() {
+  try {
+    const snap = await getDocs(query(collection(db, 'noel_produits'), orderBy('order', 'asc')));
+    produitsCache = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    renderNoelList();
+  } catch (err) {
+    document.getElementById('noelList').innerHTML =
+      `<p class="empty-hint">Impossible de charger le catalogue (${escapeAttr(err.message)}).</p>`;
+  }
+
+  try {
+    const snap = await getDoc(doc(db, 'settings', 'noel'));
+    const s = snap.exists() ? snap.data() : {};
+    document.getElementById('noel-ouvert').checked = s.ouvert === true;
+    setVal('noel-dateDebut', s.dateDebut || '');
+    setVal('noel-dateFin',   s.dateFin   || '');
+    setVal('noel-message',   s.message   || '');
+  } catch (err) {
+    showStatus('Période de retrait illisible : ' + err.message, true);
+  }
+}
+
+function renderNoelList() {
+  const list = document.getElementById('noelList');
+  if (!produitsCache.length) {
+    list.innerHTML = '<p class="empty-hint">Aucun produit pour le moment. Clique sur « + Ajouter un produit » pour commencer.</p>';
+    return;
+  }
+
+  list.innerHTML = produitsCache.map((p, i) => `
+    <div class="noel-item ${p.disponible === false ? 'is-rupture' : ''}" data-id="${escapeAttr(p.id)}">
+      <div class="noel-item-header">
+        <h3>${escapeAttr(p.nom || '(sans nom)')}</h3>
+        <button type="button" class="noel-dispo" data-action="dispo">${p.disponible === false ? 'En rupture' : 'Disponible'}</button>
+        <div class="noel-item-actions">
+          <button class="icon-btn" data-action="up" ${i === 0 ? 'disabled' : ''} title="Monter">${IB_ICONS.up}</button>
+          <button class="icon-btn" data-action="down" ${i === produitsCache.length - 1 ? 'disabled' : ''} title="Descendre">${IB_ICONS.down}</button>
+          <button class="icon-btn" data-action="delete" title="Supprimer">${IB_ICONS.trash}</button>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <label>Photo</label>
+        <div class="noel-img-mount" data-value="${escapeAttr(p.imageUrl || '')}"></div>
+      </div>
+      <div class="form-row-grid">
+        <div class="form-row"><label>Nom du produit</label><input type="text" class="noel-nom" value="${escapeAttr(p.nom || '')}" placeholder="ex. Bûche vanille-caramel"></div>
+        <div class="form-row">
+          <label>Prix (€)</label>
+          <input type="text" inputmode="decimal" class="noel-prix" value="${escapeAttr(p.prix != null ? fmtPrix(p.prix) : '')}" placeholder="24,50">
+        </div>
+      </div>
+      <div class="form-row">
+        <label>Description</label>
+        <textarea class="noel-desc" rows="2" placeholder="Parts, parfums, allergènes…">${escapeAttr(p.description || '')}</textarea>
+      </div>
+      <div class="noel-item-save">
+        <button type="button" class="btn btn-primary btn-small" data-action="save">Enregistrer ce produit</button>
+      </div>
+    </div>
+  `).join('');
+
+  list.querySelectorAll('.noel-item').forEach(el => {
+    const id = el.dataset.id;
+    const produit = produitsCache.find(p => p.id === id) || {};
+
+    const mount = el.querySelector('.noel-img-mount');
+    mount.appendChild(createImageUploader({
+      className: 'noel-img', value: mount.dataset.value, folder: 'noel'
+    }));
+
+    el.querySelector('[data-action="up"]').addEventListener('click', () => moveProduit(id, -1));
+    el.querySelector('[data-action="down"]').addEventListener('click', () => moveProduit(id, 1));
+    el.querySelector('[data-action="delete"]').addEventListener('click', () => deleteProduit(id, produit.nom));
+    el.querySelector('[data-action="dispo"]').addEventListener('click', () => toggleDispo(id));
+    el.querySelector('[data-action="save"]').addEventListener('click', () => saveProduit(id, el));
+  });
+}
+
+/* ---------- Écritures ---------- */
+async function saveProduit(id, el) {
+  const nom = el.querySelector('.noel-nom').value.trim();
+  if (!nom) { showStatus('Le produit a besoin d\'un nom.', true); return; }
+
+  const prix = parsePrix(el.querySelector('.noel-prix').value);
+  if (prix === null) { showStatus('Prix invalide. Exemple : 24,50', true); return; }
+
+  const btn = el.querySelector('[data-action="save"]');
+  btn.disabled = true;
+  try {
+    await updateDoc(doc(db, 'noel_produits', id), {
+      nom,
+      prix,
+      description: el.querySelector('.noel-desc').value.trim(),
+      imageUrl: el.querySelector('.noel-img').value.trim()
+    });
+    await loadNoel();
+    showStatus('Produit enregistré.');
+  } catch (err) {
+    showStatus("Erreur lors de l'enregistrement : " + err.message, true);
+  }
+  btn.disabled = false;
+}
+
+async function toggleDispo(id) {
+  const p = produitsCache.find(x => x.id === id);
+  try {
+    await updateDoc(doc(db, 'noel_produits', id), { disponible: p.disponible === false });
+    await loadNoel();
+  } catch (err) {
+    showStatus('Erreur : ' + err.message, true);
+  }
+}
+
+async function moveProduit(id, direction) {
+  const index = produitsCache.findIndex(p => p.id === id);
+  const swapIndex = index + direction;
+  if (swapIndex < 0 || swapIndex >= produitsCache.length) return;
+
+  const a = produitsCache[index];
+  const b = produitsCache[swapIndex];
+  const tempOrder = a.order;
+  a.order = b.order;
+  b.order = tempOrder;
+
+  try {
+    await updateDoc(doc(db, 'noel_produits', a.id), { order: a.order });
+    await updateDoc(doc(db, 'noel_produits', b.id), { order: b.order });
+    await loadNoel();
+  } catch (err) {
+    showStatus('Erreur lors du déplacement : ' + err.message, true);
+  }
+}
+
+async function deleteProduit(id, nom) {
+  const ok = await confirmDialog(
+    `Retirer « ${nom || 'ce produit'} » du catalogue ?`,
+    "Il disparaîtra de la page de commande immédiatement. Les commandes déjà passées le conservent."
+  );
+  if (!ok) return;
+  try {
+    await deleteDoc(doc(db, 'noel_produits', id));
+    await loadNoel();
+    showSuccess('Produit retiré', "Il n'apparaît plus sur la page de commande.");
+  } catch (err) {
+    showStatus('Erreur : ' + err.message, true);
+  }
+}
+
+/* ---------- Câblage ---------- */
+export function initNoel() {
+  document.getElementById('addNoelBtn').addEventListener('click', async () => {
+    // Créé tout de suite en base : la carte a besoin d'un identifiant pour que
+    // ses boutons (ordre, disponibilité, suppression) aient une cible.
+    const maxOrder = produitsCache.reduce((max, p) => Math.max(max, p.order || 0), 0);
+    try {
+      await addDoc(collection(db, 'noel_produits'), {
+        nom: '', description: '', prix: 0, imageUrl: '',
+        disponible: true, order: maxOrder + 1
+      });
+      await loadNoel();
+    } catch (err) {
+      showStatus("Impossible d'ajouter le produit : " + err.message, true);
+    }
+  });
+
+  document.getElementById('saveNoelPeriodeBtn').addEventListener('click', async () => {
+    const debut = val('noel-dateDebut');
+    const fin   = val('noel-dateFin');
+    if (debut && fin && fin < debut) {
+      showStatus('La fin de période est avant son début.', true);
+      return;
+    }
+
+    const ouvert = document.getElementById('noel-ouvert').checked;
+    if (ouvert && !(debut && fin)) {
+      showStatus('Renseigne les deux dates avant d\'ouvrir les commandes.', true);
+      return;
+    }
+
+    const ok = await confirmDialog(
+      ouvert ? 'Ouvrir les commandes de Noël ?' : 'Fermer les commandes de Noël ?',
+      ouvert
+        ? 'La page « Commander » acceptera les réservations dès maintenant.'
+        : 'La page « Commander » restera visible mais n\'acceptera plus de réservation.'
+    );
+    if (!ok) return;
+
+    try {
+      await setDoc(doc(db, 'settings', 'noel'), {
+        ouvert, dateDebut: debut, dateFin: fin, message: val('noel-message')
+      }, { merge: true });
+      await showSuccess('Période enregistrée ✓', 'La page de commande est à jour.');
+    } catch (err) {
+      showStatus("Erreur lors de l'enregistrement : " + err.message, true);
+    }
+  });
+}

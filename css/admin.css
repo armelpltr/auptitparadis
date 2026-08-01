@@ -342,8 +342,59 @@
   .upload-ring-fill{ transition:none; }
 }
 
+/* ---------- Actions en bas de carte ---------- */
+.card-actions{ display:flex; justify-content:flex-end; gap:.8rem; }
+
+/* ---------- Interrupteur (ouvrir/fermer les commandes) ---------- */
+.switch-row{
+  display:flex; align-items:center; gap:.7rem;
+  margin-bottom:1.4rem; cursor:pointer; user-select:none;
+}
+.switch-row input{ width:18px; height:18px; accent-color:var(--gold-deep); cursor:pointer; }
+.switch-row span{ font-size:.94rem; color:var(--ink); }
+
+/* ---------- Catalogue de Noël ---------- */
+.noel-list{ display:flex; flex-direction:column; gap:1.1rem; margin-bottom:1.4rem; }
+
+.noel-item{
+  border:1px solid var(--sand); border-radius:10px;
+  padding:1.2rem 1.3rem 1rem; background:var(--white);
+}
+/* En rupture : la fiche s'efface sans disparaître — elle reste modifiable. */
+.noel-item.is-rupture{ background:var(--sand); opacity:.82; }
+
+.noel-item-header{
+  display:flex; align-items:center; gap:.8rem;
+  margin-bottom:1.1rem; padding-bottom:.8rem; border-bottom:1px solid var(--sand);
+}
+.noel-item-header h3{
+  flex:1; min-width:0; margin:0;
+  font-size:.95rem; font-weight:700; color:var(--gold-deep); letter-spacing:.02em;
+  overflow-wrap:anywhere;
+}
+.noel-item-actions{ display:flex; gap:.4rem; flex-shrink:0; }
+
+.noel-dispo{
+  flex-shrink:0; border:1px solid var(--gold-deep); background:transparent;
+  color:var(--gold-deep); border-radius:999px;
+  padding:.32em 1em; font-size:.78rem; font-weight:600; font-family:inherit;
+  cursor:pointer; white-space:nowrap;
+}
+.noel-item.is-rupture .noel-dispo{ border-color:#a13a25; color:#a13a25; }
+
+.noel-item-save{ display:flex; justify-content:flex-end; }
+
 @media (max-width: 720px){
   .form-row-grid, .template-grid{ grid-template-columns:1fr; }
+
+  .card-actions .btn{ width:100%; }
+
+  /* Catalogue Noël : le nom prend sa ligne, les boutons la suivante */
+  .noel-item{ padding:1rem 1rem .9rem; }
+  .noel-item-header{ flex-wrap:wrap; gap:.6rem; }
+  .noel-item-header h3{ flex-basis:100%; }
+  .noel-dispo{ flex:1; text-align:center; }
+  .noel-item-save .btn{ width:100%; }
   .hour-row{ grid-template-columns:1fr 1fr; }
   .hour-row > .row-remove{ grid-column:span 2; width:100%; border-radius:6px; }
 

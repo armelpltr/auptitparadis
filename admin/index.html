@@ -97,6 +97,7 @@
 
     <nav class="admin-tabs">
       <button type="button" class="admin-tab is-active" data-tab="settings">Réglages du site</button>
+      <button type="button" class="admin-tab" data-tab="noel">Catalogue Noël</button>
       <button type="button" class="admin-tab" data-tab="team">Équipe</button>
     </nav>
 
@@ -167,6 +168,47 @@
       <div class="save-bar" id="saveBar">
         <span class="save-bar-status" id="saveBarStatus">Tout est enregistré</span>
         <button type="button" class="btn btn-primary" id="saveSettingsBtn">Enregistrer les réglages</button>
+      </div>
+    </section>
+
+    <!-- ===================== ONGLET CATALOGUE NOËL ===================== -->
+    <section class="admin-panel" id="panel-noel">
+
+      <div class="admin-card">
+        <h2>Commandes de Noël</h2>
+        <p class="admin-card-hint">Tant que les commandes sont fermées, la page « Commander » reste consultable mais n'accepte aucune réservation.</p>
+
+        <label class="switch-row">
+          <input type="checkbox" id="noel-ouvert">
+          <span>Accepter les commandes en ligne</span>
+        </label>
+
+        <div class="form-row-grid">
+          <div class="form-row">
+            <label for="noel-dateDebut">Premier jour de retrait</label>
+            <input type="date" id="noel-dateDebut">
+          </div>
+          <div class="form-row">
+            <label for="noel-dateFin">Dernier jour de retrait</label>
+            <input type="date" id="noel-dateFin">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <label for="noel-message">Message affiché en haut de la page (optionnel)</label>
+          <textarea id="noel-message" rows="2" placeholder="ex. Commandes jusqu'au 18 décembre, retrait en boutique."></textarea>
+        </div>
+
+        <div class="card-actions">
+          <button type="button" class="btn btn-primary btn-small" id="saveNoelPeriodeBtn">Enregistrer la période</button>
+        </div>
+      </div>
+
+      <div class="admin-card">
+        <h2>Catalogue</h2>
+        <p class="admin-card-hint">Les produits proposés à la réservation. Un produit en rupture reste affiché, mais ne peut plus être ajouté au panier.</p>
+        <div id="noelList" class="noel-list"></div>
+        <button type="button" class="btn btn-ghost btn-small" id="addNoelBtn">+ Ajouter un produit</button>
       </div>
     </section>
 
