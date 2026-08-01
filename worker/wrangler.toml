@@ -2,14 +2,23 @@ name = "auptitparadis-worker"
 main = "src/index.js"
 compatibility_date = "2024-09-23"
 
-# Supprimer le compte Firebase de quelqu'un d'autre exige des droits admin, que
-# le SDK navigateur n'a pas : il ne sait supprimer que le compte connecté. D'où
-# ce Worker, seul endroit où la clé de service peut vivre sans être publique.
+# Deux choses que le navigateur ne peut pas faire seul : supprimer le compte
+# Firebase de quelqu'un d'autre (le SDK ne sait supprimer que le compte
+# connecté), et enregistrer une commande après avoir vérifié le jeton
+# anti-bot auprès de Cloudflare. Les deux exigent la clé de service, d'où ce
+# Worker — seul endroit où elle peut vivre sans être publique.
 
 [vars]
 ALLOWED_ORIGIN = "https://armelpltr.github.io"
 FIREBASE_PROJECT_ID = "au-ptit-paradis"
 
-# Secret à injecter : wrangler secret put FIREBASE_SERVICE_ACCOUNT
-#   → JSON complet du compte de service (Firebase Console > Paramètres du projet
-#     > Comptes de service > Générer une nouvelle clé privée)
+# Secrets à injecter :
+#
+#   wrangler secret put FIREBASE_SERVICE_ACCOUNT
+#     → JSON complet du compte de service (Firebase Console > Paramètres du
+#       projet > Comptes de service > Générer une nouvelle clé privée)
+#
+#   wrangler secret put TURNSTILE_SECRET
+#     → clé secrète du widget Turnstile (dash.cloudflare.com > Turnstile).
+#       Sans elle, POST /order refuse toute commande : mieux vaut un
+#       formulaire en panne qu'un endpoint d'écriture ouvert aux robots.
