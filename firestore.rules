@@ -45,6 +45,22 @@ service cloud.firestore {
       allow write: if isMember();
     }
 
+    // Catalogue des commandes de Noël (bûches, coffrets). Le site public le
+    // lit pour afficher les produits ; seul le panel les modifie.
+    match /noel_produits/{produitId} {
+      allow read:  if true;
+      allow write: if isMember();
+    }
+
+    // Commandes des clients. Rien n'est ouvert au public, pas même la
+    // création : le formulaire passe par le Worker, qui vérifie le jeton
+    // Turnstile avant d'écrire avec la clé de service — laquelle contourne
+    // ces règles. Une création directe depuis le navigateur permettrait de
+    // remplir la boîte de commandes en ignorant la vérification anti-bot.
+    match /orders/{orderId} {
+      allow read, write: if isMember();
+    }
+
     // Personnes ayant accès au panel.
     match /admins/{uid} {
       allow read: if isMember();
