@@ -97,6 +97,7 @@
 
     <nav class="admin-tabs">
       <button type="button" class="admin-tab is-active" data-tab="settings">Réglages du site</button>
+      <button type="button" class="admin-tab" data-tab="orders">Commandes</button>
       <button type="button" class="admin-tab" data-tab="noel">Catalogue Noël</button>
       <button type="button" class="admin-tab" data-tab="team">Équipe</button>
     </nav>
@@ -168,6 +169,37 @@
       <div class="save-bar" id="saveBar">
         <span class="save-bar-status" id="saveBarStatus">Tout est enregistré</span>
         <button type="button" class="btn btn-primary" id="saveSettingsBtn">Enregistrer les réglages</button>
+      </div>
+    </section>
+
+    <!-- ===================== ONGLET COMMANDES ===================== -->
+    <section class="admin-panel" id="panel-orders">
+
+      <div class="admin-card">
+        <h2>Commandes reçues</h2>
+        <p class="admin-card-hint">Triées par jour de retrait. Le client présente son code en boutique : cherchez-le ci-dessous pour confirmer sa commande.</p>
+
+        <div class="orders-barre">
+          <div class="form-row">
+            <label for="ordersRecherche">Rechercher</label>
+            <input type="search" id="ordersRecherche" placeholder="Code, nom ou téléphone" autocomplete="off">
+          </div>
+          <div class="form-row">
+            <label for="ordersFiltre">Afficher</label>
+            <select id="ordersFiltre">
+              <option value="en_cours" selected>En cours</option>
+              <option value="attente">En attente de confirmation</option>
+              <option value="confirmee">Confirmées</option>
+              <option value="prete">Prêtes</option>
+              <option value="terminees">Récupérées et annulées</option>
+              <option value="toutes">Toutes</option>
+            </select>
+          </div>
+          <button type="button" class="btn btn-ghost btn-small" id="ordersRefresh">Actualiser</button>
+        </div>
+
+        <p class="orders-compte" id="ordersCompte"></p>
+        <div id="ordersList" class="orders-list"></div>
       </div>
     </section>
 

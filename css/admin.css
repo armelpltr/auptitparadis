@@ -384,6 +384,68 @@
 
 .noel-item-save{ display:flex; justify-content:flex-end; }
 
+/* ---------- Commandes ---------- */
+.orders-barre{
+  display:grid; grid-template-columns:1fr 1fr auto; gap:1.2rem; align-items:end;
+  margin-bottom:.6rem;
+}
+.orders-barre .form-row{ margin-bottom:0; }
+.orders-compte{ font-size:.82rem; color:var(--ink-soft); margin:0 0 1.2rem; }
+
+.orders-list{ display:flex; flex-direction:column; gap:1rem; }
+
+.cmd-carte{
+  border:1px solid var(--sand); border-left-width:4px; border-radius:10px;
+  padding:1.1rem 1.3rem 1rem; background:var(--white);
+}
+.cmd-carte.statut-en_attente{ border-left-color:var(--gold); }
+.cmd-carte.statut-confirmee{ border-left-color:#3f9142; }
+.cmd-carte.statut-prete{ border-left-color:var(--sea); }
+.cmd-carte.statut-recuperee{ border-left-color:var(--sand); opacity:.7; }
+.cmd-carte.statut-annulee{ border-left-color:#a13a25; opacity:.6; }
+/* Une commande oubliée doit sauter aux yeux dans une liste longue. */
+.cmd-carte.is-alerte{ background:#fdf6e9; border-left-color:#c0563f; }
+
+.cmd-header{
+  display:flex; align-items:center; gap:.9rem; flex-wrap:wrap;
+  margin-bottom:.8rem;
+}
+.cmd-code{
+  font-family:var(--font-display); font-size:1.35rem; font-weight:700;
+  letter-spacing:.14em; color:var(--gold-deep);
+}
+.cmd-statut{
+  font-size:.75rem; font-weight:700; text-transform:uppercase; letter-spacing:.08em;
+  color:var(--ink-soft); border:1px solid var(--sand); border-radius:999px; padding:.22em .8em;
+}
+.cmd-retrait{ margin-left:auto; font-size:.88rem; font-weight:600; color:var(--ink); }
+
+.cmd-alerte{
+  margin:0 0 .8rem; font-size:.84rem; font-weight:600; color:#a13a25;
+}
+
+.cmd-client{ display:flex; gap:1.2rem; flex-wrap:wrap; align-items:baseline; margin-bottom:.8rem; }
+.cmd-client strong{ font-size:.98rem; }
+.cmd-client a{ font-size:.9rem; color:var(--gold-deep); }
+
+.cmd-lignes{ margin:0 0 .6rem; font-size:.92rem; }
+.cmd-lignes li{
+  display:flex; gap:.5rem; align-items:baseline;
+  padding:.28rem 0; border-bottom:1px solid var(--sand);
+}
+.cmd-qte{ font-weight:700; color:var(--gold-deep); }
+.cmd-ligne-prix{ margin-left:auto; color:var(--ink-soft); white-space:nowrap; }
+
+.cmd-total{ margin:0 0 .6rem; font-size:.88rem; color:var(--ink-soft); }
+.cmd-total strong{ font-size:1.05rem; color:var(--ink); margin-left:.4rem; }
+
+.cmd-commentaire{
+  margin:0 0 .9rem; padding:.6rem .9rem; background:var(--sand);
+  border-radius:6px; font-size:.88rem; font-style:italic;
+}
+
+.cmd-actions{ display:flex; gap:.7rem; justify-content:flex-end; flex-wrap:wrap; }
+
 @media (max-width: 720px){
   .form-row-grid, .template-grid{ grid-template-columns:1fr; }
 
@@ -395,6 +457,16 @@
   .noel-item-header h3{ flex-basis:100%; }
   .noel-dispo{ flex:1; text-align:center; }
   .noel-item-save .btn{ width:100%; }
+
+  /* Commandes : la barre de filtres s'empile, les cartes passent en pleine
+     largeur — le panel se consulte au comptoir, sur téléphone. */
+  .orders-barre{ grid-template-columns:1fr; gap:.9rem; }
+  .orders-barre .btn{ width:100%; }
+  .cmd-carte{ padding:1rem 1rem .9rem; }
+  .cmd-header{ gap:.6rem; }
+  .cmd-retrait{ margin-left:0; flex-basis:100%; }
+  .cmd-client{ flex-direction:column; gap:.25rem; }
+  .cmd-actions .btn{ flex:1; }
   .hour-row{ grid-template-columns:1fr 1fr; }
   .hour-row > .row-remove{ grid-column:span 2; width:100%; border-radius:6px; }
 

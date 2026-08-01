@@ -1,0 +1,185 @@
+// ============================================================
+// ONGLET COMMANDES — suivi des réservations de Noël
+//
+// Les commandes sont écrites par le Worker ; le panel les lit et fait
+// avancer leur statut. Le tri se fait sur la date de retrait : c'est
+// l'ordre dans lequel le travail arrive en boutique.
+// ============================================================
+
+import { db } from "../firebase-config.js";
+import {
+  doc, collection, getDocs, updateDoc
+} from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+import { confirmDialog, showStatus, escapeAttr } from "./ui.js";
+
+/* Une commande non confirmée depuis plus de ce délai est signalée : le
+   patron décide au cas par cas, mais il faut d'abord qu'il la voie. */
+const JOURS_AVANT_ALERTE = 3;
+
+const STATUTS = {
+  en_attente: { label: 'En attente',  suivant: 'confirmee', actionSuivante: 'Confirmer' },
+  confirmee:  { label: 'Confirmée',   suivant: 'prete',     actionSuivante: 'Marquer prête' },
+  prete:      { label: 'Prête',       suivant: 'recuperee', actionSuivante: 'Marquer récupérée' },
+  recuperee:  { label: 'Récupérée',   suivant: null,        actionSuivante: null },
+  annulee:    { label: 'Annulée',     suivant: null,        actionSuivante: null }
+};
+
+/* Regroupements du filtre. « En cours » est le défaut : les commandes
+   récupérées et annulées n'appellent plus d'action. */
+const FILTRES = {
+  en_cours:  ['en_attente', 'confirmee', 'prete'],
+  attente:   ['en_attente'],
+  confirmee: ['confirmee'],
+  prete:     ['prete'],
+  terminees: ['recuperee', 'annulee'],
+  toutes:    Object.keys(STATUTS)
+};
+
+const euros = new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' });
+const jourLong = new Intl.DateTimeFormat('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
+
+let ordersCache = [];
+
+function toDate(v) {
+  if (!v) return null;
+  const d = v.toDate ? v.toDate() : new Date(v);
+  return Number.isNaN(d.getTime()) ? null : d;
+}
+
+function joursDepuis(date) {
+  if (!date) return 0;
+  return Math.floor((Date.now() - date.getTime()) / 86400000);
+}
+
+function fmtDateRetrait(iso) {
+  if (!iso) return 'date inconnue';
+  const d = new Date(`${iso}T12:00:00`);
+  return Number.isNaN(d.getTime()) ? iso : jourLong.format(d);
+}
+
+/* Le téléphone est stocké normalisé (0XXXXXXXXX) ; on le rend lisible. */
+function fmtTelephone(tel) {
+  const s = String(tel || '');
+  return /^0\d{9}$/.test(s) ? s.replace(/(\d{2})(?=\d)/g, '$1 ').trim() : s;
+}
+
+/* ---------- Chargement ---------- */
+export async function loadOrders() {
+  const list = document.getElementById('ordersList');
+  try {
+    const snap = await getDocs(collection(db, 'orders'));
+    ordersCache = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    // Tri côté client : croiser statut et date de retrait dans la requête
+    // réclamerait un index composite créé à la main dans la console.
+    ordersCache.sort((a, b) => String(a.dateRetrait || '').localeCompare(String(b.dateRetrait || '')));
+    renderOrders();
+  } catch (err) {
+    list.innerHTML = `<p class="empty-hint">Commandes illisibles : ${escapeAttr(err.message)}</p>`;
+  }
+}
+
+function renderOrders() {
+  const list = document.getElementById('ordersList');
+  const filtre = document.getElementById('ordersFiltre').value;
+  const recherche = document.getElementById('ordersRecherche').value.trim().toLowerCase();
+  const statutsVoulus = FILTRES[filtre] || FILTRES.toutes;
+
+  const visibles = ordersCache.filter(o => {
+    if (!statutsVoulus.includes(o.statut)) return false;
+    if (!recherche) return true;
+    return [o.code, o.client?.nom, o.client?.telephone]
+      .some(v => String(v || '').toLowerCase().includes(recherche));
+  });
+
+  document.getElementById('ordersCompte').textContent = visibles.length === 0
+    ? 'Aucune commande'
+    : `${visibles.length} commande${visibles.length > 1 ? 's' : ''}`;
+
+  if (!visibles.length) {
+    list.innerHTML = '<p class="empty-hint">Rien à afficher pour ce filtre.</p>';
+    return;
+  }
+
+  list.innerHTML = visibles.map(o => {
+    const statut = STATUTS[o.statut] || { label: o.statut || '—', suivant: null };
+    const attente = o.statut === 'en_attente' ? joursDepuis(toDate(o.createdAt)) : 0;
+    const alerte = attente >= JOURS_AVANT_ALERTE;
+
+    const lignes = (o.items || []).map(it => `
+      <li><span class="cmd-qte">${escapeAttr(it.quantite)}×</span> ${escapeAttr(it.nom)}
+        <span class="cmd-ligne-prix">${escapeAttr(euros.format((it.prixUnitaire || 0) * (it.quantite || 0)))}</span>
+      </li>`).join('');
+
+    return `
+      <article class="cmd-carte statut-${escapeAttr(o.statut || 'inconnu')} ${alerte ? 'is-alerte' : ''}" data-id="${escapeAttr(o.id)}">
+        <header class="cmd-header">
+          <span class="cmd-code">${escapeAttr(o.code || '——')}</span>
+          <span class="cmd-statut">${escapeAttr(statut.label)}</span>
+          <span class="cmd-retrait">Retrait ${escapeAttr(fmtDateRetrait(o.dateRetrait))}</span>
+        </header>
+
+        ${alerte ? `<p class="cmd-alerte">Non confirmée depuis ${attente} jour${attente > 1 ? 's' : ''}</p>` : ''}
+
+        <div class="cmd-client">
+          <strong>${escapeAttr(o.client?.nom || '(sans nom)')}</strong>
+          <a href="tel:${escapeAttr(o.client?.telephone || '')}">${escapeAttr(fmtTelephone(o.client?.telephone))}</a>
+          ${o.client?.email ? `<a href="mailto:${escapeAttr(o.client.email)}">${escapeAttr(o.client.email)}</a>` : ''}
+        </div>
+
+        <ul class="cmd-lignes">${lignes}</ul>
+        <p class="cmd-total">Total <strong>${escapeAttr(euros.format(o.total || 0))}</strong></p>
+
+        ${o.commentaire ? `<p class="cmd-commentaire">« ${escapeAttr(o.commentaire)} »</p>` : ''}
+
+        <div class="cmd-actions">
+          ${statut.suivant
+            ? `<button type="button" class="btn btn-primary btn-small" data-action="avancer">${escapeAttr(statut.actionSuivante)}</button>`
+            : ''}
+          ${['recuperee', 'annulee'].includes(o.statut)
+            ? ''
+            : '<button type="button" class="btn btn-ghost btn-small" data-action="annuler">Annuler</button>'}
+        </div>
+      </article>`;
+  }).join('');
+
+  list.querySelectorAll('.cmd-carte').forEach(carte => {
+    const id = carte.dataset.id;
+    carte.querySelector('[data-action="avancer"]')?.addEventListener('click', () => avancerStatut(id));
+    carte.querySelector('[data-action="annuler"]')?.addEventListener('click', () => annulerCommande(id));
+  });
+}
+
+/* ---------- Actions ---------- */
+async function changerStatut(id, statut) {
+  try {
+    await updateDoc(doc(db, 'orders', id), { statut });
+    await loadOrders();
+  } catch (err) {
+    showStatus('Changement de statut refusé : ' + err.message, true);
+  }
+}
+
+async function avancerStatut(id) {
+  const o = ordersCache.find(x => x.id === id);
+  const suivant = STATUTS[o?.statut]?.suivant;
+  if (!suivant) return;
+  await changerStatut(id, suivant);
+  showStatus(`Commande ${o.code || ''} — ${STATUTS[suivant].label.toLowerCase()}.`);
+}
+
+async function annulerCommande(id) {
+  const o = ordersCache.find(x => x.id === id);
+  const ok = await confirmDialog(
+    `Annuler la commande ${o?.code || ''} ?`,
+    `${o?.client?.nom || 'Le client'} ne sera pas prévenu automatiquement — pensez à l'appeler.`
+  );
+  if (!ok) return;
+  await changerStatut(id, 'annulee');
+}
+
+/* ---------- Câblage ---------- */
+export function initOrders() {
+  document.getElementById('ordersFiltre').addEventListener('change', renderOrders);
+  document.getElementById('ordersRecherche').addEventListener('input', renderOrders);
+  document.getElementById('ordersRefresh').addEventListener('click', loadOrders);
+}
