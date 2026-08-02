@@ -17,6 +17,19 @@ const DEFAULTS = {
     { title: 'Pâtisserie',         icon: 'pastry',   text: "Pur beurre, sans compromis — c'est la règle depuis le premier jour. Croissants feuilletés, tartes de saison, entremets : le genre de choses qu'on mange lentement, parce qu'on sait que ça ne dure pas." },
     { title: 'Glaces artisanales', icon: 'icecream', text: "En juillet, la file d'attente commence à 10h. On ne s'en plaint pas. Glaces et sorbets faits maison, aux fruits de saison — le meilleur alibi pour rester cinq minutes de plus à Luc-sur-Mer." }
   ],
+  /* Un seul article connu au moment de l'écriture. La date n'est pas
+     renseignée : actu.fr bloque la lecture automatique de ses pages, et
+     inventer une date de publication n'aurait servi personne. */
+  presse: {
+    articles: [{
+      titre: "Son métier n'avait rien à voir : Fabrice reprend une boulangerie-pâtisserie sur la Côte de Nacre",
+      media: 'actu.fr',
+      date: '',
+      url: 'https://actu.fr/normandie/luc-sur-mer_14384/son-metier-navait-rien-a-voir-fabrice-reprend-une-boulangerie-patisserie-sur-la-cote-de-nacre_64229309.html',
+      extrait: ''
+    }],
+    avis: []
+  },
   histoire: {
     title: "On se lève avant vous. Depuis longtemps.",
     text1: "Au P'tit Paradis, les journées commencent dans le noir. Pendant que Luc-sur-Mer dort encore, notre équipe pétrit, façonne, enfourne. Pas parce qu'on y est obligés — parce qu'un pain fait à la main et cuit à l'heure, c'est une chose qui a encore du sens.",
@@ -50,6 +63,76 @@ function collectHourRows() {
     day: row.querySelector('.hour-day').value.trim(),
     hours: row.querySelector('.hour-hours').value.trim()
   })).filter(r => r.day || r.hours);
+}
+
+/* ---------- « Ils parlent de nous » ---------- */
+/* Deux listes indépendantes, éditées en ligne : la sélection est éditoriale,
+   rien n'est récupéré automatiquement depuis Google ou la presse. */
+
+function addPresseArticleRow({ titre = '', media = '', date = '', url = '', extrait = '' } = {}) {
+  const list = document.getElementById('presseArticlesList');
+  const row = document.createElement('div');
+  row.className = 'card-item-edit presse-article-edit';
+  row.innerHTML = `
+    <button type="button" class="row-remove" title="Retirer cet article">${SVG_X}</button>
+    <div class="form-row"><label>Titre de l'article</label><input type="text" class="pa-titre" value="${escapeAttr(titre)}"></div>
+    <div class="form-row-grid">
+      <div class="form-row"><label>Journal</label><input type="text" class="pa-media" placeholder="actu.fr, Ouest-France…" value="${escapeAttr(media)}"></div>
+      <div class="form-row"><label>Date</label><input type="text" class="pa-date" placeholder="mars 2026" value="${escapeAttr(date)}"></div>
+    </div>
+    <div class="form-row"><label>Lien vers l'article</label><input type="text" class="pa-url" placeholder="https://…" value="${escapeAttr(url)}"></div>
+    <div class="form-row"><label>Extrait cité (optionnel)</label><textarea class="pa-extrait" rows="2">${escapeAttr(extrait)}</textarea></div>
+  `;
+  row.querySelector('.row-remove').addEventListener('click', () => row.remove());
+  list.appendChild(row);
+}
+
+function addPresseAvisRow({ auteur = '', note = 5, texte = '', date = '' } = {}) {
+  const list = document.getElementById('presseAvisList');
+  const row = document.createElement('div');
+  row.className = 'card-item-edit presse-avis-edit';
+  row.innerHTML = `
+    <button type="button" class="row-remove" title="Retirer cet avis">${SVG_X}</button>
+    <div class="form-row-grid">
+      <div class="form-row"><label>Nom affiché</label><input type="text" class="av-auteur" placeholder="Marie L." value="${escapeAttr(auteur)}"></div>
+      <div class="form-row">
+        <label>Note</label>
+        <select class="av-note">
+          ${[5, 4, 3, 2, 1].map(n => `<option value="${n}" ${Number(note) === n ? 'selected' : ''}>${n} étoile${n > 1 ? 's' : ''}</option>`).join('')}
+        </select>
+      </div>
+    </div>
+    <div class="form-row"><label>Avis</label><textarea class="av-texte" rows="3" placeholder="Collez ici le texte de l'avis Google">${escapeAttr(texte)}</textarea></div>
+    <div class="form-row"><label>Date (optionnel)</label><input type="text" class="av-date" placeholder="janvier 2026" value="${escapeAttr(date)}"></div>
+  `;
+  row.querySelector('.row-remove').addEventListener('click', () => row.remove());
+  list.appendChild(row);
+}
+
+function collectPresse() {
+  const articles = Array.from(document.querySelectorAll('#presseArticlesList .presse-article-edit')).map(r => ({
+    titre:   r.querySelector('.pa-titre').value.trim(),
+    media:   r.querySelector('.pa-media').value.trim(),
+    date:    r.querySelector('.pa-date').value.trim(),
+    url:     r.querySelector('.pa-url').value.trim(),
+    extrait: r.querySelector('.pa-extrait').value.trim()
+  })).filter(a => a.titre);
+
+  const avis = Array.from(document.querySelectorAll('#presseAvisList .presse-avis-edit')).map(r => ({
+    auteur: r.querySelector('.av-auteur').value.trim(),
+    note:   Number(r.querySelector('.av-note').value) || 5,
+    texte:  r.querySelector('.av-texte').value.trim(),
+    date:   r.querySelector('.av-date').value.trim()
+  })).filter(a => a.texte);
+
+  return { articles, avis };
+}
+
+function renderPresse(p) {
+  document.getElementById('presseArticlesList').innerHTML = '';
+  document.getElementById('presseAvisList').innerHTML = '';
+  (p.articles || []).forEach(addPresseArticleRow);
+  (p.avis || []).forEach(addPresseAvisRow);
 }
 
 /* ---------- Spécialités et leurs produits vedettes ---------- */
@@ -150,6 +233,7 @@ export async function loadSettings() {
   setVal('set-histoire-text2', DEFAULTS.histoire.text2);
 
   specState = DEFAULTS.specialites.map(s => ({ ...s, produits: [] }));
+  renderPresse(DEFAULTS.presse);
 
   const container = document.getElementById('hoursRowsContainer');
   container.innerHTML = '';
@@ -170,6 +254,9 @@ export async function loadSettings() {
         produits: Array.isArray(item.produits) ? item.produits : []
       }));
     }
+
+    // Présent mais vide = tout a été retiré volontairement, on le respecte.
+    if (s.presse) renderPresse(s.presse);
 
     if (s.histoire) {
       if (s.histoire.title)    setVal('set-histoire-title',    s.histoire.title);
@@ -226,6 +313,10 @@ const SETTINGS_SECTIONS = {
         produits: collectSpecProduitsForIndex(i)
       }))
     })
+  },
+  presse: {
+    label: '« Ils parlent de nous »',
+    collect: () => ({ presse: collectPresse() })
   },
   histoire: {
     label: '« Notre histoire »',
@@ -294,13 +385,16 @@ export function initSettings() {
 
   document.getElementById('addHourRow').addEventListener('click', () => addHourRowEl());
 
+  document.getElementById('addPresseArticle').addEventListener('click', () => addPresseArticleRow());
+  document.getElementById('addPresseAvis').addEventListener('click', () => addPresseAvisRow());
+
   // Capture : attrape aussi les champs créés après coup (fiches, produits, uploads)
   const panel = document.getElementById('panel-settings');
   panel.addEventListener('input', markDirty, true);
   panel.addEventListener('change', markDirty, true);
   panel.addEventListener('click', (e) => {
     // Ajout/suppression de fiche, de produit ou de ligne d'horaire
-    if (e.target.closest('#addSpecBtn, #addHourRow, .add-spec-produit, .row-remove')) markDirty();
+    if (e.target.closest('#addSpecBtn, #addHourRow, #addPresseArticle, #addPresseAvis, .add-spec-produit, .row-remove')) markDirty();
   });
 
   // Dernier filet si l'onglet est fermé ou la page rechargée

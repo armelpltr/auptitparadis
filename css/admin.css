@@ -342,6 +342,16 @@
   .upload-ring-fill{ transition:none; }
 }
 
+/* ---------- Sous-titre dans une carte ---------- */
+.admin-subtitle{
+  font-size:.82rem; font-weight:700; text-transform:uppercase; letter-spacing:.08em;
+  color:var(--ink-soft); margin:1.8rem 0 .9rem;
+}
+.admin-subtitle:first-of-type{ margin-top:.4rem; }
+/* Le sous-titre suit un bouton « + Ajouter » : sans ce recul les deux blocs
+   se touchent et l'on ne sait plus à quelle liste appartient le bouton. */
+.admin-card-hint + #presseAvisList{ margin-top:-.6rem; }
+
 /* ---------- Actions en bas de carte ---------- */
 .card-actions{ display:flex; justify-content:flex-end; gap:.8rem; }
 

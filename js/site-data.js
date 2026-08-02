@@ -132,6 +132,8 @@ function applySettings(s) {
     }
   }
 
+  if (s.presse) applyPresse(s.presse);
+
   if (s.histoire) {
     setText('histoireTitle', s.histoire.title);
     setText('histoireText1', s.histoire.text1);
@@ -204,6 +206,65 @@ function applySettings(s) {
   }
 
   setText('contactIntro', s.contactIntro);
+}
+
+/* ---------- « Ils parlent de nous » ---------- */
+/* Articles de presse et avis Google, choisis un par un depuis le panel.
+   Rien n'est récupéré automatiquement : la sélection est éditoriale. */
+
+const LIEN_EXTERNE_SVG =
+  '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 17 7M9 7h8v8"/></svg>';
+
+function etoiles(note) {
+  const n = Math.max(0, Math.min(5, Math.round(Number(note) || 0)));
+  return '★'.repeat(n) + '☆'.repeat(5 - n);
+}
+
+function renderArticlePresse(a) {
+  const url = safeUrl(a.url);
+  const dedans = `
+    ${a.media ? `<span class="presse-media">${escapeHTML(a.media)}</span>` : ''}
+    <h3>${escapeHTML(a.titre || '')}</h3>
+    ${a.extrait ? `<p class="presse-extrait">« ${escapeHTML(a.extrait)} »</p>` : ''}
+    ${a.date ? `<p class="presse-date">${escapeHTML(a.date)}</p>` : ''}
+    ${url ? `<span class="presse-lire">Lire l'article ${LIEN_EXTERNE_SVG}</span>` : ''}`;
+
+  // Sans lien valide, la carte reste lisible mais cesse d'être cliquable :
+  // un <a href=""> rechargerait la page d'accueil.
+  return url
+    ? `<a class="presse-article" href="${escapeHTML(url)}" target="_blank" rel="noopener">${dedans}</a>`
+    : `<article class="presse-article">${dedans}</article>`;
+}
+
+function renderAvis(av) {
+  return `
+    <figure class="avis-carte">
+      <div class="avis-etoiles" aria-label="${escapeHTML(Math.round(Number(av.note) || 0))} sur 5">${etoiles(av.note)}</div>
+      <blockquote>${escapeHTML(av.texte || '')}</blockquote>
+      <figcaption>${escapeHTML(av.auteur || 'Client')}${
+        av.date ? ` <span class="avis-source">· ${escapeHTML(av.date)}</span>` : ''
+      }</figcaption>
+    </figure>`;
+}
+
+function applyPresse(p) {
+  const section  = document.getElementById('presse');
+  const articles = document.getElementById('presseArticles');
+  const avis     = document.getElementById('presseAvis');
+  if (!section || !articles || !avis) return;
+
+  const listeArticles = (Array.isArray(p.articles) ? p.articles : []).filter(a => a.titre);
+  const listeAvis     = (Array.isArray(p.avis)     ? p.avis     : []).filter(a => a.texte);
+
+  articles.innerHTML = listeArticles.map(renderArticlePresse).join('');
+  avis.innerHTML     = listeAvis.map(renderAvis).join('');
+
+  // Plus rien à montrer : la section disparaît, et le séparateur qui la suit
+  // avec elle — son dégradé partirait sinon d'une couleur devenue absente.
+  const vide = !listeArticles.length && !listeAvis.length;
+  section.hidden = vide;
+  const separateur = section.nextElementSibling;
+  if (separateur && separateur.classList.contains('divider')) separateur.hidden = vide;
 }
 
 /* ---------- Rendu des blocs dynamiques ---------- */

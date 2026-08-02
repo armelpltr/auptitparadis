@@ -261,7 +261,8 @@ p{ margin:0 0 1em; color:var(--ink-soft); }
 .divider-flip svg{ animation-duration:5.5s; animation-delay:-2s; }
 
 /* Dégradés inter-sections — couleurs inversées pour les .divider-flip */
-.hero       + .divider{ background:linear-gradient(to bottom, var(--cream), var(--cream)); }
+.hero       + .divider{ background:linear-gradient(to bottom, var(--cream), var(--sand)); }
+.presse     + .divider{ background:linear-gradient(to bottom, var(--sand),  var(--cream)); }
 .specialites + .divider{ background:linear-gradient(to bottom, var(--sand),  var(--cream)); }
 .histoire    + .divider{ background:linear-gradient(to bottom, var(--sand),  var(--sea-pale)); }
 .horaires    + .divider{ background:linear-gradient(to bottom, var(--white), var(--sea-pale)); }
@@ -628,6 +629,74 @@ p{ margin:0 0 1em; color:var(--ink-soft); }
 .ma-route:active{ background:var(--ink); color:var(--cream); }
 
 /* =========================================================
+   Ils parlent de nous (presse + avis choisis à la main)
+   ========================================================= */
+.presse{ background:var(--sand); }
+.presse .section-inner{ padding-top:4.5rem; padding-bottom:4.5rem; }
+
+/* --- Articles de presse --- */
+.presse-articles{
+  display:grid; grid-template-columns:repeat(auto-fit, minmax(300px, 1fr));
+  gap:1.4rem; margin-top:2.2rem;
+}
+.presse-article{
+  display:flex; flex-direction:column; gap:.7rem;
+  background:var(--white); border-radius:12px; padding:1.5rem 1.6rem;
+  box-shadow:0 14px 30px -24px rgba(33,28,23,.5);
+  transition:transform .28s var(--ease), box-shadow .28s var(--ease);
+}
+.presse-article:hover{
+  transform:translateY(-3px);
+  box-shadow:0 22px 40px -26px rgba(33,28,23,.55);
+}
+.presse-media{
+  align-self:flex-start;
+  font-size:.7rem; font-weight:700; letter-spacing:.14em; text-transform:uppercase;
+  color:var(--gold-deep); background:var(--sand);
+  border-radius:999px; padding:.3em .9em;
+}
+.presse-article h3{
+  font-size:1.12rem; line-height:1.35; margin:0;
+  /* Un titre de presse peut être long : il ne doit pas déborder de la carte */
+  overflow-wrap:anywhere;
+}
+.presse-extrait{ font-size:.93rem; font-style:italic; margin:0; }
+.presse-date{ font-size:.8rem; color:var(--ink-soft); margin:0; }
+.presse-lire{
+  margin-top:auto; display:inline-flex; align-items:center; gap:.4rem;
+  font-size:.85rem; font-weight:600; color:var(--gold-deep);
+}
+.presse-lire svg{
+  width:14px; height:14px; fill:none; stroke:currentColor;
+  stroke-width:2; stroke-linecap:round; stroke-linejoin:round;
+  transition:transform .25s var(--ease);
+}
+.presse-article:hover .presse-lire svg{ transform:translate(2px,-2px); }
+
+/* --- Avis Google choisis --- */
+.presse-avis{
+  display:grid; grid-template-columns:repeat(auto-fit, minmax(270px, 1fr));
+  gap:1.4rem; margin-top:1.4rem;
+}
+/* Vide tant qu'aucun avis n'est sélectionné : pas de marge fantôme */
+.presse-avis:empty{ display:none; }
+
+.avis-carte{
+  margin:0; background:var(--white); border-radius:12px; padding:1.5rem 1.6rem;
+  box-shadow:0 14px 30px -24px rgba(33,28,23,.5);
+  display:flex; flex-direction:column; gap:.8rem;
+}
+.avis-etoiles{ color:var(--gold); font-size:1rem; letter-spacing:.12em; }
+.avis-carte blockquote{
+  margin:0; font-size:.96rem; line-height:1.6; color:var(--ink-soft);
+  overflow-wrap:anywhere;
+}
+.avis-carte figcaption{
+  margin-top:auto; font-size:.85rem; font-weight:600; color:var(--ink);
+}
+.avis-source{ font-weight:400; color:var(--ink-soft); }
+
+/* =========================================================
    Responsive
    ========================================================= */
 @media (max-width: 900px){
@@ -655,6 +724,11 @@ p{ margin:0 0 1em; color:var(--ink-soft); }
   .cards{ grid-template-columns:1fr; }
   /* Une seule colonne : plus de milieu où centrer */
   .cards > .card:last-child:nth-child(3n+1){ grid-column:auto; }
+  /* Presse et avis : une colonne, cartes un peu plus serrées */
+  .presse-articles, .presse-avis{ grid-template-columns:1fr; gap:1.1rem; }
+  .presse .section-inner{ padding-top:3.4rem; padding-bottom:3.4rem; }
+  .presse-article, .avis-carte{ padding:1.25rem 1.3rem; }
+  .presse-article h3{ font-size:1.05rem; }
   /* 2 colonnes gardées pour nav + horaires : plus compact qu'un empilement total */
   .footer-top{ padding:1.8rem 1.5rem 2.4rem; }
   .footer-grid{ grid-template-columns:1fr 1fr; gap:2rem 1.5rem; }
