@@ -44,6 +44,9 @@ export async function loadNoel() {
     setVal('noel-dateDebut', s.dateDebut || '');
     setVal('noel-dateFin',   s.dateFin   || '');
     setVal('noel-message',   s.message   || '');
+    // Réglage absent = pas d'annulation en ligne : c'est l'état des
+    // commandes déjà passées avant l'ajout de cette option.
+    setVal('noel-delaiAnnulation', String(s.delaiAnnulationJours ?? 0));
   } catch (err) {
     showStatus('Période de retrait illisible : ' + err.message, true);
   }
@@ -232,17 +235,29 @@ export function initNoel() {
       return;
     }
 
+    /* Le champ est libre : une valeur négative ou farfelue ne doit pas
+       partir en base, où le Worker devrait la rattraper. */
+    const delaiBrut = Number(val('noel-delaiAnnulation'));
+    if (!Number.isInteger(delaiBrut) || delaiBrut < 0 || delaiBrut > 60) {
+      showStatus("Le délai d'annulation doit être un nombre de jours entre 0 et 60.", true);
+      return;
+    }
+
     const ok = await confirmDialog(
       ouvert ? 'Ouvrir les commandes de Noël ?' : 'Fermer les commandes de Noël ?',
-      ouvert
+      (ouvert
         ? 'La page « Commander » acceptera les réservations dès maintenant.'
-        : 'La page « Commander » restera visible mais n\'acceptera plus de réservation.'
+        : 'La page « Commander » restera visible mais n\'acceptera plus de réservation.') +
+      // La date limite est gravée dans chaque commande au moment où elle est
+      // passée : changer le délai ne touche que les suivantes.
+      ' Le délai d\'annulation ne s\'applique qu\'aux commandes à venir, pas à celles déjà passées.'
     );
     if (!ok) return;
 
     try {
       await setDoc(doc(db, 'settings', 'noel'), {
-        ouvert, dateDebut: debut, dateFin: fin, message: val('noel-message')
+        ouvert, dateDebut: debut, dateFin: fin, message: val('noel-message'),
+        delaiAnnulationJours: delaiBrut
       }, { merge: true });
       await showSuccess('Période enregistrée ✓', 'La page de commande est à jour.');
     } catch (err) {

@@ -51,6 +51,15 @@ function joursDepuis(date) {
   return Math.floor((Date.now() - date.getTime()) / 86400000);
 }
 
+/* Une annulation se lit à l'heure près : savoir qu'elle est tombée ce matin
+   ou il y a trois jours ne se déduit pas d'une date seule. */
+function fmtMoment(date) {
+  if (!date) return '';
+  return date.toLocaleString('fr-FR', {
+    day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit'
+  });
+}
+
 function fmtDateRetrait(iso) {
   if (!iso) return 'date inconnue';
   const d = new Date(`${iso}T12:00:00`);
@@ -127,6 +136,9 @@ function renderOrders() {
         </header>
 
         ${alerte ? `<p class="cmd-alerte">Non confirmée depuis ${attente} jour${attente > 1 ? 's' : ''}</p>` : ''}
+        ${o.annuleePar === 'client'
+          ? `<p class="cmd-annulee-client">Annulée par le client${o.annuleeLe ? `, ${fmtMoment(toDate(o.annuleeLe))}` : ''} — rien à faire</p>`
+          : ''}
 
         <div class="cmd-client">
           <strong>${escapeAttr(nomClient(o.client))}</strong>

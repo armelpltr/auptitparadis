@@ -265,6 +265,20 @@
         </div>
 
         <div class="form-row">
+          <label for="noel-delaiAnnulation">Délai d'annulation en ligne</label>
+          <div class="form-row-suffixe">
+            <input type="number" id="noel-delaiAnnulation" min="0" max="60" step="1" placeholder="1">
+            <span>jour(s) après la commande</span>
+          </div>
+          <p class="form-row-hint">
+            Le client reçoit dans son e-mail de confirmation un lien pour annuler lui-même,
+            valable pendant ce délai. L'annulation reste impossible à partir du jour de retrait,
+            même si le délai court encore. <strong>0 = pas d'annulation en ligne</strong> :
+            aucun lien n'est envoyé, le client doit appeler.
+          </p>
+        </div>
+
+        <div class="form-row">
           <label for="noel-message">Message affiché en haut de la page (optionnel)</label>
           <textarea id="noel-message" rows="2" placeholder="ex. Commandes jusqu'au 18 décembre, retrait en boutique."></textarea>
         </div>

@@ -448,6 +448,20 @@
 .cmd-alerte{
   margin:0 0 .8rem; font-size:.84rem; font-weight:600; color:#a13a25;
 }
+/* Annulation venue du client : signalée en vert plutôt qu'en rouge. Rien
+   n'a échoué, et il n'y a rien à corriger — juste à ne pas préparer. */
+.cmd-annulee-client{
+  margin:0 0 .8rem; font-size:.84rem; font-weight:600; color:#2f6b45;
+}
+
+/* Champ chiffré suivi de son unité, sur une seule ligne */
+.form-row-suffixe{ display:flex; align-items:center; gap:.6rem; }
+.form-row-suffixe input{ width:6.5rem; flex-shrink:0; }
+.form-row-suffixe span{ font-size:.9rem; color:var(--ink-soft); }
+.form-row-hint{
+  margin:.5rem 0 0; font-size:.83rem; line-height:1.5;
+  color:var(--ink-soft);
+}
 
 .cmd-client{ display:flex; gap:1.2rem; flex-wrap:wrap; align-items:baseline; margin-bottom:.8rem; }
 .cmd-client strong{ font-size:.98rem; }

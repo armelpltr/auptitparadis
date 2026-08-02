@@ -24,6 +24,10 @@ const MAX_LIGNES        = 10;   // produits distincts dans une même commande
 const MAX_QUANTITE      = 20;   // exemplaires d'un même produit
 const FENETRE_DOUBLON_H = 24;   // au-delà, un même numéro peut recommander
 
+// Garde-fou sur le délai d'annulation saisi dans le panel : au-delà, la
+// valeur relève de la faute de frappe plus que du choix.
+const DELAI_ANNULATION_MAX_JOURS = 60;
+
 /* Alphabet sans O/0, I/1, S/5, B/8, Z/2 : le code est lu à voix haute au
    comptoir et recopié à la main. */
 const ALPHABET_CODE = 'ACDEFGHJKLMNPQRTUVWXY34679';
@@ -108,7 +112,37 @@ async function lirePeriode(env) {
   if (!s.dateDebut || !s.dateFin) {
     throw httpError("La période de retrait n'est pas encore définie.", 409);
   }
-  return { dateDebut: s.dateDebut, dateFin: s.dateFin };
+  return {
+    dateDebut: s.dateDebut,
+    dateFin: s.dateFin,
+    delaiAnnulationJours: normaliserDelai(s.delaiAnnulationJours)
+  };
+}
+
+/* Le réglage vient du panel : on le borne ici plutôt que de faire confiance
+   à ce qui est en base. 0 (ou absent) = pas d'annulation en ligne. */
+function normaliserDelai(v) {
+  const n = Number(v);
+  if (!Number.isFinite(n) || n <= 0) return 0;
+  return Math.min(Math.floor(n), DELAI_ANNULATION_MAX_JOURS);
+}
+
+/* La date limite est calculée à la commande et gravée dans le document,
+   pas recalculée à chaque lecture : le client a reçu une date par e-mail,
+   elle ne doit pas bouger si la boulangerie change son réglage ensuite. */
+function calculerLimiteAnnulation(delaiJours, dateRetrait, maintenant) {
+  if (!delaiJours) return null;
+
+  const parDelai = maintenant.getTime() + delaiJours * 86400000;
+  // Jamais au-delà du début du jour de retrait : une bûche annulée le matin
+  // même est déjà faite. La période de commande est en décembre, donc
+  // toujours en heure d'hiver — d'où le +01:00 en dur.
+  const debutRetrait = Date.parse(`${dateRetrait}T00:00:00+01:00`);
+
+  const limite = Math.min(parDelai, debutRetrait);
+  // Commande passée la veille au soir pour le lendemain : la limite serait
+  // déjà dépassée. Mieux vaut ne rien promettre.
+  return limite > maintenant.getTime() ? new Date(limite) : null;
 }
 
 /* ---------- Lignes de commande ---------- */
@@ -212,6 +246,17 @@ export async function handleOrder(request, env, cors) {
 
   const { lignes, total } = await construireLignes(body.items, env);
   const code = genererCode();
+  const maintenant = new Date();
+
+  /* Jeton de gestion : c'est lui, et lui seul, qui donne accès à la
+     commande depuis l'e-mail. Il ne sert pas à s'authentifier auprès de
+     Firestore — les règles y interdisent toujours toute lecture publique —
+     mais à retrouver la commande côté Worker. Un UUID v4 : 122 bits, hors
+     de portée d'une énumération. */
+  const manageToken = crypto.randomUUID();
+  const annulableJusqua = calculerLimiteAnnulation(
+    periode.delaiAnnulationJours, dateRetrait, maintenant
+  );
 
   const commande = {
     code,
@@ -220,10 +265,12 @@ export async function handleOrder(request, env, cors) {
     items: lignes,
     total,
     dateRetrait,
-    commentaire
+    commentaire,
+    manageToken,
+    annulableJusqua
   };
 
-  await firestoreCreate('orders', { ...commande, createdAt: new Date() }, env);
+  await firestoreCreate('orders', { ...commande, createdAt: maintenant }, env);
 
   // Après l'écriture, et sans pouvoir la remettre en cause : une commande
   // enregistrée dont l'e-mail échoue reste une commande valable.

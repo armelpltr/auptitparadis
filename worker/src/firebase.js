@@ -205,6 +205,24 @@ export async function firestoreCreate(collectionPath, data, env) {
 }
 
 /**
+ * Met à jour les seuls champs fournis. Sans `updateMask`, l'API REST
+ * remplace le document entier : une commande mise à jour sur son statut
+ * perdrait ses produits, son client et son total.
+ */
+export async function firestoreUpdate(path, data, env) {
+  const token = await getAccessToken(env);
+  const masque = Object.keys(data)
+    .map(k => `updateMask.fieldPaths=${encodeURIComponent(k)}`)
+    .join('&');
+  const res = await fetch(docsUrl(env, `/${path}?${masque}`), {
+    method: 'PATCH',
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ fields: toFirestoreFields(data) })
+  });
+  if (!res.ok) throw new Error(`Firestore update ${res.status}: ${await res.text()}`);
+}
+
+/**
  * Égalité sur un seul champ. Volontairement limité : dès qu'on croise deux
  * champs, Firestore réclame un index composite qu'il faut créer à la main
  * dans la console, et l'oubli ne se voit qu'en production.

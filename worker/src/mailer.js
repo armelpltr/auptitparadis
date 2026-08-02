@@ -22,6 +22,24 @@ function jourLisible(iso) {
   });
 }
 
+/* Date limite d'annulation : jour ET heure, parce qu'elle tombe rarement à
+   minuit. Forcée sur le fuseau de Paris — le Worker tourne en UTC, et une
+   limite affichée avec une heure de retard se retourne contre nous. */
+function momentLisible(iso) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '';
+  return d.toLocaleString('fr-FR', {
+    weekday: 'long', day: 'numeric', month: 'long',
+    hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Paris'
+  });
+}
+
+function lienGestion(commande, env) {
+  if (!env.SITE_URL || !commande.manageToken) return '';
+  return `${env.SITE_URL.replace(/\/+$/, '')}/ma-commande.html?t=${encodeURIComponent(commande.manageToken)}`;
+}
+
 /* Le nom du client et son commentaire finissent dans du HTML d'e-mail.
    Les clients de messagerie interprètent ce HTML : sans échappement, un
    nom contenant du balisage casserait la mise en page, au mieux. */
@@ -49,9 +67,31 @@ function lignesTexte(items) {
   ).join('\n');
 }
 
-function mailClient(commande) {
+function mailClient(commande, env) {
   const { code, client, items, total, dateRetrait } = commande;
   const jour = jourLisible(dateRetrait);
+
+  /* Le bloc de gestion ne s'affiche que si les deux conditions sont
+     réunies : une page où aller, et un délai encore ouvert. Annoncer un
+     lien d'annulation là où le délai est nul serait pire que se taire. */
+  const lien = lienGestion(commande, env);
+  const limite = commande.annulableJusqua ? momentLisible(commande.annulableJusqua) : '';
+  const gestionHtml = lien && limite ? `
+  <div style="border:1px solid #e7c79a;border-radius:10px;padding:16px;margin:0 0 20px;">
+    <p style="margin:0 0 8px;font-weight:bold;">Un empêchement ?</p>
+    <p style="margin:0 0 12px;color:#4a423a;">
+      Vous pouvez annuler cette réservation en ligne jusqu'au
+      <strong>${esc(limite)}</strong>.
+    </p>
+    <a href="${esc(lien)}" style="display:inline-block;background:#c8853a;color:#fff;text-decoration:none;padding:10px 18px;border-radius:4px;font-weight:bold;">
+      Gérer ma réservation
+    </a>
+  </div>` : '';
+  const gestionTexte = lien && limite ? `
+Un empêchement ? Vous pouvez annuler cette réservation en ligne jusqu'au
+${limite} :
+${lien}
+` : '';
 
   const html = `
 <div style="font-family:Helvetica,Arial,sans-serif;color:#211c17;max-width:520px;margin:0 auto;">
@@ -82,7 +122,7 @@ function mailClient(commande) {
     Présentez ce code pour la confirmer. Le règlement se fait sur place, au retrait —
     aucun paiement n'est demandé en ligne.
   </p>
-
+${gestionHtml}
   <p style="color:#4a423a;font-size:14px;margin:0;">
     À très vite,<br>Au P'tit Paradis — Luc-sur-Mer
   </p>
@@ -102,11 +142,88 @@ Total à régler en boutique : ${euros(total)}
 Votre réservation est acceptée sous réserve de votre passage en boutique.
 Présentez ce code pour la confirmer. Le règlement se fait sur place, au
 retrait — aucun paiement n'est demandé en ligne.
-
+${gestionTexte}
 À très vite,
 Au P'tit Paradis — Luc-sur-Mer`;
 
   return { sujet: `Votre réservation Au P'tit Paradis — code ${code}`, html, texte };
+}
+
+/* ---------- Annulation par le client ---------- */
+
+function mailClientAnnulation(commande) {
+  const { code, client, dateRetrait } = commande;
+
+  const html = `
+<div style="font-family:Helvetica,Arial,sans-serif;color:#211c17;max-width:520px;margin:0 auto;">
+  <h1 style="font-size:20px;margin:0 0 4px;">Votre réservation est annulée</h1>
+  <p style="color:#4a423a;margin:0 0 20px;">Bonjour ${esc(client.prenom || client.nom)},</p>
+
+  <p style="margin:0 0 16px;">
+    La réservation <strong>${esc(code)}</strong>, prévue pour le
+    ${esc(jourLisible(dateRetrait))}, a bien été annulée. Il n'y a rien
+    d'autre à faire de votre côté, et rien à régler.
+  </p>
+
+  <p style="margin:0 0 20px;color:#4a423a;">
+    C'était une erreur ? Repassez une réservation depuis le site tant que les
+    commandes sont ouvertes, ou appelez-nous.
+  </p>
+
+  <p style="color:#4a423a;font-size:14px;margin:0;">
+    À bientôt,<br>Au P'tit Paradis — Luc-sur-Mer
+  </p>
+</div>`;
+
+  const texte = `Votre réservation est annulée
+
+Bonjour ${client.prenom || client.nom},
+
+La réservation ${code}, prévue pour le ${jourLisible(dateRetrait)}, a bien
+été annulée. Il n'y a rien d'autre à faire de votre côté, et rien à régler.
+
+C'était une erreur ? Repassez une réservation depuis le site tant que les
+commandes sont ouvertes, ou appelez-nous.
+
+À bientôt,
+Au P'tit Paradis — Luc-sur-Mer`;
+
+  return { sujet: `Réservation annulée — ${code}`, html, texte };
+}
+
+function mailPatronAnnulation(commande) {
+  const { code, client, items, total, dateRetrait } = commande;
+  const nom = client.nomComplet || `${client.prenom} ${client.nom}`;
+
+  const html = `
+<div style="font-family:Helvetica,Arial,sans-serif;color:#211c17;max-width:520px;margin:0 auto;">
+  <h1 style="font-size:18px;margin:0 0 16px;">Réservation annulée par le client — ${esc(code)}</h1>
+  <p style="margin:0 0 4px;"><strong>${esc(nom)}</strong></p>
+  <p style="margin:0 0 4px;">${esc(client.telephone)} · ${esc(client.email)}</p>
+  <p style="margin:0 0 16px;"><strong>Retrait qui était prévu :</strong> ${esc(jourLisible(dateRetrait))}</p>
+  <table style="width:100%;border-collapse:collapse;">
+    ${lignesHtml(items)}
+    <tr>
+      <td style="padding:10px 0;font-weight:bold;">Total annulé</td>
+      <td style="padding:10px 0;text-align:right;font-weight:bold;">${esc(euros(total))}</td>
+    </tr>
+  </table>
+  <p style="color:#4a423a;font-size:13px;">La commande est déjà passée en « Annulée » dans le panel. Rien à faire.</p>
+</div>`;
+
+  const texte = `Réservation annulée par le client — ${code}
+
+${nom}
+${client.telephone} · ${client.email}
+Retrait qui était prévu : ${jourLisible(dateRetrait)}
+
+${lignesTexte(items)}
+
+Total annulé : ${euros(total)}
+
+La commande est déjà passée en « Annulée » dans le panel. Rien à faire.`;
+
+  return { sujet: `Commande annulée — ${nom} — ${dateRetrait}`, html, texte };
 }
 
 function mailPatron(commande) {
@@ -190,23 +307,38 @@ export async function envoyerConfirmation(commande, env) {
   // code à l'écran. On ne prétend simplement pas lui avoir écrit.
   if (!env.BREVO_API_KEY || !env.EMAIL_EXPEDITEUR) return false;
 
+  return diffuser(commande, mailClient(commande, env), mailPatron(commande), env);
+}
+
+/**
+ * Prévient le client que sa réservation est annulée, et les membres du
+ * panel abonnés aux alertes. Mêmes garanties que ci-dessus : ne lève
+ * jamais, l'annulation est déjà enregistrée.
+ */
+export async function envoyerAnnulation(commande, env) {
+  if (!env.BREVO_API_KEY || !env.EMAIL_EXPEDITEUR) return false;
+  return diffuser(commande, mailClientAnnulation(commande), mailPatronAnnulation(commande), env);
+}
+
+/* Un e-mail au client, un à chaque membre abonné. L'échec de l'un
+   n'empêche pas les autres : la boulangerie doit être prévenue même si
+   l'adresse du client rebondit. */
+async function diffuser(commande, pourClient, pourPatron, env) {
   let clientPrevenu = false;
   try {
-    const m = mailClient(commande);
     await envoyer({
       destinataire: commande.client.email,
       nomDestinataire: commande.client.nomComplet,
-      ...m
+      ...pourClient
     }, env);
     clientPrevenu = true;
   } catch (err) {
-    console.error('Confirmation client non envoyée :', err.message);
+    console.error('E-mail client non envoyé :', err.message);
   }
 
-  const alerte = mailPatron(commande);
   for (const destinataire of await destinatairesAlerte(env)) {
     try {
-      await envoyer({ destinataire, ...alerte }, env);
+      await envoyer({ destinataire, ...pourPatron }, env);
     } catch (err) {
       console.error(`Alerte non envoyée à ${destinataire} :`, err.message);
     }

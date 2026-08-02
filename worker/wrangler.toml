@@ -12,6 +12,12 @@ compatibility_date = "2024-09-23"
 ALLOWED_ORIGIN = "https://armelpltr.github.io"
 FIREBASE_PROJECT_ID = "au-ptit-paradis"
 
+# Base des liens envoyés par e-mail (« Gérer ma réservation »). Sans elle,
+# la confirmation part sans lien d'annulation : le client garde son code,
+# il ne peut simplement plus se décommander tout seul. À reprendre en même
+# temps que ALLOWED_ORIGIN le jour d'un domaine personnalisé.
+SITE_URL = "https://armelpltr.github.io/auptitparadis"
+
 # Confirmations de commande (Brevo). Tant que EMAIL_EXPEDITEUR est vide ou
 # que BREVO_API_KEY manque, aucun e-mail ne part : la commande est quand
 # même enregistrée, et la page ne prétend pas avoir écrit au client.

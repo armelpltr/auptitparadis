@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ma réservation — Au P'tit Paradis</title>
+<meta name="description" content="Consultez ou annulez votre réservation de Noël à la boulangerie Au P'tit Paradis, à Luc-sur-Mer.">
+
+<!-- Page atteinte depuis un lien d'e-mail portant un jeton : elle ne doit
+     pas être indexée, et le jeton ne doit pas partir dans un référent. -->
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+
+<meta http-equiv="Content-Security-Policy" content="
+  default-src 'self';
+  base-uri 'self';
+  object-src 'none';
+  form-action 'self';
+  script-src 'self' https://www.gstatic.com;
+  style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+  font-src 'self' https://fonts.gstatic.com data:;
+  img-src 'self' data: blob: https:;
+  connect-src 'self' https://firestore.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://www.googleapis.com https://auptitparadis-worker.armelpltr14-ad6.workers.dev;
+">
+
+<link rel="icon" href="assets/logo.jpg" type="image/jpeg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atma:wght@300;400;500;600;700&family=Jost:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+
+<!-- Habillage de Noël. Chargé ici, bloquant et avant le <body> : posé après
+     coup, le thème produirait un clignotement crème → rouge. -->
+<script src="js/theme.js"></script>
+</head>
+<body class="page-commander">
+
+<a class="skip-link" href="#main">Aller au contenu</a>
+
+<!-- ===================== HEADER ===================== -->
+<header class="site-header" id="top">
+  <div class="scroll-progress" aria-hidden="true"></div>
+
+  <div class="header-inner">
+    <a href="index.html" class="brand" aria-label="Au P'tit Paradis — Accueil">
+      <img src="assets/logo-header.png" alt="Au P'tit Paradis" class="brand-logo-header">
+    </a>
+
+    <div class="nav-right-group">
+      <nav class="main-nav" aria-label="Navigation principale">
+        <ul>
+          <li><a href="index.html#specialites">Nos spécialités</a></li>
+          <li><a href="index.html#histoire">Notre histoire</a></li>
+          <li><a href="index.html#horaires">Horaires &amp; accès</a></li>
+          <li><a href="commander.html" class="nav-cta">Commander</a></li>
+        </ul>
+      </nav>
+      <button class="nav-toggle" id="navToggle" aria-expanded="false" aria-controls="mobile-nav" aria-label="Ouvrir le menu">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </div>
+
+  <nav class="mobile-nav" id="mobile-nav" aria-label="Navigation mobile" aria-hidden="true">
+    <ul>
+      <li><a href="index.html#specialites">Nos spécialités</a></li>
+      <li><a href="index.html#histoire">Notre histoire</a></li>
+      <li><a href="index.html#horaires">Horaires &amp; accès</a></li>
+      <li><a href="commander.html" class="nav-cta">Commander</a></li>
+    </ul>
+  </nav>
+
+  <div class="header-rule" aria-hidden="true"></div>
+</header>
+
+<main id="main" class="commande-main">
+
+  <section class="commande-head">
+    <div class="section-inner">
+      <p class="eyebrow">Votre réservation</p>
+      <h1>Gérer ma réservation</h1>
+    </div>
+  </section>
+
+  <div class="divider" aria-hidden="true">
+    <svg viewBox="0 0 1200 80" preserveAspectRatio="none"><path d="M0,40 C100,40 200,10 400,45 C600,80 700,15 900,40 C1050,62 1150,38 1200,40" /></svg>
+  </div>
+
+  <section class="commande-body">
+    <div class="section-inner gestion-inner">
+
+      <!-- Trois états exclusifs : chargement, erreur, commande trouvée. -->
+      <p class="gestion-etat" id="gestionChargement">Chargement de votre réservation…</p>
+
+      <div class="gestion-erreur" id="gestionErreur" hidden>
+        <h2 id="gestionErreurTitre">Réservation introuvable</h2>
+        <p id="gestionErreurTexte"></p>
+        <p>
+          Vous pouvez nous appeler, on retrouvera votre commande avec votre nom
+          ou votre code de réservation.
+        </p>
+        <a href="index.html#horaires" class="btn btn-ghost">Nous contacter</a>
+      </div>
+
+      <article class="gestion-carte" id="gestionCarte" hidden>
+        <header class="gestion-carte-head">
+          <div>
+            <p class="gestion-label">Code de réservation</p>
+            <p class="gestion-code" id="gestionCode">——————</p>
+          </div>
+          <span class="gestion-statut" id="gestionStatut">En attente</span>
+        </header>
+
+        <p class="gestion-retrait">
+          <strong>Retrait :</strong> <span id="gestionRetrait"></span>
+        </p>
+
+        <ul class="gestion-lignes" id="gestionLignes"></ul>
+
+        <p class="gestion-total">
+          Total à régler en boutique <strong id="gestionTotal">0,00 €</strong>
+        </p>
+
+        <p class="gestion-commentaire" id="gestionCommentaire" hidden></p>
+
+        <!-- Annulation possible : le délai court encore -->
+        <div class="gestion-annulation" id="gestionAnnulation" hidden>
+          <p class="gestion-delai" id="gestionDelai"></p>
+          <button type="button" class="btn btn-ghost btn-annuler" id="btnAnnuler">
+            Annuler ma réservation
+          </button>
+          <p class="gestion-erreur-action" id="gestionErreurAction" hidden></p>
+        </div>
+
+        <!-- Annulation impossible : on dit pourquoi, et quoi faire à la place -->
+        <p class="gestion-impossible" id="gestionImpossible" hidden></p>
+      </article>
+
+      <div class="gestion-annulee" id="gestionAnnulee" hidden>
+        <h2>Votre réservation est annulée</h2>
+        <p>
+          C'est enregistré, il n'y a rien d'autre à faire et rien à régler.
+          Un e-mail de confirmation vient de vous être envoyé.
+        </p>
+        <a href="commander.html" class="btn btn-primary">Passer une nouvelle réservation</a>
+      </div>
+
+    </div>
+  </section>
+
+</main>
+
+<!-- ===================== FOOTER ===================== -->
+<footer class="site-footer">
+
+  <div class="footer-wave" aria-hidden="true">
+    <svg viewBox="0 0 1200 90" preserveAspectRatio="none">
+      <path d="M0,0 L1200,0 L1200,38 C1080,58 990,26 850,16 C700,5 610,30 450,54 C300,77 140,72 0,26 Z" />
+    </svg>
+  </div>
+
+  <div class="footer-top">
+    <div class="footer-grid">
+
+      <div class="footer-brand">
+        <a href="index.html" class="footer-brand-link">
+          <img src="assets/logo.jpg" alt="" class="footer-logo">
+          <span class="footer-brand-text">
+            <span class="footer-brand-name">Au P'tit Paradis</span>
+            <span class="footer-brand-tagline">Boulangerie · Pâtisserie · Glaces</span>
+          </span>
+        </a>
+        <p class="footer-brand-desc">Fait à Luc-sur-Mer, tous les matins, depuis longtemps.</p>
+        <div class="footer-socials">
+          <a href="#" class="footer-social-link" id="footerInstagram" aria-label="Instagram" target="_blank" rel="noopener">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="0.9" fill="currentColor" stroke="none"/></svg>
+          </a>
+          <a href="#" class="footer-social-link" id="footerFacebook" aria-label="Facebook" target="_blank" rel="noopener">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path class="solid" d="M15 8.5h-2c-.6 0-1 .4-1 1V12h3l-.4 3h-2.6v7h-3v-7H7v-3h2V9c0-2.2 1.8-4 4-4h2v3.5Z"/></svg>
+          </a>
+        </div>
+      </div>
+
+      <nav class="footer-col footer-nav" aria-label="Navigation secondaire">
+        <p class="footer-section-label">Le site</p>
+        <ul>
+          <li><a href="index.html#specialites">Nos spécialités</a></li>
+          <li><a href="index.html#histoire">Notre histoire</a></li>
+          <li><a href="index.html#horaires">Horaires &amp; accès</a></li>
+          <li><a href="commander.html">Commander</a></li>
+        </ul>
+      </nav>
+
+      <div class="footer-col footer-hours-col">
+        <p class="footer-section-label">Horaires</p>
+        <ul class="footer-hours" id="footerHours">
+          <li><span class="fh-day">Lundi</span><span class="fh-time">Fermé</span></li>
+          <li><span class="fh-day">Mardi — Vendredi</span><span class="fh-time">7h00 – 13h30 · 15h30 – 19h30</span></li>
+          <li><span class="fh-day">Samedi</span><span class="fh-time">7h00 – 19h30</span></li>
+          <li><span class="fh-day">Dimanche</span><span class="fh-time">7h00 – 13h30</span></li>
+        </ul>
+      </div>
+
+      <div class="footer-col footer-contact">
+        <p class="footer-section-label">Nous trouver</p>
+        <address>
+          <a class="footer-contact-line" id="footerMapsLink" href="https://www.google.com/maps/search/Au+P%27tit+Paradis+1+Place+Petit+Enfer+14530+Luc-sur-Mer" target="_blank" rel="noopener">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s7-5.4 7-11a7 7 0 1 0-14 0c0 5.6 7 11 7 11Z"/><circle cx="12" cy="10" r="2.6"/></svg>
+            <span id="footerAddress">1 Place du Petit Enfer<br>14530 Luc-sur-Mer</span>
+          </a>
+          <a class="footer-contact-line" id="footerPhoneLink" href="tel:+33000000000">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 3.5h3l1.5 4-2 1.4a12 12 0 0 0 5.1 5.1l1.4-2 4 1.5v3a2 2 0 0 1-2.2 2A16.5 16.5 0 0 1 4.5 5.7a2 2 0 0 1 2-2.2Z"/></svg>
+            <span id="footerPhoneText">02 00 00 00 00</span>
+          </a>
+          <a class="footer-contact-line" id="footerEmailLink" href="#" hidden>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="m3.7 6.8 8.3 6 8.3-6"/></svg>
+            <span id="footerEmailText"></span>
+          </a>
+        </address>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="footer-bottom">
+    <div class="footer-bottom-inner">
+      <p>&copy; <span id="year"></span> Au P'tit Paradis — Luc-sur-Mer. Tous droits réservés.</p>
+      <div class="footer-bottom-right">
+        <a href="mentions-legales.html" class="footer-admin-link">Mentions légales</a>
+        <a href="confidentialite.html" class="footer-admin-link">Confidentialité</a>
+        <a href="admin/" class="footer-admin-link">Espace admin</a>
+        <a href="#top" class="footer-top-link">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V5"/><path d="m5.5 11.5 6.5-6.5 6.5 6.5"/></svg>
+          Haut de page
+        </a>
+      </div>
+    </div>
+  </div>
+
+</footer>
+
+<script type="module" src="js/site-data.js"></script>
+<script src="js/script.js"></script>
+<script src="js/ma-commande.js"></script>
+</body>
+</html>

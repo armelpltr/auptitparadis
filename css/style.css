@@ -1372,6 +1372,85 @@ p{ margin:0 0 1em; color:var(--ink-soft); }
 }
 .succes-email[hidden]{ display:none; }
 
+/* =========================================================
+   Gérer ma réservation (ma-commande.html)
+   ========================================================= */
+.gestion-inner{ max-width:640px; }
+.gestion-etat{ text-align:center; color:var(--ink-soft); }
+
+.gestion-carte{
+  background:var(--white); border-radius:14px; padding:1.8rem 1.8rem 1.6rem;
+  box-shadow:0 10px 30px rgba(33,28,23,.07);
+}
+.gestion-carte-head{
+  display:flex; align-items:flex-start; justify-content:space-between;
+  gap:1rem; flex-wrap:wrap; margin-bottom:1.4rem;
+}
+.gestion-label{
+  margin:0 0 .2rem; font-size:.74rem; font-weight:700;
+  text-transform:uppercase; letter-spacing:.14em; color:var(--ink-soft);
+}
+.gestion-code{
+  margin:0; font-family:var(--font-display); font-size:2rem; font-weight:700;
+  letter-spacing:.18em; color:var(--gold-deep); user-select:all;
+}
+.gestion-statut{
+  padding:.35em .9em; border-radius:999px; background:var(--sand);
+  font-size:.8rem; font-weight:600; color:var(--ink); white-space:nowrap;
+}
+.gestion-statut.statut-annulee{ background:#f6e2de; color:#8c3423; }
+.gestion-statut.statut-recuperee{ background:#e4efe6; color:#2f6b45; }
+
+.gestion-retrait{ margin:0 0 1.2rem; color:var(--ink); }
+
+.gestion-lignes{ margin:0 0 1rem; }
+.gestion-lignes li{
+  display:flex; align-items:baseline; gap:.6rem;
+  padding:.6rem 0; border-bottom:1px solid var(--sand);
+}
+.gestion-qte{ font-weight:700; color:var(--gold-deep); flex-shrink:0; }
+.gestion-nom{ flex:1; }
+.gestion-ligne-prix{ white-space:nowrap; color:var(--ink-soft); }
+
+.gestion-total{
+  display:flex; justify-content:space-between; align-items:baseline;
+  gap:1rem; margin:0 0 1.2rem; font-weight:600;
+}
+.gestion-commentaire{
+  background:var(--sand); border-radius:8px; padding:.8rem 1rem;
+  font-style:italic; color:var(--ink-soft);
+}
+
+/* Bloc d'annulation : détaché du reste par un filet, pour qu'on ne clique
+   pas dessus en croyant valider quelque chose. */
+.gestion-annulation{ border-top:1px solid var(--sand); padding-top:1.2rem; }
+.gestion-delai{ margin:0 0 .9rem; font-size:.92rem; color:var(--ink-soft); }
+.btn-annuler{ border-color:#c0563f; color:#a13a25; }
+.btn-annuler:hover{ background:#a13a25; border-color:#a13a25; color:var(--white); }
+.btn-annuler:disabled{ opacity:.55; cursor:default; transform:none; }
+
+.gestion-impossible,
+.gestion-erreur-action{
+  margin:1.2rem 0 0; padding:.9rem 1.1rem; border-radius:8px;
+  background:#fbeae6; border-left:3px solid #c0563f; color:#8c3423;
+  font-size:.92rem;
+}
+.gestion-impossible[hidden],
+.gestion-erreur-action[hidden]{ display:none; }
+
+.gestion-erreur,
+.gestion-annulee{ text-align:center; }
+.gestion-annulee h2, .gestion-erreur h2{ margin-bottom:.6rem; }
+
+@media (max-width: 560px){
+  .gestion-carte{ padding:1.3rem 1.2rem; }
+  .gestion-code{ font-size:1.6rem; }
+  /* Le prix passe sous le nom du produit plutôt que de l'écraser */
+  .gestion-lignes li{ flex-wrap:wrap; }
+  .gestion-ligne-prix{ width:100%; padding-left:2rem; }
+  .btn-annuler{ width:100%; }
+}
+
 @media (max-width: 980px){
   .commande-grid{ grid-template-columns:1fr; gap:2.4rem; }
   /* Le panier n'a plus de colonne à suivre : il repasse dans le flux, sous
