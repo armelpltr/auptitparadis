@@ -877,11 +877,15 @@ p{ margin:0 0 1em; color:var(--ink-soft); }
    cadre et son rayon calculé pour que la courbe touche le haut aux deux
    bords de la tuile et plonge de 24 px au milieu — les arcs se raccordent
    donc bout à bout, sans cassure.
-   Le header descend de la hauteur de la guirlande : sans ça les ampoules
-   se poseraient en plein milieu du logo. */
-.theme-noel .site-header{ top:34px; }
+   La guirlande est accrochée SOUS la barre du menu, comme une vraie
+   guirlande sous une enseigne. Elle vit dans le header et se cale sur
+   `top:100%` : elle suit donc sa hauteur toute seule, y compris quand il
+   se resserre au défilement ou que le menu mobile se déplie. La version
+   précédente était fixée en haut de la fenêtre et forçait à descendre le
+   header, ce qui ouvrait au-dessus une bande transparente où la page
+   défilait à nu — une couture visible en travers de l'écran. */
 .noel-garland{
-  position:fixed; top:0; left:0; right:0; height:34px; z-index:101;
+  position:absolute; top:100%; left:0; right:0; height:34px;
   pointer-events:none; overflow:hidden;
 }
 .noel-garland::before{
@@ -1080,6 +1084,25 @@ p{ margin:0 0 1em; color:var(--ink-soft); }
   50%     { transform:scaleX(-1) translateY(0); }
 }
 
+/* ---- Ornements semés dans chaque section ---- */
+/* Sapins, cadeaux, sucres d'orge, houx et lutins, un par section, en
+   alternant les côtés. Ils se posent en bas, dans la marge latérale que
+   laisse `.section-inner` : sur un écran large ils ne croisent aucun
+   texte, et sur un écran étroit ils passent derrière (z-index 0 contre le
+   contenu qui reste au-dessus, cf. .noel-ornement + section-inner). */
+.theme-noel section,
+.theme-noel .site-footer{ position:relative; overflow:hidden; }
+.theme-noel .section-inner{ position:relative; z-index:1; }
+.noel-ornement{
+  position:absolute; bottom:0; width:88px; height:auto; z-index:0;
+  pointer-events:none;
+}
+.noel-ornement--g{ left:.8rem; }
+.noel-ornement--d{ right:.8rem; }
+/* Sucre d'orge et houx pendent du haut plutôt que de pousser du sol. */
+.noel-ornement--haut{ bottom:auto; top:0; }
+.theme-noel .site-footer .noel-ornement{ opacity:.55; }
+
 /* ---- Compte à rebours dans le hero ---- */
 .noel-countdown{
   display:inline-flex; align-items:center; gap:.5rem;
@@ -1105,7 +1128,6 @@ p{ margin:0 0 1em; color:var(--ink-soft); }
    faire sur batterie. */
 @media (max-width: 720px){
   .noel-snow-3{ display:none; }
-  .theme-noel .site-header{ top:26px; }
   .noel-garland{ height:26px; }
   .noel-garland::before{
     background-image:radial-gradient(circle 27.8px at 50% -9.8px,
@@ -1147,6 +1169,11 @@ p{ margin:0 0 1em; color:var(--ink-soft); }
   .noel-lutin-d{ right:1vw; }
   .noel-bonnet{ left:-10px; top:-12px; width:40px; }
   .site-header.is-scrolled .noel-bonnet{ width:34px; top:-9px; }
+  /* Les ornements de section n'ont plus de marge latérale où se loger :
+     ils rapetissent et s'effacent derrière le texte. */
+  .noel-ornement{ width:54px; opacity:.5; }
+  .noel-ornement--g{ left:.2rem; }
+  .noel-ornement--d{ right:.2rem; }
 }
 
 /* =========================================================

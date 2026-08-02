@@ -406,4 +406,8 @@ async function applyNoelTheme() {
   } catch (err) {
     console.warn('Aucune section dynamique chargée :', err.message);
   }
+
+  // Les sections qui viennent d'arriver n'existaient pas quand le décor de
+  // Noël s'est posé : elles réclament leur sapin.
+  if (typeof window.decoreSectionsNoel === 'function') window.decoreSectionsNoel();
 })();

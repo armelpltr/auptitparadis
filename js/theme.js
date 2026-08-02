@@ -34,12 +34,6 @@
     decor.id = DECOR_ID;
     decor.setAttribute('aria-hidden', 'true');
     decor.innerHTML =
-      '<div class="noel-garland">' +
-        '<span class="noel-bulbs noel-bulbs-1"></span>' +
-        '<span class="noel-bulbs noel-bulbs-2"></span>' +
-        '<span class="noel-bulbs noel-bulbs-3"></span>' +
-        '<span class="noel-bulbs noel-bulbs-4"></span>' +
-      '</div>' +
       '<div class="noel-snow">' +
         '<i class="noel-snow-1"></i>' +
         '<i class="noel-snow-2"></i>' +
@@ -47,8 +41,54 @@
       '</div>';
     document.body.appendChild(decor);
 
+    buildGuirlande();
+
     buildPersonnages();
+    buildOrnements();
     buildCountdown();
+  }
+
+  /* La guirlande se range dans le header, pas dans #noelDecor : accrochée
+     à `top:100%`, elle suit sa hauteur au défilement sans qu'on ait à la
+     recalculer. */
+  function buildGuirlande() {
+    var header = document.querySelector('.site-header');
+    if (!header || header.querySelector('.noel-garland')) return;
+    var g = document.createElement('div');
+    g.className = 'noel-garland';
+    g.setAttribute('aria-hidden', 'true');
+    g.innerHTML =
+      '<span class="noel-bulbs noel-bulbs-1"></span>' +
+      '<span class="noel-bulbs noel-bulbs-2"></span>' +
+      '<span class="noel-bulbs noel-bulbs-3"></span>' +
+      '<span class="noel-bulbs noel-bulbs-4"></span>';
+    header.appendChild(g);
+  }
+
+  /* Un ornement par section, en alternant les côtés. Le sucre d'orge et le
+     houx pendent du haut, le reste pousse du bas. */
+  var ORNEMENTS = [
+    { nom: 'sapin' },
+    { nom: 'cadeaux' },
+    { nom: 'canne', haut: true },
+    { nom: 'lutin' },
+    { nom: 'houx', haut: true }
+  ];
+
+  /* Toutes les sections, pas seulement celles de <main> : « Vos avis » est
+     en dehors, et les blocs pilotés depuis l'admin arrivent plus tard. */
+  function buildOrnements() {
+    var cibles = document.querySelectorAll('section, .site-footer');
+    var i = 0;
+    cibles.forEach(function (sec) {
+      // Le hero a déjà son traîneau et ses deux lutins.
+      if (sec.classList.contains('hero') || sec.querySelector(':scope > .noel-ornement')) return;
+      var o = ORNEMENTS[i % ORNEMENTS.length];
+      var classe = 'noel-ornement noel-ornement--' + (i % 2 ? 'd' : 'g') +
+                   (o.haut ? ' noel-ornement--haut' : '');
+      sec.appendChild(img('assets/noel/' + o.nom + '.svg', classe));
+      i++;
+    });
   }
 
   /* Père Noël, lutins et bonnet. Chacun est optionnel : les pages légales
@@ -82,7 +122,7 @@
     if (cd) cd.remove();
     // Les personnages vivent dans le header et le hero, pas dans #noelDecor :
     // ils se retirent un par un.
-    document.querySelectorAll('.noel-bonnet, .noel-traineau, .noel-lutin')
+    document.querySelectorAll('.noel-bonnet, .noel-traineau, .noel-lutin, .noel-ornement, .noel-garland')
       .forEach(function (el) { el.remove(); });
   }
 
@@ -132,6 +172,13 @@
   // Un navigateur en navigation privée peut refuser localStorage : le thème
   // s'appliquera simplement une fois Firestore chargé.
   try { apply(localStorage.getItem(KEY) === '1'); } catch (e) {}
+
+  /* Les sections pilotées depuis l'admin arrivent après ce script :
+     site-data.js rappelle ceci une fois qu'elles sont posées, pour qu'elles
+     reçoivent leur ornement elles aussi. */
+  window.decoreSectionsNoel = function () {
+    if (document.documentElement.classList.contains('theme-noel')) buildOrnements();
+  };
 
   window.setNoelTheme = function (on) {
     apply(on);
