@@ -159,9 +159,11 @@
           <input type="text" id="ordWebsite" name="website" tabindex="-1" autocomplete="off">
         </div>
 
-        <!-- Turnstile s'insère ici et dépose son jeton dans un champ caché -->
+        <!-- Turnstile s'insère ici et dépose son jeton dans un champ caché.
+             La clé publique n'est pas un secret : elle est lisible dans la
+             page. Son pendant secret vit dans le Worker. -->
         <div class="cf-turnstile commande-turnstile"
-             data-sitekey="1x00000000000000000000AA"
+             data-sitekey="0x4AAAAAAED7yI96qPuGBOUj"
              data-language="fr"
              data-appearance="interaction-only"></div>
 
