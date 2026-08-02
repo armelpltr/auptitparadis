@@ -111,10 +111,12 @@ p{ margin:0 0 1em; color:var(--ink-soft); }
 /* Brand — gauche */
 .brand{ display:flex; align-items:center; text-decoration:none; }
 .brand-logo-header{
-  height:54px; width:auto; object-fit:contain;
+  height:72px; width:auto; object-fit:contain;
   transition:height .4s var(--ease);
 }
-.site-header.is-scrolled .brand-logo-header{ height:34px; }
+/* Réduit une fois la page défilée, mais pas au point de devenir illisible :
+   le logo porte le nom de la boutique, il reste le seul repère en haut. */
+.site-header.is-scrolled .brand-logo-header{ height:46px; }
 
 /* Nav droite */
 .nav-right-group{ display:flex; align-items:center; }
@@ -868,7 +870,9 @@ p{ margin:0 0 1em; color:var(--ink-soft); }
   -webkit-backdrop-filter:blur(18px) saturate(1.6);
 }
 .page-commander .header-rule{ opacity:1; transform:scaleX(1); }
-.commande-main{ padding-top:5.5rem; }
+/* Doit suivre la hauteur du header, qui est en position fixe : logo + ses
+   marges. Un logo plus grand pousse d'autant le début du contenu. */
+.commande-main{ padding-top:7rem; }
 
 /* Lien « Commander » de la barre de navigation : c'est l'action de la page,
    elle se distingue des autres entrées. */
@@ -1069,7 +1073,11 @@ p{ margin:0 0 1em; color:var(--ink-soft); }
 }
 
 @media (max-width: 720px){
-  .commande-main{ padding-top:4.5rem; }
+  /* Le logo prend une part bien plus grande d'un écran étroit : il grandit,
+     mais moins qu'en desktop, sinon il chasse le bouton de menu. */
+  .brand-logo-header{ height:56px; }
+  .site-header.is-scrolled .brand-logo-header{ height:40px; }
+  .commande-main{ padding-top:5.8rem; }
   .produits-grid{ grid-template-columns:1fr; gap:1.1rem; }
   .produit-photo{ aspect-ratio:16/9; }
   .commande-panier{ padding:1.3rem 1.1rem; }
