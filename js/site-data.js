@@ -222,12 +222,16 @@ function etoiles(note) {
 
 function renderArticlePresse(a) {
   const url = safeUrl(a.url);
+  const image = safeUrl(a.imageUrl);
   const dedans = `
-    ${a.media ? `<span class="presse-media">${escapeHTML(a.media)}</span>` : ''}
-    <h3>${escapeHTML(a.titre || '')}</h3>
-    ${a.extrait ? `<p class="presse-extrait">« ${escapeHTML(a.extrait)} »</p>` : ''}
-    ${a.date ? `<p class="presse-date">${escapeHTML(a.date)}</p>` : ''}
-    ${url ? `<span class="presse-lire">Lire l'article ${LIEN_EXTERNE_SVG}</span>` : ''}`;
+    ${image ? `<img class="presse-photo" src="${escapeHTML(image)}" alt="" loading="lazy">` : ''}
+    <div class="presse-article-corps">
+      ${a.media ? `<span class="presse-media">${escapeHTML(a.media)}</span>` : ''}
+      <h3>${escapeHTML(a.titre || '')}</h3>
+      ${a.extrait ? `<p class="presse-extrait">« ${escapeHTML(a.extrait)} »</p>` : ''}
+      ${a.date ? `<p class="presse-date">${escapeHTML(a.date)}</p>` : ''}
+      ${url ? `<span class="presse-lire">Lire l'article ${LIEN_EXTERNE_SVG}</span>` : ''}
+    </div>`;
 
   // Sans lien valide, la carte reste lisible mais cesse d'être cliquable :
   // un <a href=""> rechargerait la page d'accueil.

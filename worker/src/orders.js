@@ -18,6 +18,7 @@ import { json, httpError } from './http.js';
 import {
   firestoreGet, firestoreList, firestoreCreate, firestoreQueryByField, fromFirestoreFields
 } from './firebase.js';
+import { envoyerConfirmation } from './mailer.js';
 
 const MAX_LIGNES        = 10;   // produits distincts dans une même commande
 const MAX_QUANTITE      = 20;   // exemplaires d'un même produit
@@ -212,16 +213,21 @@ export async function handleOrder(request, env, cors) {
   const { lignes, total } = await construireLignes(body.items, env);
   const code = genererCode();
 
-  await firestoreCreate('orders', {
+  const commande = {
     code,
     statut: 'en_attente',
     client,
     items: lignes,
     total,
     dateRetrait,
-    commentaire,
-    createdAt: new Date()
-  }, env);
+    commentaire
+  };
 
-  return json({ ok: true, code, total, dateRetrait }, 200, cors);
+  await firestoreCreate('orders', { ...commande, createdAt: new Date() }, env);
+
+  // Après l'écriture, et sans pouvoir la remettre en cause : une commande
+  // enregistrée dont l'e-mail échoue reste une commande valable.
+  const emailEnvoye = await envoyerConfirmation(commande, env);
+
+  return json({ ok: true, code, total, dateRetrait, emailEnvoye, email: client.email }, 200, cors);
 }

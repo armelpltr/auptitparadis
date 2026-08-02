@@ -12,11 +12,26 @@ compatibility_date = "2024-09-23"
 ALLOWED_ORIGIN = "https://armelpltr.github.io"
 FIREBASE_PROJECT_ID = "au-ptit-paradis"
 
+# Confirmations de commande (Brevo). Tant que EMAIL_EXPEDITEUR est vide ou
+# que BREVO_API_KEY manque, aucun e-mail ne part : la commande est quand
+# même enregistrée, et la page ne prétend pas avoir écrit au client.
+#
+# EMAIL_EXPEDITEUR doit être une adresse validée comme expéditeur dans
+# Brevo (Senders → Add a sender → clic sur le lien de confirmation).
+EMAIL_EXPEDITEUR = ""
+EMAIL_EXPEDITEUR_NOM = "Au P'tit Paradis"
+# Adresse qui reçoit une alerte à chaque commande. Vide = pas d'alerte.
+EMAIL_PATRON = ""
+
 # Secrets à injecter :
 #
 #   wrangler secret put FIREBASE_SERVICE_ACCOUNT
 #     → JSON complet du compte de service (Firebase Console > Paramètres du
 #       projet > Comptes de service > Générer une nouvelle clé privée)
+#
+#   wrangler secret put BREVO_API_KEY
+#     → clé API v3 de Brevo (SMTP & API > API Keys). Facultative : sans
+#       elle, les commandes fonctionnent, seuls les e-mails ne partent pas.
 #
 #   wrangler secret put TURNSTILE_SECRET
 #     → clé secrète du widget Turnstile (dash.cloudflare.com > Turnstile).

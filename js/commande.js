@@ -243,6 +243,14 @@ function afficherSucces(body) {
     ? `Retrait le ${date} — ${euros.format(body.total || 0)} à régler sur place.`
     : '';
 
+  // Ne rien promettre que le serveur n'ait fait : il répond s'il a écrit
+  // au client ou non.
+  const email = $('succesEmail');
+  email.hidden = !body.emailEnvoye;
+  if (body.emailEnvoye) {
+    email.textContent = `Une confirmation vient de vous être envoyée à ${body.email}.`;
+  }
+
   $('commandeBody').hidden = true;
   $('commandeSucces').hidden = false;
   window.scrollTo({ top: 0, behavior: 'smooth' });

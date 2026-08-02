@@ -26,6 +26,7 @@ const DEFAULTS = {
       media: 'actu.fr',
       date: '',
       url: 'https://actu.fr/normandie/luc-sur-mer_14384/son-metier-navait-rien-a-voir-fabrice-reprend-une-boulangerie-patisserie-sur-la-cote-de-nacre_64229309.html',
+      imageUrl: '',
       extrait: ''
     }],
     avis: []
@@ -69,7 +70,7 @@ function collectHourRows() {
 /* Deux listes indépendantes, éditées en ligne : la sélection est éditoriale,
    rien n'est récupéré automatiquement depuis Google ou la presse. */
 
-function addPresseArticleRow({ titre = '', media = '', date = '', url = '', extrait = '' } = {}) {
+function addPresseArticleRow({ titre = '', media = '', date = '', url = '', extrait = '', imageUrl = '' } = {}) {
   const list = document.getElementById('presseArticlesList');
   const row = document.createElement('div');
   row.className = 'card-item-edit presse-article-edit';
@@ -81,9 +82,14 @@ function addPresseArticleRow({ titre = '', media = '', date = '', url = '', extr
       <div class="form-row"><label>Date</label><input type="text" class="pa-date" placeholder="mars 2026" value="${escapeAttr(date)}"></div>
     </div>
     <div class="form-row"><label>Lien vers l'article</label><input type="text" class="pa-url" placeholder="https://…" value="${escapeAttr(url)}"></div>
+    <div class="form-row"><label>Photo de l'article</label><div class="pa-image-mount"></div></div>
     <div class="form-row"><label>Extrait cité (optionnel)</label><textarea class="pa-extrait" rows="2">${escapeAttr(extrait)}</textarea></div>
   `;
-  row.querySelector('.row-remove').addEventListener('click', () => row.remove());
+  row.querySelector('.pa-image-mount').appendChild(
+    createImageUploader({ className: 'pa-image', value: imageUrl, folder: 'presse' })
+  );
+  // :scope > pour ne pas attraper le bouton « retirer la photo » de l'uploader
+  row.querySelector(':scope > .row-remove').addEventListener('click', () => row.remove());
   list.appendChild(row);
 }
 
@@ -114,8 +120,9 @@ function collectPresse() {
     titre:   r.querySelector('.pa-titre').value.trim(),
     media:   r.querySelector('.pa-media').value.trim(),
     date:    r.querySelector('.pa-date').value.trim(),
-    url:     r.querySelector('.pa-url').value.trim(),
-    extrait: r.querySelector('.pa-extrait').value.trim()
+    url:      r.querySelector('.pa-url').value.trim(),
+    imageUrl: r.querySelector('.pa-image').value.trim(),
+    extrait:  r.querySelector('.pa-extrait').value.trim()
   })).filter(a => a.titre);
 
   const avis = Array.from(document.querySelectorAll('#presseAvisList .presse-avis-edit')).map(r => ({
