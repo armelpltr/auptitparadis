@@ -21,7 +21,7 @@ FIREBASE_PROJECT_ID = "au-ptit-paradis"
 #
 # Adresse provisoire, le temps que la boulangerie ait la sienne. À changer
 # ici puis redéployer : elle est visible par tous les clients.
-EMAIL_EXPEDITEUR = "armelpltr14@gmail.com"
+EMAIL_EXPEDITEUR = "pltrarmel@gmail.com"
 EMAIL_EXPEDITEUR_NOM = "Au P'tit Paradis"
 # Adresse qui reçoit une alerte à chaque commande. Vide = pas d'alerte.
 EMAIL_PATRON = "armelpltr14@gmail.com"
