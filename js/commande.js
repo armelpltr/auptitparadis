@@ -177,11 +177,19 @@ async function envoyerCommande(e) {
   // Le piège n'est rempli que par un robot : on s'arrête sans rien envoyer.
   if ($('ordWebsite').value.trim() !== '') return;
 
-  const nom = $('ordNom').value.trim();
-  const tel = $('ordTel').value.trim();
-  if (nom.length < 2)  { afficherErreur('Merci d\'indiquer votre nom.'); return; }
+  const prenom = $('ordPrenom').value.trim();
+  const nom    = $('ordNom').value.trim();
+  const tel    = $('ordTel').value.trim();
+  const email  = $('ordEmail').value.trim();
+
+  if (prenom.length < 2) { afficherErreur('Merci d\'indiquer votre prénom.'); return; }
+  if (nom.length < 2)    { afficherErreur('Merci d\'indiquer votre nom.'); return; }
   if (!/^(?:\+33|0)[\s.\-]?[1-9](?:[\s.\-]?\d{2}){4}$/.test(tel)) {
     afficherErreur('Numéro de téléphone invalide. Exemple : 06 12 34 56 78');
+    return;
+  }
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
+    afficherErreur('Merci d\'indiquer une adresse e-mail valide.');
     return;
   }
 
@@ -202,7 +210,7 @@ async function envoyerCommande(e) {
       body: JSON.stringify({
         turnstileToken: jeton.value,
         items: [...panier].map(([id, quantite]) => ({ id, quantite })),
-        client: { nom, telephone: tel, email: $('ordEmail').value.trim() },
+        client: { prenom, nom, telephone: tel, email },
         dateRetrait: $('ordDate').value,
         commentaire: $('ordCommentaire').value.trim()
       })

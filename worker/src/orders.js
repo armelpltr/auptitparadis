@@ -55,11 +55,12 @@ function telephoneFr(v) {
   return normalise;
 }
 
-function emailOptionnel(v) {
+/* Obligatoire : c'est par là que partira la confirmation de réservation. */
+function email(v) {
   const s = String(v ?? '').trim();
-  if (!s) return '';
+  if (!s) throw httpError("Merci d'indiquer une adresse e-mail.", 400);
   if (s.length > 120 || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(s)) {
-    throw httpError("Adresse e-mail invalide.", 400);
+    throw httpError('Adresse e-mail invalide.', 400);
   }
   return s;
 }
@@ -186,10 +187,16 @@ export async function handleOrder(request, env, cors) {
     throw httpError('La date de retrait est en dehors de la période proposée.', 400);
   }
 
+  const prenom = texte(body.client?.prenom, { min: 2, max: 40, champ: 'Le prénom' });
+  const nom    = texte(body.client?.nom,    { min: 2, max: 40, champ: 'Le nom' });
   const client = {
-    nom:       texte(body.client?.nom, { min: 2, max: 80, champ: 'Le nom' }),
+    prenom,
+    nom,
+    // Recopié complet : l'admin et les futurs e-mails l'affichent tel quel,
+    // sans avoir à recoller les deux morceaux à chaque fois.
+    nomComplet: `${prenom} ${nom}`,
     telephone: telephoneFr(body.client?.telephone),
-    email:     emailOptionnel(body.client?.email)
+    email:     email(body.client?.email)
   };
   const commentaire = texte(body.commentaire, { max: 300, champ: 'Le commentaire' });
 

@@ -916,6 +916,31 @@ p{ margin:0 0 1em; color:var(--ink-soft); }
 .form-field textarea{ resize:vertical; }
 .form-hint{ font-size:.8rem; color:var(--ink-soft); margin:0; }
 
+/* Prénom et nom côte à côte */
+.form-duo{ display:grid; grid-template-columns:1fr 1fr; gap:.9rem; }
+
+/* Menu déroulant du jour de retrait.
+   `appearance:none` retire la flèche du système, qui ne suit ni la palette
+   ni l'arrondi du reste du formulaire ; on la redessine en fond. La flèche
+   est une data-URI et non un pseudo-élément : un <select> ne peut pas
+   accueillir de ::after. */
+.form-field select{
+  appearance:none; -webkit-appearance:none; -moz-appearance:none;
+  padding-right:2.6em; cursor:pointer;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8' fill='none' stroke='%238c5a26' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M1 1.5 6 6.5l5-5'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;
+  background-position:right 1em center;
+  background-size:12px 8px;
+  transition:border-color .2s var(--ease), background-color .2s var(--ease);
+}
+.form-field select:hover{ border-color:var(--gold-pale); }
+.form-field select:focus{ border-color:var(--gold); }
+/* Le menu ouvert est rendu par le système : on ne peut styliser que les
+   options elles-mêmes, et seulement leurs couleurs. */
+.form-field select option{ background:var(--white); color:var(--ink); }
+/* Firefox garde un liseré au focus par-dessus le nôtre */
+.form-field select:-moz-focusring{ color:transparent; text-shadow:0 0 0 var(--ink); }
+
 /* Piège à robots : hors de l'écran plutôt que display:none, que certains
    remplisseurs automatiques savent reconnaître et ignorer. */
 .form-honeypot{
@@ -958,6 +983,8 @@ p{ margin:0 0 1em; color:var(--ink-soft); }
   .produits-grid{ grid-template-columns:1fr; gap:1.1rem; }
   .produit-photo{ aspect-ratio:16/9; }
   .commande-panier{ padding:1.3rem 1.1rem; }
+  /* Prénom et nom : deux colonnes deviennent deux champs trop étroits */
+  .form-duo{ grid-template-columns:1fr; gap:0; }
   /* Cibles tactiles : les steppers passent en pleine largeur */
   .produit-stepper{ justify-content:space-between; }
   .stepper-btn{ width:44px; height:44px; }

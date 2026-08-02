@@ -57,6 +57,14 @@ function fmtDateRetrait(iso) {
   return Number.isNaN(d.getTime()) ? iso : jourLong.format(d);
 }
 
+/* Les premières commandes n'avaient qu'un champ `nom` : on retombe dessus
+   plutôt que d'afficher « (sans nom) » sur un historique parfaitement bon. */
+function nomClient(c) {
+  if (!c) return '(sans nom)';
+  const compose = [c.prenom, c.nom].filter(Boolean).join(' ').trim();
+  return c.nomComplet || compose || c.nom || '(sans nom)';
+}
+
 /* Le téléphone est stocké normalisé (0XXXXXXXXX) ; on le rend lisible. */
 function fmtTelephone(tel) {
   const s = String(tel || '');
@@ -121,7 +129,7 @@ function renderOrders() {
         ${alerte ? `<p class="cmd-alerte">Non confirmée depuis ${attente} jour${attente > 1 ? 's' : ''}</p>` : ''}
 
         <div class="cmd-client">
-          <strong>${escapeAttr(o.client?.nom || '(sans nom)')}</strong>
+          <strong>${escapeAttr(nomClient(o.client))}</strong>
           <a href="tel:${escapeAttr(o.client?.telephone || '')}">${escapeAttr(fmtTelephone(o.client?.telephone))}</a>
           ${o.client?.email ? `<a href="mailto:${escapeAttr(o.client.email)}">${escapeAttr(o.client.email)}</a>` : ''}
         </div>
@@ -171,7 +179,7 @@ async function annulerCommande(id) {
   const o = ordersCache.find(x => x.id === id);
   const ok = await confirmDialog(
     `Annuler la commande ${o?.code || ''} ?`,
-    `${o?.client?.nom || 'Le client'} ne sera pas prévenu automatiquement — pensez à l'appeler.`
+    `${o?.client ? nomClient(o.client) : 'Le client'} ne sera pas prévenu automatiquement — pensez à l'appeler.`
   );
   if (!ok) return;
   await changerStatut(id, 'annulee');
