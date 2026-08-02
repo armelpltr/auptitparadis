@@ -126,7 +126,10 @@
         </div>
 
         <div class="form-field">
-          <label for="ordDate">Jour de retrait</label>
+          <label for="ordDate" id="ordDateLabel">Jour de retrait</label>
+          <!-- Le <select> reste la source de vérité ; commande.js construit
+               par-dessus une liste stylable, la liste native étant dessinée
+               par le système et hors de portée du CSS. -->
           <select id="ordDate" required></select>
         </div>
 

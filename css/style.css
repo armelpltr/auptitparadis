@@ -929,27 +929,54 @@ p{ margin:0 0 1em; color:var(--ink-soft); }
 /* Prénom et nom côte à côte */
 .form-duo{ display:grid; grid-template-columns:1fr 1fr; gap:.9rem; }
 
-/* Menu déroulant du jour de retrait.
-   `appearance:none` retire la flèche du système, qui ne suit ni la palette
-   ni l'arrondi du reste du formulaire ; on la redessine en fond. La flèche
-   est une data-URI et non un pseudo-élément : un <select> ne peut pas
-   accueillir de ::after. */
-.form-field select{
-  appearance:none; -webkit-appearance:none; -moz-appearance:none;
-  padding-right:2.6em; cursor:pointer;
-  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8' fill='none' stroke='%238c5a26' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M1 1.5 6 6.5l5-5'/%3E%3C/svg%3E");
-  background-repeat:no-repeat;
-  background-position:right 1em center;
-  background-size:12px 8px;
-  transition:border-color .2s var(--ease), background-color .2s var(--ease);
+/* Liste déroulante du jour de retrait.
+   La liste ouverte d'un <select> est dessinée par le système d'exploitation :
+   police, couleurs et arrondis lui échappent complètement. Le <select> est
+   donc masqué et ne sert plus qu'à porter la valeur, tandis que commande.js
+   construit la liste ci-dessous, qui elle est stylable. */
+.select-perso{ position:relative; }
+
+.select-perso-bouton{
+  width:100%; display:flex; align-items:center; justify-content:space-between; gap:.8rem;
+  padding:.7em .85em;
+  border:1px solid var(--sand); border-radius:var(--radius); background:var(--cream);
+  font-family:var(--font-body); font-size:.98rem; color:var(--ink); text-align:left;
+  cursor:pointer;
+  transition:border-color .2s var(--ease), background .2s var(--ease);
 }
-.form-field select:hover{ border-color:var(--gold-pale); }
-.form-field select:focus{ border-color:var(--gold); }
-/* Le menu ouvert est rendu par le système : on ne peut styliser que les
-   options elles-mêmes, et seulement leurs couleurs. */
-.form-field select option{ background:var(--white); color:var(--ink); }
-/* Firefox garde un liseré au focus par-dessus le nôtre */
-.form-field select:-moz-focusring{ color:transparent; text-shadow:0 0 0 var(--ink); }
+.select-perso-bouton:hover{ border-color:var(--gold-pale); background:var(--white); }
+.select-perso-bouton[aria-expanded="true"]{ border-color:var(--gold); background:var(--white); }
+
+.select-perso-fleche{
+  width:12px; height:8px; flex-shrink:0;
+  fill:none; stroke:var(--gold-deep); stroke-width:1.8;
+  stroke-linecap:round; stroke-linejoin:round;
+  transition:transform .25s var(--ease);
+}
+.select-perso-bouton[aria-expanded="true"] .select-perso-fleche{ transform:rotate(180deg); }
+
+.select-perso-liste{
+  position:absolute; z-index:20; top:calc(100% + 4px); left:0; right:0;
+  max-height:16rem; overflow-y:auto;
+  margin:0; padding:.3rem; list-style:none;
+  background:var(--white); border:1px solid var(--sand); border-radius:8px;
+  box-shadow:0 18px 36px -18px rgba(33,28,23,.45);
+}
+.select-perso-liste[hidden]{ display:none; }
+
+.select-perso-liste li{
+  padding:.55em .8em; border-radius:5px;
+  font-size:.94rem; color:var(--ink-soft); cursor:pointer;
+  transition:background .15s var(--ease), color .15s var(--ease);
+}
+.select-perso-liste li:hover{ background:var(--sand); color:var(--ink); }
+/* Option atteinte au clavier : elle ne reçoit pas le focus, c'est le bouton
+   qui le garde — sans marque visible on ne saurait pas où l'on est. */
+.select-perso-liste li.is-active{ background:var(--sand); color:var(--ink); }
+.select-perso-liste li.is-choisie{
+  background:var(--gold); color:var(--white); font-weight:600;
+}
+.select-perso-liste li.is-choisie:hover{ background:var(--gold-deep); }
 
 /* Piège à robots : hors de l'écran plutôt que display:none, que certains
    remplisseurs automatiques savent reconnaître et ignorer. */

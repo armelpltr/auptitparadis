@@ -150,6 +150,106 @@ function remplirDates(dateDebut, dateFin) {
   return options.length > 0;
 }
 
+/* ---------- Liste déroulante habillée ---------- */
+/* La liste ouverte d'un <select> est dessinée par le système : ni sa police,
+   ni ses couleurs, ni ses arrondis ne suivent le reste du formulaire. On la
+   remplace par une liste à nous, en gardant le <select> comme source de la
+   valeur — le reste du code continue de lire `ordDate.value`. */
+function habillerSelecteur(select, labelId) {
+  const options = [...select.options];
+  if (!options.length) return;
+
+  const bloc = document.createElement('div');
+  bloc.className = 'select-perso';
+
+  const bouton = document.createElement('button');
+  bouton.type = 'button';
+  bouton.className = 'select-perso-bouton';
+  bouton.setAttribute('role', 'combobox');
+  bouton.setAttribute('aria-haspopup', 'listbox');
+  bouton.setAttribute('aria-expanded', 'false');
+  bouton.setAttribute('aria-labelledby', `${labelId} ${select.id}-valeur`);
+  bouton.innerHTML =
+    `<span class="select-perso-valeur" id="${select.id}-valeur">${escapeHTML(options[0].textContent)}</span>` +
+    `<svg class="select-perso-fleche" viewBox="0 0 12 8" aria-hidden="true"><path d="M1 1.5 6 6.5l5-5"/></svg>`;
+
+  const liste = document.createElement('ul');
+  liste.className = 'select-perso-liste';
+  liste.id = `${select.id}-liste`;
+  liste.setAttribute('role', 'listbox');
+  liste.hidden = true;
+  liste.innerHTML = options.map((o, i) => `
+    <li role="option" id="${select.id}-opt-${i}" data-value="${escapeHTML(o.value)}"
+        aria-selected="${i === 0 ? 'true' : 'false'}"
+        class="${i === 0 ? 'is-choisie' : ''}">${escapeHTML(o.textContent)}</li>`).join('');
+
+  bouton.setAttribute('aria-controls', liste.id);
+
+  const items = [...liste.children];
+  let actif = 0;
+
+  function marquerActif(i) {
+    actif = Math.max(0, Math.min(items.length - 1, i));
+    items.forEach((el, n) => el.classList.toggle('is-active', n === actif));
+    bouton.setAttribute('aria-activedescendant', items[actif].id);
+    items[actif].scrollIntoView({ block: 'nearest' });
+  }
+
+  function ouvrir() {
+    liste.hidden = false;
+    bouton.setAttribute('aria-expanded', 'true');
+    marquerActif(options.findIndex(o => o.value === select.value));
+  }
+
+  function fermer() {
+    liste.hidden = true;
+    bouton.setAttribute('aria-expanded', 'false');
+    bouton.removeAttribute('aria-activedescendant');
+  }
+
+  function choisir(i) {
+    select.value = items[i].dataset.value;
+    select.dispatchEvent(new Event('change', { bubbles: true }));
+    bouton.querySelector('.select-perso-valeur').textContent = items[i].textContent;
+    items.forEach((el, n) => {
+      el.setAttribute('aria-selected', String(n === i));
+      el.classList.toggle('is-choisie', n === i);
+    });
+    fermer();
+    bouton.focus();
+  }
+
+  bouton.addEventListener('click', () => (liste.hidden ? ouvrir() : fermer()));
+  items.forEach((el, i) => el.addEventListener('click', () => choisir(i)));
+
+  bouton.addEventListener('keydown', e => {
+    const ouverte = !liste.hidden;
+    switch (e.key) {
+      case 'ArrowDown': e.preventDefault(); ouverte ? marquerActif(actif + 1) : ouvrir(); break;
+      case 'ArrowUp':   e.preventDefault(); ouverte ? marquerActif(actif - 1) : ouvrir(); break;
+      case 'Home':      if (ouverte) { e.preventDefault(); marquerActif(0); } break;
+      case 'End':       if (ouverte) { e.preventDefault(); marquerActif(items.length - 1); } break;
+      case 'Enter':
+      case ' ':         e.preventDefault(); ouverte ? choisir(actif) : ouvrir(); break;
+      case 'Escape':    if (ouverte) { e.preventDefault(); fermer(); } break;
+      case 'Tab':       fermer(); break;
+    }
+  });
+
+  // Un clic ailleurs referme : sans ça la liste resterait ouverte derrière
+  // le reste du formulaire.
+  document.addEventListener('click', e => {
+    if (!liste.hidden && !bloc.contains(e.target)) fermer();
+  });
+
+  select.hidden = true;
+  bloc.append(bouton, liste);
+  select.after(bloc);
+
+  // La valeur affichée doit correspondre à celle que le formulaire enverra.
+  select.value = options[0].value;
+}
+
 /* ---------- Envoi ---------- */
 
 function afficherErreur(message) {
@@ -283,6 +383,9 @@ function afficherSucces(body) {
   }
 
   $('commandeBody').hidden = false;
+  // Après l'affichage : la liste mesure ses positions, ce qu'un conteneur
+  // encore masqué ne permet pas.
+  habillerSelecteur($('ordDate'), 'ordDateLabel');
   $('commandeForm').addEventListener('submit', envoyerCommande);
 
   try {
