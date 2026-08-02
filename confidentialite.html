@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Politique de confidentialité — Au P'tit Paradis</title>
+<meta name="description" content="Comment la boulangerie Au P'tit Paradis traite les données personnelles de ses clients.">
+<meta name="robots" content="noindex, follow">
+
+<meta http-equiv="Content-Security-Policy" content="
+  default-src 'self';
+  base-uri 'self';
+  object-src 'none';
+  form-action 'self';
+  script-src 'self' https://www.gstatic.com;
+  style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+  font-src 'self' https://fonts.gstatic.com data:;
+  img-src 'self' data: blob: https:;
+  connect-src 'self' https://firestore.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://www.googleapis.com;
+  frame-src 'none';
+">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+
+<link rel="icon" href="assets/logo.jpg" type="image/jpeg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atma:wght@300;400;500;600;700&family=Jost:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body class="page-commander">
+
+<a class="skip-link" href="#main">Aller au contenu</a>
+
+<header class="site-header" id="top">
+  <div class="header-inner">
+    <a href="index.html" class="brand" aria-label="Au P'tit Paradis — Accueil">
+      <img src="assets/logo-header.png" alt="Au P'tit Paradis" class="brand-logo-header">
+    </a>
+    <div class="nav-right-group">
+      <nav class="main-nav" aria-label="Navigation principale">
+        <ul>
+          <li><a href="index.html#specialites">Nos spécialités</a></li>
+          <li><a href="index.html#horaires">Horaires &amp; accès</a></li>
+          <li><a href="commander.html" class="nav-cta">Commander</a></li>
+        </ul>
+      </nav>
+      <button class="nav-toggle" id="navToggle" aria-expanded="false" aria-controls="mobile-nav" aria-label="Ouvrir le menu">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </div>
+  <nav class="mobile-nav" id="mobile-nav" aria-label="Navigation mobile" aria-hidden="true">
+    <ul>
+      <li><a href="index.html#specialites">Nos spécialités</a></li>
+      <li><a href="index.html#horaires">Horaires &amp; accès</a></li>
+      <li><a href="commander.html">Commander</a></li>
+    </ul>
+  </nav>
+  <div class="header-rule" aria-hidden="true"></div>
+</header>
+
+<main id="main" class="commande-main">
+  <section class="page-legale">
+    <div class="section-inner">
+      <p class="eyebrow">Vos données</p>
+      <h1>Politique de confidentialité</h1>
+
+      <p class="page-legale-chapo">
+        Ce site collecte le strict nécessaire pour traiter une réservation.
+        Aucune donnée n'est vendue, aucun profil publicitaire n'est constitué,
+        et il n'y a ni traceur ni outil de mesure d'audience sur les pages
+        publiques.
+      </p>
+
+      <h2>Responsable du traitement</h2>
+      <p>
+        <strong>Au P'tit Paradis</strong>, 1 Place du Petit Enfer, 14530 Luc-sur-Mer.<br>
+        Contact : <span id="legalEmail">[adresse à compléter]</span> —
+        <span id="legalPhone">[téléphone à compléter]</span>
+      </p>
+
+      <h2>Quelles données, et pourquoi</h2>
+
+      <h3>Lorsque vous passez une réservation</h3>
+      <table class="table-legale">
+        <thead>
+          <tr><th>Données</th><th>Pourquoi</th><th>Base légale</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Prénom, nom</td>
+            <td>Vous identifier au comptoir lors du retrait</td>
+            <td>Mesures précontractuelles</td>
+          </tr>
+          <tr>
+            <td>Téléphone</td>
+            <td>Vous joindre en cas de problème sur la commande</td>
+            <td>Mesures précontractuelles</td>
+          </tr>
+          <tr>
+            <td>Adresse e-mail</td>
+            <td>Vous envoyer la confirmation et votre code de réservation</td>
+            <td>Mesures précontractuelles</td>
+          </tr>
+          <tr>
+            <td>Produits, quantités, jour de retrait, commentaire</td>
+            <td>Préparer votre commande</td>
+            <td>Mesures précontractuelles</td>
+          </tr>
+          <tr>
+            <td>Données techniques anti-robot (dont adresse IP)</td>
+            <td>Empêcher les commandes automatisées frauduleuses</td>
+            <td>Intérêt légitime</td>
+          </tr>
+        </tbody>
+      </table>
+      <p>
+        Ces informations sont <strong>obligatoires</strong> : sans elles, la
+        réservation ne peut pas être traitée. Le commentaire, lui, est facultatif.
+      </p>
+
+      <h3>Lorsque vous administrez le site</h3>
+      <p>
+        Les comptes du panel d'administration enregistrent un prénom, un nom,
+        une adresse e-mail et un mot de passe chiffré, ainsi qu'un rôle. Ces
+        données servent uniquement à donner accès au panel.
+      </p>
+
+      <h2>Combien de temps</h2>
+      <ul>
+        <li><strong>Réservations</strong> : <span class="a-completer">[durée à confirmer — 12 mois recommandés]</span> après le jour de retrait, puis suppression.</li>
+        <li><strong>Comptes d'administration</strong> : jusqu'à la suppression de l'accès.</li>
+        <li><strong>Données anti-robot</strong> : conservées par Cloudflare selon sa propre politique, quelques jours au plus.</li>
+      </ul>
+
+      <h2>Qui y a accès</h2>
+      <p>
+        Les réservations sont consultables uniquement par les personnes
+        disposant d'un accès au panel d'administration de la boulangerie.
+        Elles ne sont ni transmises ni revendues à des tiers.
+      </p>
+      <p>Les prestataires techniques suivants interviennent dans le traitement :</p>
+      <table class="table-legale">
+        <thead>
+          <tr><th>Prestataire</th><th>Rôle</th><th>Localisation</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Google (Firebase / Firestore)</td><td>Base de données des réservations et authentification du panel</td><td>États-Unis, clauses contractuelles types</td></tr>
+          <tr><td>Cloudflare</td><td>Vérification anti-robot (Turnstile) et traitement des commandes</td><td>Réseau mondial, clauses contractuelles types</td></tr>
+          <tr><td>Brevo</td><td>Envoi des e-mails de confirmation</td><td>Union européenne (France)</td></tr>
+          <tr><td>Cloudinary</td><td>Hébergement des photos du site</td><td>États-Unis, clauses contractuelles types</td></tr>
+          <tr><td>GitHub (GitHub Pages)</td><td>Hébergement des pages du site</td><td>États-Unis, clauses contractuelles types</td></tr>
+          <tr><td>Featurable</td><td>Affichage des avis Google sur la page d'accueil</td><td>Hors Union européenne</td></tr>
+        </tbody>
+      </table>
+
+      <h2>Cookies et traceurs</h2>
+      <p>
+        Les pages publiques ne déposent <strong>aucun cookie publicitaire ni
+        de mesure d'audience</strong>. Aucun bandeau de consentement n'est donc
+        nécessaire.
+      </p>
+      <p>
+        Le panel d'administration, accessible aux seuls membres de l'équipe,
+        utilise un stockage local strictement nécessaire au maintien de la
+        session de connexion.
+      </p>
+      <p>
+        Le widget d'avis Google affiché en bas de la page d'accueil est fourni
+        par un tiers, qui peut déposer ses propres traceurs lors de son
+        chargement. Si vous préférez l'éviter, un bloqueur de contenu tiers
+        suffit à l'empêcher.
+      </p>
+
+      <h2>Vos droits</h2>
+      <p>
+        Vous disposez d'un droit d'accès, de rectification, d'effacement, de
+        limitation et d'opposition sur vos données, ainsi que d'un droit à la
+        portabilité. Pour les exercer, écrivez à l'adresse indiquée en haut de
+        cette page, ou passez simplement en boutique.
+      </p>
+      <p>
+        Si la réponse ne vous satisfait pas, vous pouvez saisir la
+        <strong>CNIL</strong> — 3 place de Fontenoy, TSA 80715, 75334 Paris
+        Cedex 07 —
+        <a href="https://www.cnil.fr" target="_blank" rel="noopener">cnil.fr</a>.
+      </p>
+
+      <h2>Sécurité</h2>
+      <p>
+        Les échanges avec le site sont chiffrés (HTTPS). Les réservations sont
+        stockées dans une base dont les règles d'accès interdisent toute
+        lecture publique : seuls les comptes du panel peuvent les consulter.
+        L'envoi d'une commande passe par un serveur intermédiaire qui vérifie
+        chaque demande avant enregistrement.
+      </p>
+
+      <p class="page-legale-maj">Dernière mise à jour : août 2026.</p>
+    </div>
+  </section>
+</main>
+
+<footer class="site-footer">
+  <div class="footer-wave" aria-hidden="true">
+    <svg viewBox="0 0 1200 90" preserveAspectRatio="none">
+      <path d="M0,0 L1200,0 L1200,38 C1080,58 990,26 850,16 C700,5 610,30 450,54 C300,77 140,72 0,26 Z" />
+    </svg>
+  </div>
+  <div class="footer-bottom">
+    <div class="footer-bottom-inner">
+      <p>&copy; <span id="year"></span> Au P'tit Paradis — Luc-sur-Mer. Tous droits réservés.</p>
+      <div class="footer-bottom-right">
+        <a href="index.html" class="footer-admin-link">Retour au site</a>
+        <a href="mentions-legales.html" class="footer-admin-link">Mentions légales</a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script type="module" src="js/site-data.js"></script>
+<script src="js/script.js"></script>
+</body>
+</html>

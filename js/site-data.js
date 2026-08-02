@@ -160,6 +160,9 @@ function applySettings(s) {
       const phoneLabel = h.phone ? (h.phoneDisplay || h.phone) : '';
       setText('phoneLink', phoneLabel);
       setText('footerPhoneText', phoneLabel);
+      // Pages légales : le contact doit rester le même partout, sans
+      // recopie manuelle qui finirait par diverger.
+      setText('legalPhone', phoneLabel);
       if (h.phone) {
         setAttr('phoneLink', 'href', `tel:${h.phone}`);
         setAttr('footerPhoneLink', 'href', `tel:${h.phone}`);
@@ -174,6 +177,7 @@ function applySettings(s) {
     if (email) {
       setText('emailLink', email);
       setText('footerEmailText', email);
+      setText('legalEmail', email);
       setAttr('emailLink', 'href', `mailto:${email}`);
       setAttr('footerEmailLink', 'href', `mailto:${email}`);
     }

@@ -34,7 +34,11 @@
   border-color:var(--gold); outline:none;
   box-shadow:0 0 0 3px rgba(200,133,58,.12);
 }
-.form-row-grid{ display:grid; grid-template-columns:1fr 1fr; gap:1.2rem; }
+/* minmax(0,1fr) et non 1fr : une colonne de grille ne descend pas sous la
+   largeur naturelle de son contenu, et un <input> en réclame une vingtaine
+   de caractères. Sans ça, deux champs côte à côte débordent de leur carte. */
+.form-row-grid{ display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:1.2rem; }
+.form-row input, .form-row textarea, .form-row select{ min-width:0; }
 .field-hint{ font-size:.8rem; color:var(--ink-soft); margin:.3rem 0 0; }
 
 /* ---------- Topbar & tabs ---------- */

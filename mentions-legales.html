@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mentions légales — Au P'tit Paradis</title>
+<meta name="description" content="Mentions légales du site de la boulangerie-pâtisserie Au P'tit Paradis, à Luc-sur-Mer.">
+<meta name="robots" content="noindex, follow">
+
+<meta http-equiv="Content-Security-Policy" content="
+  default-src 'self';
+  base-uri 'self';
+  object-src 'none';
+  form-action 'self';
+  script-src 'self' https://www.gstatic.com;
+  style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+  font-src 'self' https://fonts.gstatic.com data:;
+  img-src 'self' data: blob: https:;
+  connect-src 'self' https://firestore.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://www.googleapis.com;
+  frame-src 'none';
+">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+
+<link rel="icon" href="assets/logo.jpg" type="image/jpeg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atma:wght@300;400;500;600;700&family=Jost:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body class="page-commander">
+
+<a class="skip-link" href="#main">Aller au contenu</a>
+
+<header class="site-header" id="top">
+  <div class="header-inner">
+    <a href="index.html" class="brand" aria-label="Au P'tit Paradis — Accueil">
+      <img src="assets/logo-header.png" alt="Au P'tit Paradis" class="brand-logo-header">
+    </a>
+    <div class="nav-right-group">
+      <nav class="main-nav" aria-label="Navigation principale">
+        <ul>
+          <li><a href="index.html#specialites">Nos spécialités</a></li>
+          <li><a href="index.html#horaires">Horaires &amp; accès</a></li>
+          <li><a href="commander.html" class="nav-cta">Commander</a></li>
+        </ul>
+      </nav>
+      <button class="nav-toggle" id="navToggle" aria-expanded="false" aria-controls="mobile-nav" aria-label="Ouvrir le menu">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </div>
+  <nav class="mobile-nav" id="mobile-nav" aria-label="Navigation mobile" aria-hidden="true">
+    <ul>
+      <li><a href="index.html#specialites">Nos spécialités</a></li>
+      <li><a href="index.html#horaires">Horaires &amp; accès</a></li>
+      <li><a href="commander.html">Commander</a></li>
+    </ul>
+  </nav>
+  <div class="header-rule" aria-hidden="true"></div>
+</header>
+
+<main id="main" class="commande-main">
+  <section class="page-legale">
+    <div class="section-inner">
+      <p class="eyebrow">Informations légales</p>
+      <h1>Mentions légales</h1>
+
+      <h2>Éditeur du site</h2>
+      <p>
+        <strong>Au P'tit Paradis</strong><br>
+        <span class="a-completer">[Raison sociale et forme juridique à compléter]</span><br>
+        1 Place du Petit Enfer, 14530 Luc-sur-Mer, France<br>
+        SIRET : <span class="a-completer">[à compléter]</span><br>
+        Numéro de TVA intracommunautaire : <span class="a-completer">[à compléter, ou « non assujetti »]</span><br>
+        Téléphone : <span id="legalPhone">[à compléter]</span><br>
+        E-mail : <span id="legalEmail">[à compléter]</span>
+      </p>
+
+      <h2>Directeur de la publication</h2>
+      <p><span class="a-completer">[Nom et prénom du gérant à compléter]</span></p>
+
+      <h2>Hébergement</h2>
+      <p>
+        Le site est hébergé par <strong>GitHub, Inc.</strong> (GitHub Pages)<br>
+        88 Colin P. Kelly Jr. Street, San Francisco, CA 94107, États-Unis<br>
+        <a href="https://github.com" target="_blank" rel="noopener">github.com</a>
+      </p>
+      <p>
+        Les services applicatifs (base de données, envoi d'e-mails, protection
+        anti-robot, hébergement des photos) sont assurés par des prestataires
+        tiers listés dans la <a href="confidentialite.html">politique de confidentialité</a>.
+      </p>
+
+      <h2>Conception et réalisation</h2>
+      <p>Armel Plantier</p>
+
+      <h2>Propriété intellectuelle</h2>
+      <p>
+        L'ensemble des contenus de ce site — textes, photographies, logo,
+        éléments graphiques — est la propriété de Au P'tit Paradis ou de ses
+        ayants droit. Toute reproduction ou représentation, totale ou
+        partielle, sans autorisation écrite préalable, est interdite.
+      </p>
+      <p>
+        Les extraits d'articles de presse cités dans la rubrique « Ils parlent
+        de nous » restent la propriété de leurs auteurs et des publications
+        concernées, et sont reproduits à titre de courte citation avec lien
+        vers l'article d'origine.
+      </p>
+
+      <h2>Réservations en ligne</h2>
+      <p>
+        Le formulaire de commande permet de <strong>réserver</strong> des produits,
+        sans paiement en ligne. Une réservation ne constitue pas une vente ferme :
+        elle est confirmée lorsque le client présente son code en boutique. Le
+        règlement s'effectue sur place, au moment du retrait. La boulangerie se
+        réserve le droit d'annuler une réservation non confirmée.
+      </p>
+
+      <h2>Signaler un problème</h2>
+      <p>
+        Pour toute question relative au site ou à son contenu, écrivez à
+        l'adresse indiquée ci-dessus ou contactez la boutique par téléphone.
+      </p>
+    </div>
+  </section>
+</main>
+
+<footer class="site-footer">
+  <div class="footer-wave" aria-hidden="true">
+    <svg viewBox="0 0 1200 90" preserveAspectRatio="none">
+      <path d="M0,0 L1200,0 L1200,38 C1080,58 990,26 850,16 C700,5 610,30 450,54 C300,77 140,72 0,26 Z" />
+    </svg>
+  </div>
+  <div class="footer-bottom">
+    <div class="footer-bottom-inner">
+      <p>&copy; <span id="year"></span> Au P'tit Paradis — Luc-sur-Mer. Tous droits réservés.</p>
+      <div class="footer-bottom-right">
+        <a href="index.html" class="footer-admin-link">Retour au site</a>
+        <a href="confidentialite.html" class="footer-admin-link">Confidentialité</a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script type="module" src="js/site-data.js"></script>
+<script src="js/script.js"></script>
+</body>
+</html>
