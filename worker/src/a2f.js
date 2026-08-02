@@ -29,7 +29,6 @@ const TTL_MS         = 10 * 60 * 1000;   // validité d'un code
 const MAX_ESSAIS     = 5;                // essais avant invalidation du défi
 const MAX_ENVOIS     = 5;                // codes demandés par fenêtre
 const FENETRE_MS     = 30 * 60 * 1000;   // durée de la fenêtre de comptage
-const DELAI_RENVOI_MS = 45 * 1000;       // attente minimale entre deux envois
 
 /* Durée pendant laquelle le panel reste ouvert après un code validé. Passé
    ce délai, un nouveau code est demandé. Court volontairement : le poste
@@ -103,21 +102,24 @@ export async function handleA2fRequest(request, env, cors) {
     precedent = fromFirestoreFields(doc.fields);
   } catch { /* aucune demande en cours */ }
 
-  /* Un code encore valable existe déjà : on ne le remplace pas et on ne
-     renvoie rien. Le refus sec ne vaut que pour un renvoi demandé
-     explicitement — sinon toute reconnexion dans les 45 secondes suivant
-     la précédente était rejetée, et l'appelant se retrouvait déconnecté
-     avec « patientez » sans avoir rien demandé. */
+  /* Il n'y a plus de délai minimal entre deux envois : un clic sur
+     « Renvoyer » renvoie, toujours. Le seul garde-fou restant est le
+     plafond par demi-heure, qui suffit — l'endpoint exige déjà le jeton
+     d'un membre, et la seule boîte qu'il peut inonder est la sienne.
+     Le délai n'apportait qu'un message « patientez » là où l'utilisateur
+     voulait précisément un nouveau code.
+
+     Reste une seule suppression, sur la demande AUTOMATIQUE faite à la
+     connexion : si un code a réellement été envoyé et court encore, on ne
+     le remplace pas. `lastSentAt > 0` est ce qui distingue un envoi
+     confirmé d'un défi écrit puis abandonné. */
   const renvoiExplicite = body.renvoi === true;
   if (precedent) {
-    const tropTot = maintenant - (precedent.lastSentAt || 0) < DELAI_RENVOI_MS;
+    const vraimentEnvoye = (precedent.lastSentAt || 0) > 0;
     const encoreValable = (precedent.expiresAt || 0) > maintenant;
 
-    console.log(`[a2f] defi existant — tropTot=${tropTot} encoreValable=${encoreValable} renvoi=${renvoiExplicite}`);
-    if (tropTot && renvoiExplicite) {
-      throw httpError('Patientez quelques secondes avant de demander un nouveau code.', 429);
-    }
-    if (tropTot && encoreValable) {
+    console.log(`[a2f] defi existant — envoye=${vraimentEnvoye} valable=${encoreValable} renvoi=${renvoiExplicite}`);
+    if (vraimentEnvoye && encoreValable && !renvoiExplicite) {
       return json({
         ok: true,
         dejaEnvoye: true,
