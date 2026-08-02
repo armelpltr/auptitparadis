@@ -42,9 +42,7 @@
     document.body.appendChild(decor);
 
     buildGuirlande();
-
-    buildPersonnages();
-    buildOrnements();
+    buildBonnet();
     buildCountdown();
   }
 
@@ -65,45 +63,32 @@
     header.appendChild(g);
   }
 
-  /* Un ornement par section, en alternant les côtés. Le sucre d'orge et le
-     houx pendent du haut, le reste pousse du bas. */
-  var ORNEMENTS = [
-    { nom: 'sapin' },
-    { nom: 'cadeaux' },
-    { nom: 'canne', haut: true },
-    { nom: 'lutin' },
-    { nom: 'houx', haut: true }
-  ];
+  /* Bonnet posé sur le grand logo du hero. Le logo est un <img> centré dont
+     la largeur dépend de la fenêtre (600 px, plafonnés à 90vw) : on
+     l'emballe dans un conteneur qui épouse sa taille, ce qui permet de
+     placer le bonnet en pourcentages. Il reste ainsi au même endroit du
+     dessin quelle que soit la largeur d'écran.
+     Absent des pages légales et de la page de commande, qui n'ont pas de
+     hero — d'où le test. */
+  function buildBonnet() {
+    var logo = document.querySelector('.hero-logo');
+    if (!logo || logo.parentNode.classList.contains('noel-logo-wrap')) return;
 
-  /* Toutes les sections, pas seulement celles de <main> : « Vos avis » est
-     en dehors, et les blocs pilotés depuis l'admin arrivent plus tard. */
-  function buildOrnements() {
-    var cibles = document.querySelectorAll('section, .site-footer');
-    var i = 0;
-    cibles.forEach(function (sec) {
-      // Le hero a déjà son traîneau et ses deux lutins.
-      if (sec.classList.contains('hero') || sec.querySelector(':scope > .noel-ornement')) return;
-      var o = ORNEMENTS[i % ORNEMENTS.length];
-      var classe = 'noel-ornement noel-ornement--' + (i % 2 ? 'd' : 'g') +
-                   (o.haut ? ' noel-ornement--haut' : '');
-      sec.appendChild(img('assets/noel/' + o.nom + '.svg', classe));
-      i++;
-    });
+    var wrap = document.createElement('span');
+    wrap.className = 'noel-logo-wrap';
+    logo.parentNode.insertBefore(wrap, logo);
+    wrap.appendChild(logo);
+    wrap.appendChild(img('assets/noel/bonnet.svg', 'noel-bonnet'));
   }
 
-  /* Père Noël, lutins et bonnet. Chacun est optionnel : les pages légales
-     n'ont pas de hero, la page de commande non plus. */
-  function buildPersonnages() {
-    var brand = document.querySelector('.brand');
-    if (brand && !brand.querySelector('.noel-bonnet')) {
-      brand.appendChild(img('assets/noel/bonnet.svg', 'noel-bonnet'));
-    }
-
-    var hero = document.querySelector('.hero');
-    if (!hero || hero.querySelector('.noel-traineau')) return;
-    hero.appendChild(img('assets/noel/traineau.svg', 'noel-traineau'));
-    hero.appendChild(img('assets/noel/lutin.svg', 'noel-lutin noel-lutin-g'));
-    hero.appendChild(img('assets/noel/lutin.svg', 'noel-lutin noel-lutin-d'));
+  /* Défait l'emballage du logo, sinon couper le thème laisserait le hero
+     avec un conteneur en trop autour de son image. */
+  function removeBonnet() {
+    var wrap = document.querySelector('.noel-logo-wrap');
+    if (!wrap) return;
+    var logo = wrap.querySelector('.hero-logo');
+    if (logo) wrap.parentNode.insertBefore(logo, wrap);
+    wrap.remove();
   }
 
   function img(src, className) {
@@ -120,10 +105,10 @@
     if (decor) decor.remove();
     var cd = document.getElementById(COUNTDOWN_ID);
     if (cd) cd.remove();
-    // Les personnages vivent dans le header et le hero, pas dans #noelDecor :
-    // ils se retirent un par un.
-    document.querySelectorAll('.noel-bonnet, .noel-traineau, .noel-lutin, .noel-ornement, .noel-garland')
-      .forEach(function (el) { el.remove(); });
+    // La guirlande vit dans le header, pas dans #noelDecor.
+    var g = document.querySelector('.noel-garland');
+    if (g) g.remove();
+    removeBonnet();
   }
 
   /* Nombre de jours entiers d'ici au 25 décembre. Le calcul se fait à midi
@@ -172,13 +157,6 @@
   // Un navigateur en navigation privée peut refuser localStorage : le thème
   // s'appliquera simplement une fois Firestore chargé.
   try { apply(localStorage.getItem(KEY) === '1'); } catch (e) {}
-
-  /* Les sections pilotées depuis l'admin arrivent après ce script :
-     site-data.js rappelle ceci une fois qu'elles sont posées, pour qu'elles
-     reçoivent leur ornement elles aussi. */
-  window.decoreSectionsNoel = function () {
-    if (document.documentElement.classList.contains('theme-noel')) buildOrnements();
-  };
 
   window.setNoelTheme = function (on) {
     apply(on);

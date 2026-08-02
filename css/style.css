@@ -1041,67 +1041,19 @@ p{ margin:0 0 1em; color:var(--ink-soft); }
 .theme-noel .commande-closed{ background:rgba(247,226,223,.78); }
 .theme-noel .horaires{ background:rgba(230,239,231,.82); }
 
-/* ---- Personnages ---- */
-/* Bonnet posé sur le logo du header. Il suit le logo quand celui-ci
-   rétrécit au défilement, d'où la taille en em et le repère sur .brand. */
-.theme-noel .brand{ position:relative; }
+/* ---- Bonnet sur le grand logo du hero ---- */
+/* Le conteneur épouse l'image, ce qui permet de placer le bonnet en
+   pourcentages : le logo fait 600 px mais se rabat sur 90vw en dessous,
+   et le bonnet reste au même endroit du dessin dans les deux cas. */
+.noel-logo-wrap{ position:relative; display:inline-block; }
+/* Repères en pourcentage de la boîte du logo, pas de son dessin : le PNG
+   est carré et laisse beaucoup de vide autour du lettrage, d'où un top
+   qui paraît élevé alors que le bonnet se pose bien sur la grande hampe
+   du « P ». */
 .noel-bonnet{
-  position:absolute; left:0; top:-11px; width:52px; height:auto;
+  position:absolute; left:28%; top:13.5%; width:22%; height:auto;
   transform:rotate(-14deg); transform-origin:bottom left; pointer-events:none;
-  transition:width .4s var(--ease), top .4s var(--ease);
 }
-.site-header.is-scrolled .noel-bonnet{ width:43px; top:-7px; }
-
-/* Le traîneau traverse le hero en boucle. Le hero est en overflow:hidden :
-   il entre et sort tout seul, sans déborder de la page. */
-.noel-traineau{
-  position:absolute; top:17%; left:0; width:210px; height:auto; z-index:1;
-  pointer-events:none;
-  animation:traineau-passe 28s linear infinite;
-}
-@keyframes traineau-passe{
-  0%  { transform:translateX(-26vw) translateY(6px); }
-  50% { transform:translateX(55vw)  translateY(-16px); }
-  100%{ transform:translateX(136vw) translateY(6px); }
-}
-
-/* Lutins qui dépassent du bas du hero, coupés par overflow:hidden — d'où
-   l'impression qu'ils sont cachés derrière le bord. */
-.noel-lutin{
-  position:absolute; bottom:-20px; width:92px; height:auto; z-index:1;
-  pointer-events:none;
-}
-.noel-lutin-g{ left:3vw; animation:lutin-guette 5.5s ease-in-out infinite; }
-.noel-lutin-d{ right:3vw; animation:lutin-guette-mir 5.5s ease-in-out infinite 1.8s; }
-@keyframes lutin-guette{
-  0%, 100%{ transform:translateY(14px); }
-  50%     { transform:translateY(0); }
-}
-/* Le lutin de droite regarde vers la gauche : le miroir doit être répété
-   dans chaque étape, une animation de transform remplace la propriété. */
-@keyframes lutin-guette-mir{
-  0%, 100%{ transform:scaleX(-1) translateY(14px); }
-  50%     { transform:scaleX(-1) translateY(0); }
-}
-
-/* ---- Ornements semés dans chaque section ---- */
-/* Sapins, cadeaux, sucres d'orge, houx et lutins, un par section, en
-   alternant les côtés. Ils se posent en bas, dans la marge latérale que
-   laisse `.section-inner` : sur un écran large ils ne croisent aucun
-   texte, et sur un écran étroit ils passent derrière (z-index 0 contre le
-   contenu qui reste au-dessus, cf. .noel-ornement + section-inner). */
-.theme-noel section,
-.theme-noel .site-footer{ position:relative; overflow:hidden; }
-.theme-noel .section-inner{ position:relative; z-index:1; }
-.noel-ornement{
-  position:absolute; bottom:0; width:88px; height:auto; z-index:0;
-  pointer-events:none;
-}
-.noel-ornement--g{ left:.8rem; }
-.noel-ornement--d{ right:.8rem; }
-/* Sucre d'orge et houx pendent du haut plutôt que de pousser du sol. */
-.noel-ornement--haut{ bottom:auto; top:0; }
-.theme-noel .site-footer .noel-ornement{ opacity:.55; }
 
 /* ---- Compte à rebours dans le hero ---- */
 .noel-countdown{
@@ -1116,11 +1068,7 @@ p{ margin:0 0 1em; color:var(--ink-soft); }
 /* Un décor qui bouge en permanence n'est pas négociable pour qui a demandé
    moins d'animations : la neige s'arrête, les ampoules restent allumées. */
 @media (prefers-reduced-motion: reduce){
-  .noel-snow i, .noel-bulbs, .noel-lutin{ animation:none; }
-  /* Le traîneau est retiré plutôt que figé : un traîneau arrêté en plein
-     ciel au milieu du hero n'a aucun sens. */
-  .noel-traineau{ display:none; }
-  .noel-lutin-d{ transform:scaleX(-1); }
+  .noel-snow i, .noel-bulbs{ animation:none; }
 }
 
 /* Mobile : deux nappes au lieu de trois et une guirlande plus courte. Un
@@ -1160,20 +1108,8 @@ p{ margin:0 0 1em; color:var(--ink-soft); }
       radial-gradient(circle 4px at 26px 20.5px, #fff 0 1.7px, #78afdc 2px 3.6px, transparent 3.8px);
   }
   .noel-countdown{ font-size:.82rem; padding:.35em .9em; }
-
-  /* Personnages réduits : sur 390 px de large, un traîneau de 200 px barre
-     l'écran et les lutins mordent sur les boutons. */
-  .noel-traineau{ width:132px; top:14%; }
-  .noel-lutin{ width:62px; bottom:-14px; }
-  .noel-lutin-g{ left:1vw; }
-  .noel-lutin-d{ right:1vw; }
-  .noel-bonnet{ left:-10px; top:-12px; width:40px; }
-  .site-header.is-scrolled .noel-bonnet{ width:34px; top:-9px; }
-  /* Les ornements de section n'ont plus de marge latérale où se loger :
-     ils rapetissent et s'effacent derrière le texte. */
-  .noel-ornement{ width:54px; opacity:.5; }
-  .noel-ornement--g{ left:.2rem; }
-  .noel-ornement--d{ right:.2rem; }
+  /* Le bonnet est déjà dimensionné en pourcentage du logo : il suit tout
+     seul quand celui-ci se rabat sur 90vw. Rien à reprendre ici. */
 }
 
 /* =========================================================
