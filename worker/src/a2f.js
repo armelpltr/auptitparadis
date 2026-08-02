@@ -103,9 +103,26 @@ export async function handleA2fRequest(request, env, cors) {
     precedent = fromFirestoreFields(doc.fields);
   } catch { /* aucune demande en cours */ }
 
+  /* Un code encore valable existe déjà : on ne le remplace pas et on ne
+     renvoie rien. Le refus sec ne vaut que pour un renvoi demandé
+     explicitement — sinon toute reconnexion dans les 45 secondes suivant
+     la précédente était rejetée, et l'appelant se retrouvait déconnecté
+     avec « patientez » sans avoir rien demandé. */
+  const renvoiExplicite = body.renvoi === true;
   if (precedent) {
-    if (maintenant - (precedent.lastSentAt || 0) < DELAI_RENVOI_MS) {
+    const tropTot = maintenant - (precedent.lastSentAt || 0) < DELAI_RENVOI_MS;
+    const encoreValable = (precedent.expiresAt || 0) > maintenant;
+
+    if (tropTot && renvoiExplicite) {
       throw httpError('Patientez quelques secondes avant de demander un nouveau code.', 429);
+    }
+    if (tropTot && encoreValable) {
+      return json({
+        ok: true,
+        dejaEnvoye: true,
+        expiresAt: precedent.expiresAt,
+        indice: masquer(email)
+      }, 200, cors);
     }
     if (maintenant - (precedent.windowStart || 0) < FENETRE_MS) {
       debutFenetre = precedent.windowStart;

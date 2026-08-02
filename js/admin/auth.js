@@ -123,9 +123,16 @@ async function a2fDejaValidee(user) {
   }
 }
 
-async function demanderCode(user) {
-  const data = await appelerWorker('/a2f/request', { idToken: await user.getIdToken() });
+/* `renvoi` distingue le clic sur « Renvoyer un code » de la demande
+   automatique faite à la connexion : seul le premier mérite qu'on refuse
+   sèchement quand c'est trop tôt. */
+async function demanderCode(user, renvoi = false) {
+  const data = await appelerWorker('/a2f/request', {
+    idToken: await user.getIdToken(),
+    renvoi
+  });
   if (data.indice) document.getElementById('a2fIndice').textContent = data.indice;
+  return data;
 }
 
 function montrerEcranA2F() {
@@ -182,8 +189,14 @@ export function initAuth(onReady) {
     // Membre reconnu, mais le panel n'est pas encore ouvert : il reste le code.
     if (!(await a2fDejaValidee(user))) {
       try {
-        await demanderCode(user);
+        const data = await demanderCode(user);
         montrerEcranA2F();
+        // Code encore valable d'une tentative précédente : le dire, sinon on
+        // attend un e-mail qui ne repartira pas.
+        if (data.dejaEnvoye) {
+          a2fError.textContent = 'Un code vous a déjà été envoyé, il est encore valable.';
+          a2fError.hidden = false;
+        }
       } catch (err) {
         // Sans code envoyé, personne n'entre : on renvoie à la connexion
         // plutôt que de laisser un écran de saisie sans issue.
@@ -241,7 +254,7 @@ export function initAuth(onReady) {
   document.getElementById('a2fRenvoyer').addEventListener('click', async () => {
     a2fError.hidden = true;
     try {
-      await demanderCode(auth.currentUser);
+      await demanderCode(auth.currentUser, true);
       a2fError.textContent = 'Un nouveau code vient de partir.';
       a2fError.hidden = false;
     } catch (err) {
