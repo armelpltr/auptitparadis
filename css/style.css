@@ -800,6 +800,12 @@ p{ margin:0 0 1em; color:var(--ink-soft); }
 }
 
 @media (max-width: 460px){
+  /* Sous 460px, le badge ouvert/fermé et le burger ne laissent plus assez
+     de largeur : le logo garde sa hauteur mais cède sur l'espace autour. */
+  .header-inner{ padding:.6rem .8rem; }
+  .open-badge{ margin-right:.4rem; }
+  .nav-toggle{ margin-left:.6rem; }
+
   .footer-grid{ grid-template-columns:1fr; gap:1.9rem; }
   .footer-brand, .footer-contact{ grid-column:auto; }
   .footer-brand-desc{ max-width:none; }
@@ -1074,11 +1080,17 @@ p{ margin:0 0 1em; color:var(--ink-soft); }
 }
 
 @media (max-width: 720px){
-  /* Le logo prend une part bien plus grande d'un écran étroit : il grandit,
-     mais moins qu'en desktop, sinon il chasse le bouton de menu. */
-  .brand-logo-header{ height:56px; }
-  .site-header.is-scrolled .brand-logo-header{ height:48px; }
-  .commande-main{ padding-top:5.8rem; }
+  /* Le logo est le premier repère sur un écran étroit : il prime sur le
+     confort du reste de la barre. On lui laisse la hauteur du desktop, et
+     c'est aux marges de la barre de se resserrer.
+     `max-width` + `object-fit:contain` l'empêchent de pousser le badge et
+     le bouton de menu hors de l'écran sur les téléphones les plus étroits. */
+  .header-inner{ padding:.7rem 1rem; gap:.5rem; }
+  .site-header.is-scrolled .header-inner{ padding:.45rem 1rem; }
+  .brand{ min-width:0; flex-shrink:1; }
+  .brand-logo-header{ height:72px; max-width:100%; }
+  .site-header.is-scrolled .brand-logo-header{ height:62px; }
+  .commande-main{ padding-top:7rem; }
   .produits-grid{ grid-template-columns:1fr; gap:1.1rem; }
   .produit-photo{ aspect-ratio:16/9; }
   .commande-panier{ padding:1.3rem 1.1rem; }
