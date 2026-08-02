@@ -47,7 +47,32 @@
       '</div>';
     document.body.appendChild(decor);
 
+    buildPersonnages();
     buildCountdown();
+  }
+
+  /* Père Noël, lutins et bonnet. Chacun est optionnel : les pages légales
+     n'ont pas de hero, la page de commande non plus. */
+  function buildPersonnages() {
+    var brand = document.querySelector('.brand');
+    if (brand && !brand.querySelector('.noel-bonnet')) {
+      brand.appendChild(img('assets/noel/bonnet.svg', 'noel-bonnet'));
+    }
+
+    var hero = document.querySelector('.hero');
+    if (!hero || hero.querySelector('.noel-traineau')) return;
+    hero.appendChild(img('assets/noel/traineau.svg', 'noel-traineau'));
+    hero.appendChild(img('assets/noel/lutin.svg', 'noel-lutin noel-lutin-g'));
+    hero.appendChild(img('assets/noel/lutin.svg', 'noel-lutin noel-lutin-d'));
+  }
+
+  function img(src, className) {
+    var el = document.createElement('img');
+    el.src = src;
+    el.className = className;
+    el.alt = '';
+    el.setAttribute('aria-hidden', 'true');
+    return el;
   }
 
   function removeDecor() {
@@ -55,6 +80,10 @@
     if (decor) decor.remove();
     var cd = document.getElementById(COUNTDOWN_ID);
     if (cd) cd.remove();
+    // Les personnages vivent dans le header et le hero, pas dans #noelDecor :
+    // ils se retirent un par un.
+    document.querySelectorAll('.noel-bonnet, .noel-traineau, .noel-lutin')
+      .forEach(function (el) { el.remove(); });
   }
 
   /* Nombre de jours entiers d'ici au 25 décembre. Le calcul se fait à midi

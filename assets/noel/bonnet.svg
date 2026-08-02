@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 92" role="img" aria-label="Bonnet de Père Noël">
+  <!-- Bonnet posé de biais sur le logo : la pointe part vers la droite. -->
+  <path d="M14 68 C16 28 44 6 84 16 C104 21 110 28 104 36 C86 32 62 46 52 70 Z" fill="#c62035"/>
+  <!-- Ombre interne, côté gauche, pour que le cône ne soit pas un aplat. -->
+  <path d="M14 68 C16 42 30 22 52 15 C40 30 33 47 33 68 Z" fill="#9d1728" opacity=".45"/>
+  <!-- Bourrelet et pompon cernés : posés sur le logo, donc sur un fond clair,
+       du blanc sans contour serait invisible. -->
+  <g fill="#fdfcfa" stroke="#e3d8cc" stroke-width="2">
+    <rect x="5" y="59" width="62" height="22" rx="11"/>
+    <circle cx="104" cy="30" r="12"/>
+  </g>
+</svg>

@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 132" role="img" aria-label="Père Noël en traîneau">
+  <!-- ============ Renne, de profil, tourné vers la droite ============ -->
+  <g stroke="#7d4f2e" stroke-width="6" stroke-linecap="round">
+    <path d="M192 84l-5 24"/>
+    <path d="M206 84l7 24"/>
+    <path d="M232 82l-5 26"/>
+    <path d="M246 82l7 26"/>
+  </g>
+  <ellipse cx="219" cy="70" rx="35" ry="18" fill="#96603a"/>
+  <path d="M247 62l12-20" stroke="#96603a" stroke-width="15" stroke-linecap="round"/>
+  <path d="M188 66l-14 6" stroke="#96603a" stroke-width="9" stroke-linecap="round"/>
+  <!-- Bois -->
+  <g stroke="#6b4423" stroke-width="3.4" stroke-linecap="round" fill="none">
+    <path d="M258 26l-6-14m6 14l-14-6m20-8l4-12m-4 12l12-4"/>
+  </g>
+  <ellipse cx="266" cy="34" rx="16" ry="11" fill="#96603a"/>
+  <path d="M256 26l-9-3 6-7Z" fill="#7d4f2e"/>
+  <circle cx="280" cy="37" r="7" fill="#a86c42"/>
+  <circle cx="285" cy="36" r="4.6" fill="#d6203a"/>
+  <circle cx="269" cy="31" r="2.4" fill="#33241a"/>
+  <!-- Harnais et rênes -->
+  <path d="M252 48c6 4 12 4 17 0" fill="none" stroke="#c62035" stroke-width="4" stroke-linecap="round"/>
+  <path d="M112 56c34-2 90-6 148-18" fill="none" stroke="#8c5a26" stroke-width="2.6" stroke-linecap="round"/>
+
+  <!-- ============ Traîneau ============ -->
+  <path d="M22 106h124c16 0 24-8 27-20" fill="none" stroke="#8c5a26" stroke-width="6" stroke-linecap="round"/>
+  <g stroke="#8c5a26" stroke-width="4" stroke-linecap="round">
+    <path d="M44 98v8"/><path d="M124 98v8"/>
+  </g>
+  <path d="M32 98V74c0-8 5-12 14-12h84c14 0 20 10 20 24v12Z" fill="#c62035"/>
+  <path d="M150 98V86c10 0 16-6 16-14 0-6-6-9-11-6" fill="none" stroke="#c62035" stroke-width="9" stroke-linecap="round"/>
+  <rect x="32" y="76" width="118" height="7" fill="#d9a441"/>
+
+  <!-- Sac de cadeaux, à l'arrière -->
+  <path d="M38 62c0-12 8-20 18-20s18 8 18 20Z" fill="#2f7c4a"/>
+  <path d="M48 42c2-6 14-6 16 0" fill="none" stroke="#276b3f" stroke-width="3.4" stroke-linecap="round"/>
+
+  <!-- ============ Père Noël ============ -->
+  <path d="M92 62c0-12 7-19 17-19s17 7 17 19v14H92Z" fill="#c62035"/>
+  <path d="M92 68h34v6H92z" fill="#3a2a22"/>
+  <rect x="103" y="66" width="12" height="10" rx="2" fill="#d9a441"/>
+  <path d="M126 52l16 6" stroke="#c62035" stroke-width="9" stroke-linecap="round"/>
+  <circle cx="146" cy="60" r="6" fill="#f4c9a8"/>
+  <!-- Barbe puis visage : la barbe passe dessous, le visage se pose dessus -->
+  <path d="M97 36c0 18 5 26 12 26s12-8 12-26Z" fill="#fdfcfa"/>
+  <circle cx="109" cy="32" r="13" fill="#f4c9a8"/>
+  <path d="M96 34c0-8 6-13 13-13s13 5 13 13Z" fill="#fdfcfa"/>
+  <circle cx="105" cy="31" r="2.2" fill="#33241a"/>
+  <circle cx="114" cy="31" r="2.2" fill="#33241a"/>
+  <circle cx="109" cy="37" r="3" fill="#e08f7d"/>
+  <!-- Bonnet -->
+  <path d="M95 20c2-12 10-17 18-16 10 1 15 8 14 16Z" fill="#c62035"/>
+  <rect x="92" y="18" width="36" height="8" rx="4" fill="#fdfcfa"/>
+  <circle cx="130" cy="14" r="6" fill="#fdfcfa"/>
+</svg>

@@ -937,8 +937,12 @@ p{ margin:0 0 1em; color:var(--ink-soft); }
    le même élément sans qu'elles se marchent dessus.
    Le blanc pur disparaîtrait sur un fond crème : chaque flocon a un cœur
    blanc cerclé de gris bleu, ce qui le détache sans l'assombrir. */
+/* z-index négatif : la neige passe derrière le contenu, entre le fond de
+   page et les fonds de section. Ces derniers sont opaques d'origine et
+   l'auraient entièrement masquée — ils deviennent donc légèrement
+   translucides sous le thème, plus bas. */
 .noel-snow{
-  position:fixed; inset:0; z-index:90; pointer-events:none; overflow:hidden;
+  position:fixed; inset:0; z-index:-1; pointer-events:none; overflow:hidden;
 }
 .noel-snow i{ position:absolute; left:-5%; right:-5%; top:0; bottom:0; display:block; }
 
@@ -1012,6 +1016,70 @@ p{ margin:0 0 1em; color:var(--ink-soft); }
   filter:drop-shadow(0 2px 2px rgba(90,120,150,.16));
 }
 
+/* ---- Fonds de section translucides, pour laisser voir la neige ---- */
+/* Sans ça, chaque section repeindrait par-dessus : la neige ne resterait
+   visible que dans les interstices, c'est-à-dire nulle part. */
+.theme-noel .hero{
+  background:radial-gradient(circle at 50% 18%, rgba(247,226,223,.72) 0%, rgba(253,247,244,.5) 55%);
+}
+.theme-noel .specialites,
+.theme-noel .avis,
+.theme-noel .contact,
+.theme-noel .block-cards,
+.theme-noel .block-gallery,
+.theme-noel .page-legale,
+.theme-noel .commande-head,
+.theme-noel .block-text-image:nth-of-type(even){ background:rgba(253,247,244,.8); }
+.theme-noel .histoire,
+.theme-noel .presse,
+.theme-noel .block-text-image,
+.theme-noel .commande-body,
+.theme-noel .commande-closed{ background:rgba(247,226,223,.78); }
+.theme-noel .horaires{ background:rgba(230,239,231,.82); }
+
+/* ---- Personnages ---- */
+/* Bonnet posé sur le logo du header. Il suit le logo quand celui-ci
+   rétrécit au défilement, d'où la taille en em et le repère sur .brand. */
+.theme-noel .brand{ position:relative; }
+.noel-bonnet{
+  position:absolute; left:0; top:-11px; width:52px; height:auto;
+  transform:rotate(-14deg); transform-origin:bottom left; pointer-events:none;
+  transition:width .4s var(--ease), top .4s var(--ease);
+}
+.site-header.is-scrolled .noel-bonnet{ width:43px; top:-7px; }
+
+/* Le traîneau traverse le hero en boucle. Le hero est en overflow:hidden :
+   il entre et sort tout seul, sans déborder de la page. */
+.noel-traineau{
+  position:absolute; top:17%; left:0; width:210px; height:auto; z-index:1;
+  pointer-events:none;
+  animation:traineau-passe 28s linear infinite;
+}
+@keyframes traineau-passe{
+  0%  { transform:translateX(-26vw) translateY(6px); }
+  50% { transform:translateX(55vw)  translateY(-16px); }
+  100%{ transform:translateX(136vw) translateY(6px); }
+}
+
+/* Lutins qui dépassent du bas du hero, coupés par overflow:hidden — d'où
+   l'impression qu'ils sont cachés derrière le bord. */
+.noel-lutin{
+  position:absolute; bottom:-20px; width:92px; height:auto; z-index:1;
+  pointer-events:none;
+}
+.noel-lutin-g{ left:3vw; animation:lutin-guette 5.5s ease-in-out infinite; }
+.noel-lutin-d{ right:3vw; animation:lutin-guette-mir 5.5s ease-in-out infinite 1.8s; }
+@keyframes lutin-guette{
+  0%, 100%{ transform:translateY(14px); }
+  50%     { transform:translateY(0); }
+}
+/* Le lutin de droite regarde vers la gauche : le miroir doit être répété
+   dans chaque étape, une animation de transform remplace la propriété. */
+@keyframes lutin-guette-mir{
+  0%, 100%{ transform:scaleX(-1) translateY(14px); }
+  50%     { transform:scaleX(-1) translateY(0); }
+}
+
 /* ---- Compte à rebours dans le hero ---- */
 .noel-countdown{
   display:inline-flex; align-items:center; gap:.5rem;
@@ -1025,7 +1093,11 @@ p{ margin:0 0 1em; color:var(--ink-soft); }
 /* Un décor qui bouge en permanence n'est pas négociable pour qui a demandé
    moins d'animations : la neige s'arrête, les ampoules restent allumées. */
 @media (prefers-reduced-motion: reduce){
-  .noel-snow i, .noel-bulbs{ animation:none; }
+  .noel-snow i, .noel-bulbs, .noel-lutin{ animation:none; }
+  /* Le traîneau est retiré plutôt que figé : un traîneau arrêté en plein
+     ciel au milieu du hero n'a aucun sens. */
+  .noel-traineau{ display:none; }
+  .noel-lutin-d{ transform:scaleX(-1); }
 }
 
 /* Mobile : deux nappes au lieu de trois et une guirlande plus courte. Un
@@ -1066,6 +1138,15 @@ p{ margin:0 0 1em; color:var(--ink-soft); }
       radial-gradient(circle 4px at 26px 20.5px, #fff 0 1.7px, #78afdc 2px 3.6px, transparent 3.8px);
   }
   .noel-countdown{ font-size:.82rem; padding:.35em .9em; }
+
+  /* Personnages réduits : sur 390 px de large, un traîneau de 200 px barre
+     l'écran et les lutins mordent sur les boutons. */
+  .noel-traineau{ width:132px; top:14%; }
+  .noel-lutin{ width:62px; bottom:-14px; }
+  .noel-lutin-g{ left:1vw; }
+  .noel-lutin-d{ right:1vw; }
+  .noel-bonnet{ left:-10px; top:-12px; width:40px; }
+  .site-header.is-scrolled .noel-bonnet{ width:34px; top:-9px; }
 }
 
 /* =========================================================
