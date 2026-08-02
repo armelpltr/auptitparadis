@@ -151,24 +151,57 @@ Au P'tit Paradis — Luc-sur-Mer`;
 
 /* ---------- Annulation par le client ---------- */
 
-function mailClientAnnulation(commande) {
-  const { code, client, dateRetrait } = commande;
+function mailClientAnnulation(commande, env) {
+  const { code, client, items, total, dateRetrait } = commande;
+  const lienCommander = env.SITE_URL
+    ? `${env.SITE_URL.replace(/\/+$/, '')}/commander.html`
+    : '';
 
   const html = `
 <div style="font-family:Helvetica,Arial,sans-serif;color:#211c17;max-width:520px;margin:0 auto;">
   <h1 style="font-size:20px;margin:0 0 4px;">Votre réservation est annulée</h1>
-  <p style="color:#4a423a;margin:0 0 20px;">Bonjour ${esc(client.prenom || client.nom)},</p>
+  <p style="color:#4a423a;margin:0 0 24px;">Bonjour ${esc(client.prenom || client.nom)},</p>
 
-  <p style="margin:0 0 16px;">
-    La réservation <strong>${esc(code)}</strong>, prévue pour le
-    ${esc(jourLisible(dateRetrait))}, a bien été annulée. Il n'y a rien
-    d'autre à faire de votre côté, et rien à régler.
+  <!-- Même encadré que la confirmation, en gris : le client reconnaît le
+       bloc où figurait son code, et voit du premier coup d'œil qu'il ne
+       vaut plus rien. -->
+  <div style="background:#ece7de;border-radius:10px;padding:20px;text-align:center;margin-bottom:24px;">
+    <p style="margin:0 0 6px;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:#6b6156;">
+      Réservation annulée
+    </p>
+    <p style="margin:0;font-size:32px;font-weight:bold;letter-spacing:.18em;color:#8a8177;text-decoration:line-through;">
+      ${esc(code)}
+    </p>
+  </div>
+
+  <p style="margin:0 0 8px;color:#4a423a;">
+    <strong>Retrait qui était prévu :</strong> ${esc(jourLisible(dateRetrait))}
   </p>
 
-  <p style="margin:0 0 20px;color:#4a423a;">
+  <table style="width:100%;border-collapse:collapse;margin:16px 0;color:#6b6156;">
+    ${lignesHtml(items)}
+    <tr>
+      <td style="padding:10px 0;font-weight:bold;">Montant qui était à régler</td>
+      <td style="padding:10px 0;text-align:right;font-weight:bold;white-space:nowrap;">${esc(euros(total))}</td>
+    </tr>
+  </table>
+
+  <p style="background:#eef4ee;border-left:3px solid #4a8a5f;padding:12px 16px;margin:0 0 24px;">
+    <strong>Vous n'avez rien à faire.</strong> Rien n'est dû, aucun paiement
+    n'a été pris en ligne, et vous n'avez pas à vous déplacer.
+  </p>
+
+  ${lienCommander ? `
+  <p style="margin:0 0 12px;color:#4a423a;">C'était une erreur, ou vous changez d'avis ?</p>
+  <p style="margin:0 0 24px;">
+    <a href="${esc(lienCommander)}" style="display:inline-block;background:#c8853a;color:#fff;text-decoration:none;padding:12px 22px;border-radius:4px;font-weight:bold;">
+      Passer une nouvelle réservation
+    </a>
+  </p>` : `
+  <p style="margin:0 0 24px;color:#4a423a;">
     C'était une erreur ? Repassez une réservation depuis le site tant que les
     commandes sont ouvertes, ou appelez-nous.
-  </p>
+  </p>`}
 
   <p style="color:#4a423a;font-size:14px;margin:0;">
     À bientôt,<br>Au P'tit Paradis — Luc-sur-Mer
@@ -179,11 +212,18 @@ function mailClientAnnulation(commande) {
 
 Bonjour ${client.prenom || client.nom},
 
-La réservation ${code}, prévue pour le ${jourLisible(dateRetrait)}, a bien
-été annulée. Il n'y a rien d'autre à faire de votre côté, et rien à régler.
+RÉSERVATION ANNULÉE — code ${code}
+Retrait qui était prévu : ${jourLisible(dateRetrait)}
 
-C'était une erreur ? Repassez une réservation depuis le site tant que les
-commandes sont ouvertes, ou appelez-nous.
+${lignesTexte(items)}
+
+Montant qui était à régler : ${euros(total)}
+
+Vous n'avez rien à faire. Rien n'est dû, aucun paiement n'a été pris en
+ligne, et vous n'avez pas à vous déplacer.
+
+C'était une erreur, ou vous changez d'avis ?
+${lienCommander ? lienCommander : 'Repassez une réservation depuis le site, ou appelez-nous.'}
 
 À bientôt,
 Au P'tit Paradis — Luc-sur-Mer`;
@@ -317,7 +357,7 @@ export async function envoyerConfirmation(commande, env) {
  */
 export async function envoyerAnnulation(commande, env) {
   if (!env.BREVO_API_KEY || !env.EMAIL_EXPEDITEUR) return false;
-  return diffuser(commande, mailClientAnnulation(commande), mailPatronAnnulation(commande), env);
+  return diffuser(commande, mailClientAnnulation(commande, env), mailPatronAnnulation(commande), env);
 }
 
 /* Un e-mail au client, un à chaque membre abonné. L'échec de l'un

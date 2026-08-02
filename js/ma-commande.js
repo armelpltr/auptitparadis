@@ -156,11 +156,38 @@
 
   /* ---------- Actions ---------- */
 
+  /* Confirmation via le <dialog> de la page. Enveloppé dans une promesse
+     pour garder le déroulé linéaire de annuler(). Repli sur confirm() si
+     le navigateur ne connaît pas showModal — mieux vaut une boîte laide
+     qu'une annulation qui part sans demander. */
+  function demanderConfirmation() {
+    var dlg = $('dlgAnnuler');
+    if (!dlg || typeof dlg.showModal !== 'function') {
+      return Promise.resolve(window.confirm('Annuler définitivement cette réservation ?'));
+    }
+    return new Promise(function (resolve) {
+      function fermer(reponse) {
+        dlg.close();
+        $('dlgOui').removeEventListener('click', oui);
+        $('dlgNon').removeEventListener('click', non);
+        dlg.removeEventListener('cancel', echap);
+        resolve(reponse);
+      }
+      function oui() { fermer(true); }
+      function non() { fermer(false); }
+      // Échap ferme la boîte : c'est un refus, pas une validation.
+      function echap(e) { e.preventDefault(); fermer(false); }
+
+      $('dlgOui').addEventListener('click', oui);
+      $('dlgNon').addEventListener('click', non);
+      dlg.addEventListener('cancel', echap);
+      dlg.showModal();
+    });
+  }
+
   async function annuler() {
     var bouton = $('btnAnnuler');
-    // confirm() natif plutôt que la boîte du panel : cette page ne charge
-    // pas les modules d'admin, et l'action est irréversible côté client.
-    if (!window.confirm('Annuler définitivement cette réservation ?')) return;
+    if (!(await demanderConfirmation())) return;
 
     bouton.disabled = true;
     bouton.textContent = 'Annulation…';

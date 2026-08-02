@@ -1409,6 +1409,36 @@ p{ margin:0 0 1em; color:var(--ink-soft); }
 .gestion-annulee{ text-align:center; }
 .gestion-annulee h2, .gestion-erreur h2{ margin-bottom:.6rem; }
 
+/* ---- Boîte de confirmation ---- */
+/* <dialog> natif : le navigateur gère le piège à focus, la touche Échap
+   et l'inertie du reste de la page. Reste à l'habiller — les styles par
+   défaut sont ceux d'une boîte de dialogue système. */
+.apb-dialog{
+  border:none; border-radius:14px; padding:1.8rem 1.8rem 1.5rem;
+  max-width:min(28rem, calc(100vw - 2rem));
+  background:var(--cream); color:var(--ink);
+  box-shadow:0 24px 60px rgba(33,28,23,.28);
+}
+.apb-dialog::backdrop{ background:rgba(33,28,23,.55); }
+.apb-dialog h2{ margin:0 0 .6rem; font-size:1.3rem; }
+.apb-dialog p{ margin:0 0 1.5rem; color:var(--ink-soft); font-size:.95rem; }
+.apb-dialog-actions{
+  display:flex; gap:.7rem; justify-content:flex-end; flex-wrap:wrap;
+}
+/* Boutons resserrés : à la taille normale de .btn les deux libellés ne
+   tiennent pas côte à côte dans la boîte et passent à la ligne. La classe
+   .btn-small du panel n'existe pas sur les pages publiques. */
+.apb-dialog-actions .btn{ padding:.6em 1.15em; font-size:.88rem; }
+/* Le bouton destructeur est le plus visible des deux, mais en rouge et non
+   en or : il ne doit pas se confondre avec les boutons d'action du site. */
+.apb-dialog-danger{ background:#a13a25; }
+.apb-dialog-danger:hover{ background:#8c3423; }
+
+@media (max-width: 420px){
+  .apb-dialog-actions{ flex-direction:column-reverse; }
+  .apb-dialog-actions .btn{ width:100%; }
+}
+
 @media (max-width: 560px){
   .gestion-carte{ padding:1.3rem 1.2rem; }
   .gestion-code{ font-size:1.6rem; }

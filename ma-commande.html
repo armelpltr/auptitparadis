@@ -136,6 +136,21 @@
         <p class="gestion-impossible" id="gestionImpossible" hidden></p>
       </article>
 
+      <!-- Confirmation d'annulation. Un <dialog> natif plutôt qu'un div :
+           il gère seul le focus piégé, la touche Échap et l'inertie du
+           reste de la page. -->
+      <dialog class="apb-dialog" id="dlgAnnuler" aria-labelledby="dlgTitre">
+        <h2 id="dlgTitre">Annuler cette réservation ?</h2>
+        <p>
+          Elle sera définitivement annulée et la boulangerie prévenue.
+          Pour la rétablir, il faudra en repasser une nouvelle.
+        </p>
+        <div class="apb-dialog-actions">
+          <button type="button" class="btn btn-ghost" id="dlgNon">Garder ma réservation</button>
+          <button type="button" class="btn btn-primary apb-dialog-danger" id="dlgOui">Annuler la réservation</button>
+        </div>
+      </dialog>
+
       <div class="gestion-annulee" id="gestionAnnulee" hidden>
         <h2>Votre réservation est annulée</h2>
         <p>
