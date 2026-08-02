@@ -21,7 +21,7 @@
 import { json, httpError } from './http.js';
 import {
   verifyIdToken, firestoreGet, firestoreSet, firestoreDelete,
-  firestoreIncrement, fromFirestoreFields, setCustomClaims
+  firestoreIncrement, firestoreUpdate, fromFirestoreFields, setCustomClaims
 } from './firebase.js';
 import { envoyerCodeA2F } from './mailer.js';
 
@@ -113,6 +113,7 @@ export async function handleA2fRequest(request, env, cors) {
     const tropTot = maintenant - (precedent.lastSentAt || 0) < DELAI_RENVOI_MS;
     const encoreValable = (precedent.expiresAt || 0) > maintenant;
 
+    console.log(`[a2f] defi existant — tropTot=${tropTot} encoreValable=${encoreValable} renvoi=${renvoiExplicite}`);
     if (tropTot && renvoiExplicite) {
       throw httpError('Patientez quelques secondes avant de demander un nouveau code.', 429);
     }
@@ -145,6 +146,12 @@ export async function handleA2fRequest(request, env, cors) {
   const code = genererCode();
   const sel = crypto.randomUUID();
 
+  /* `lastSentAt` reste à zéro jusqu'à ce que l'e-mail soit réellement
+     parti. C'est ce qui empêche l'état le plus vicieux : un défi enregistré
+     comme envoyé alors que la requête a été coupée avant l'envoi — un
+     rechargement de page suffit. Le code « encore valable » bloquait alors
+     tout nouvel envoi pendant dix minutes, sans qu'aucun e-mail n'existe.
+     Tant que lastSentAt vaut 0, la demande suivante renvoie un code. */
   await firestoreSet(chemin, {
     codeHash:    await sha256(sel + code),
     sel,
@@ -152,13 +159,19 @@ export async function handleA2fRequest(request, env, cors) {
     attempts:    0,
     sends:       envois,
     windowStart: debutFenetre,
-    lastSentAt:  maintenant
+    lastSentAt:  0
   }, env);
 
+  console.log(`[a2f] envoi d'un nouveau code vers @${String(email).split('@')[1] || '?'}`);
   const envoye = await envoyerCodeA2F({ email, prenom, code }, env);
   if (!envoye) {
     throw httpError("L'envoi du code a échoué. Prévenez l'administrateur du site.", 502);
   }
+
+  // Envoi confirmé : c'est seulement maintenant que le délai anti-renvoi
+  // commence à courir.
+  await firestoreUpdate(chemin, { lastSentAt: Date.now() }, env);
+  console.log('[a2f] code envoye et horodate');
 
   // L'adresse est renvoyée masquée : le panel affiche « ...@gmail.com »
   // pour lever le doute sur la boîte à consulter, sans l'étaler à l'écran.

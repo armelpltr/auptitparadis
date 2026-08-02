@@ -321,7 +321,12 @@ async function envoyer({ destinataire, nomDestinataire, sujet, html, texte }, en
       textContent: texte
     })
   });
-  if (!res.ok) throw new Error(`Brevo ${res.status}: ${await res.text()}`);
+  // Journalisé même en cas de succès : sans ça, un e-mail qui n'arrive pas
+  // laisse le doute entre « jamais parti » et « parti puis filtré ».
+  // L'adresse n'est pas écrite en clair dans les journaux.
+  const corps = await res.text();
+  console.log(`[brevo] ${res.status} vers @${String(destinataire).split('@')[1] || '?'} — ${corps.slice(0, 200)}`);
+  if (!res.ok) throw new Error(`Brevo ${res.status}: ${corps}`);
 }
 
 /* ---------- Code de connexion au panel ---------- */
