@@ -832,6 +832,82 @@ p{ margin:0 0 1em; color:var(--ink-soft); }
 }
 
 /* =========================================================
+   HABILLAGE DE NOËL
+   Activé depuis l'admin (onglet Noël) : js/theme.js pose la classe
+   .theme-noel sur <html>. Tout le site étant peint à partir des variables
+   de :root, il suffit de les redéfinir. Les quelques couleurs écrites en
+   dur — fonds translucides du header, halo du footer — sont reprises
+   juste en dessous, sans quoi elles resteraient crème sur fond rosé.
+   ========================================================= */
+.theme-noel{
+  --ink:        #241316;
+  --ink-soft:   #4d3033;
+  --cream:      #fdf7f4;
+  --sand:       #f7e2df;
+  --gold:       #b3122a;   /* le rouge de Noël prend la place de l'or */
+  --gold-deep:  #7d0d1e;
+  --gold-pale:  #e9aeae;
+  --icon-ink:   #7d0d1e;
+  --sea:        #2f5d3a;   /* vert sapin en accent secondaire */
+  --sea-pale:   #e6efe7;
+}
+
+/* Fonds translucides calés sur l'ancienne crème (251,246,238) */
+.theme-noel .site-header.is-scrolled{ background:rgba(253,247,244,.35); }
+.theme-noel .open-badge{ background:rgba(253,247,244,.7); }
+.theme-noel .mobile-nav{ background:rgba(253,247,244,.98); }
+.theme-noel .site-footer{
+  background:
+    radial-gradient(120% 75% at 12% 0%, rgba(179,18,42,.28), transparent 62%),
+    radial-gradient(90% 60% at 92% 12%, rgba(47,93,58,.22), transparent 60%),
+    var(--ink);
+}
+
+/* Guirlande : la fine ligne dorée sous le header passe en rouge / blanc /
+   vert, et s'épaissit pour que les rayures se lisent. */
+.theme-noel .header-rule{
+  height:4px;
+  background:repeating-linear-gradient(115deg,
+    var(--gold-deep) 0 9px,
+    #fdf7f4       9px 18px,
+    var(--sea)   18px 27px,
+    #fdf7f4      27px 36px);
+}
+
+/* Neige : trois nappes de flocons de tailles et de vitesses différentes,
+   pour la profondeur. Un pseudo-élément de <html> plutôt qu'un élément
+   ajouté au balisage — aucune page n'a à connaître le décor. Le blanc pur
+   serait invisible sur un fond crème : les flocons tirent sur le gris bleu.
+   z-index sous le header (100), au-dessus du contenu. */
+.theme-noel::before{
+  content:""; position:fixed; inset:0; z-index:90; pointer-events:none;
+  background-image:
+    radial-gradient(3px 3px     at 18% 12%, rgba(126,148,172,.50), transparent 60%),
+    radial-gradient(2px 2px     at 62% 38%, rgba(126,148,172,.42), transparent 60%),
+    radial-gradient(2.5px 2.5px at 84% 72%, rgba(126,148,172,.34), transparent 60%);
+  background-size:260px 260px, 190px 190px, 320px 320px;
+  animation:snow-fall 16s linear infinite;
+}
+@keyframes snow-fall{
+  to{ background-position:40px 260px, -30px 190px, 20px 320px; }
+}
+@media (prefers-reduced-motion: reduce){
+  .theme-noel::before{ animation:none; }
+}
+/* Mobile : une seule nappe. Un fond animé plein écran tourne en continu,
+   autant lui laisser un seul calque à composer sur batterie. */
+@media (max-width: 720px){
+  .theme-noel::before{
+    background-image:radial-gradient(2.5px 2.5px at 30% 20%, rgba(126,148,172,.44), transparent 60%);
+    background-size:200px 200px;
+    animation-name:snow-fall-solo;
+  }
+}
+@keyframes snow-fall-solo{
+  to{ background-position:30px 200px; }
+}
+
+/* =========================================================
    Sections dynamiques (générées depuis l'admin)
    ========================================================= */
 

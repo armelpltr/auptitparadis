@@ -374,8 +374,22 @@ function showLoadError() {
   revealDynamic();
 }
 
+/* Habillage de Noël. js/theme.js a déjà peint la page avec le dernier état
+   connu ; on ne fait ici que confirmer ou corriger depuis Firestore. Réglage
+   rangé dans `settings/noel` avec le reste des commandes de Noël : les deux
+   s'allument et s'éteignent à la même période. */
+async function applyNoelTheme() {
+  if (typeof window.setNoelTheme !== 'function') return;
+  const snap = await getDoc(doc(db, 'settings', 'noel'));
+  window.setNoelTheme(snap.exists() && snap.data().theme === true);
+}
+
 /* ---------- Lancement ---------- */
 (async () => {
+  // Le décor ne dépend pas du contenu : lancé sans attendre, il s'applique
+  // pendant que le reste se charge.
+  applyNoelTheme().catch(err => console.warn('Habillage de Noël :', err.message));
+
   try {
     const settingsSnap = await getDoc(doc(db, 'settings', 'site'));
     if (settingsSnap.exists()) applySettings(settingsSnap.data());

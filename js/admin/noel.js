@@ -40,6 +40,7 @@ export async function loadNoel() {
     const snap = await getDoc(doc(db, 'settings', 'noel'));
     const s = snap.exists() ? snap.data() : {};
     document.getElementById('noel-ouvert').checked = s.ouvert === true;
+    document.getElementById('noel-theme').checked  = s.theme  === true;
     setVal('noel-dateDebut', s.dateDebut || '');
     setVal('noel-dateFin',   s.dateFin   || '');
     setVal('noel-message',   s.message   || '');
@@ -189,6 +190,31 @@ export function initNoel() {
       await loadNoel();
     } catch (err) {
       showStatus("Impossible d'ajouter le produit : " + err.message, true);
+    }
+  });
+
+  /* L'habillage a son propre bouton : changer les couleurs du site n'a rien
+     à voir avec l'ouverture des commandes, et le merge Firestore laisse
+     l'autre carte intacte. */
+  document.getElementById('saveNoelThemeBtn').addEventListener('click', async () => {
+    const theme = document.getElementById('noel-theme').checked;
+
+    const ok = await confirmDialog(
+      theme ? 'Activer l\'habillage de Noël ?' : 'Revenir aux couleurs habituelles ?',
+      theme
+        ? 'Le site passera en rouge et vert pour tous les visiteurs.'
+        : 'Le site reprendra sa palette crème et or.'
+    );
+    if (!ok) return;
+
+    try {
+      await setDoc(doc(db, 'settings', 'noel'), { theme }, { merge: true });
+      await showSuccess(
+        theme ? 'Habillage activé ✓' : 'Habillage retiré ✓',
+        'Le changement est visible sur le site dans quelques secondes.'
+      );
+    } catch (err) {
+      showStatus("Erreur lors de l'enregistrement : " + err.message, true);
     }
   });
 
