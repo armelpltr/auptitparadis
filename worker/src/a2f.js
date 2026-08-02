@@ -75,7 +75,13 @@ async function membreOuRefus(idToken, env) {
     throw httpError("Ce compte n'a pas accès à l'administration.", 403);
   }
 
-  const email = membre.email || user.email;
+  /* L'adresse du compte Firebase d'abord, celle du document `admins`
+     seulement en secours. C'est celle avec laquelle on vient de
+     s'authentifier : elle est forcément juste, sinon la connexion aurait
+     échoué. Le champ de `admins` n'est qu'une copie faite à la création de
+     l'accès, et une copie diverge — ici elle portait une faute de frappe,
+     et les codes partaient depuis le début vers une boîte inexistante. */
+  const email = user.email || membre.email;
   if (!email) throw httpError('Aucune adresse e-mail sur ce compte.', 400);
 
   return { uid: user.localId, email, prenom: membre.prenom || '' };
