@@ -184,10 +184,12 @@ function applySettings(s) {
     if (h.instagram) {
       setUrlAttr('instagramLink', 'href', h.instagram);
       setUrlAttr('footerInstagram', 'href', h.instagram);
+      setUrlAttr('heroInstagram', 'href', h.instagram);
     }
     if (h.facebook) {
       setUrlAttr('facebookLink', 'href', h.facebook);
       setUrlAttr('footerFacebook', 'href', h.facebook);
+      setUrlAttr('heroFacebook', 'href', h.facebook);
     }
     if (h.mapUrl) setAttr('mapIframe', 'src', safeFrameUrl(h.mapUrl));
 

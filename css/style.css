@@ -234,6 +234,21 @@ p{ margin:0 0 1em; color:var(--ink-soft); }
   font-size:1.15rem; color:var(--ink-soft); max-width:520px; margin:0 auto 2rem;
 }
 .hero-actions{ display:flex; gap:1rem; justify-content:center; flex-wrap:wrap; }
+/* Réseaux sociaux : groupés dans leur propre boîte pour rester côte à côte
+   quand la ligne de boutons se casse. Les mesures reprennent celles de .btn
+   (font-size + padding + line-height) pour une pastille exactement aussi
+   haute que les boutons voisins. */
+.hero-socials{ display:flex; gap:.6rem; }
+.hero-social{
+  display:inline-flex; align-items:center; justify-content:center;
+  font-size:.95rem; padding:.85em; border:1.5px solid var(--ink); border-radius:50%;
+  color:var(--ink);
+  transition:transform .25s var(--ease), background .25s var(--ease), color .25s var(--ease);
+}
+.hero-social svg{ width:1.6em; height:1.6em; fill:none; stroke:currentColor; stroke-width:1.6; }
+/* glyphe plein (Facebook) : le contour seul rend trop maigre à cette taille */
+.hero-social svg .solid{ fill:currentColor; stroke:none; }
+.hero-social:hover{ background:var(--ink); color:var(--cream); transform:translateY(-2px); }
 
 .scroll-cue{
   position:absolute; bottom:2rem; left:50%; transform:translateX(-50%);
@@ -805,6 +820,10 @@ p{ margin:0 0 1em; color:var(--ink-soft); }
   .header-inner{ padding:.6rem .8rem; }
   .open-badge{ margin-right:.4rem; }
   .nav-toggle{ margin-left:.6rem; }
+
+  /* Pastilles réseaux un cran plus petites : sur cette largeur elles occupent
+     leur propre ligne sous les boutons du hero */
+  .hero-social{ font-size:.85rem; padding:.8em; }
 
   .footer-grid{ grid-template-columns:1fr; gap:1.9rem; }
   .footer-brand, .footer-contact{ grid-column:auto; }
