@@ -863,48 +863,209 @@ p{ margin:0 0 1em; color:var(--ink-soft); }
     var(--ink);
 }
 
-/* Guirlande : la fine ligne dorée sous le header passe en rouge / blanc /
-   vert, et s'épaissit pour que les rayures se lisent. */
-.theme-noel .header-rule{
-  height:4px;
-  background:repeating-linear-gradient(115deg,
-    var(--gold-deep) 0 9px,
-    #fdf7f4       9px 18px,
-    var(--sea)   18px 27px,
-    #fdf7f4      27px 36px);
+/* --------------------------------------------------------
+   Décor. Tout est peint en fonds CSS plutôt qu'en centaines
+   d'éléments : les flocons et les ampoules sont des dégradés radiaux
+   répétés sur quelques calques plein écran. Trois calques animés coûtent
+   trois compositions GPU ; trois cents <span> en coûteraient trois cents.
+   Aucun style en ligne non plus — les pages légales n'autorisent pas
+   'unsafe-inline' pour les styles dans leur CSP.
+   -------------------------------------------------------- */
+
+/* ---- Guirlande d'ampoules, tout en haut de la fenêtre ---- */
+/* Le fil : un arc par tuile de 70 px. Le cercle est centré au-dessus du
+   cadre et son rayon calculé pour que la courbe touche le haut aux deux
+   bords de la tuile et plonge de 24 px au milieu — les arcs se raccordent
+   donc bout à bout, sans cassure.
+   Le header descend de la hauteur de la guirlande : sans ça les ampoules
+   se poseraient en plein milieu du logo. */
+.theme-noel .site-header{ top:34px; }
+.noel-garland{
+  position:fixed; top:0; left:0; right:0; height:34px; z-index:101;
+  pointer-events:none; overflow:hidden;
+}
+.noel-garland::before{
+  content:""; position:absolute; inset:0;
+  background-image:radial-gradient(circle 37.5px at 50% -13.5px,
+    transparent 0 36.5px, rgba(52,42,35,.7) 36.5px 38px, transparent 38.1px);
+  background-size:70px 34px; background-repeat:repeat-x;
+}
+/* Les ampoules : quatre calques identiques décalés d'une tuile chacun,
+   pour quatre couleurs qui alternent le long du fil. Une ampoule = un
+   point coloré doublé de son halo, au creux de l'arc (35 px, 27 px). */
+.noel-bulbs{
+  position:absolute; inset:0; background-repeat:repeat-x;
+  background-size:280px 34px;
+  animation:bulb-blink 3.2s ease-in-out infinite;
+}
+.noel-bulbs-1{
+  background-image:
+    radial-gradient(circle 12px at 35px 27px, rgba(214,32,58,.5) 0 2px, rgba(214,32,58,0) 12px),
+    radial-gradient(circle  5px at 35px 27px, #ff8a94 0 1.4px, #d6203a 2.4px 4.2px, transparent 4.4px);
+  background-position-x:0;
+}
+.noel-bulbs-2{
+  background-image:
+    radial-gradient(circle 12px at 35px 27px, rgba(230,170,60,.5) 0 2px, rgba(230,170,60,0) 12px),
+    radial-gradient(circle  5px at 35px 27px, #ffe9ad 0 1.4px, #d9a441 2.4px 4.2px, transparent 4.4px);
+  background-position-x:70px;
+  animation-delay:.4s;
+}
+.noel-bulbs-3{
+  background-image:
+    radial-gradient(circle 12px at 35px 27px, rgba(58,160,92,.5) 0 2px, rgba(58,160,92,0) 12px),
+    radial-gradient(circle  5px at 35px 27px, #9ceab4 0 1.4px, #2f7c4a 2.4px 4.2px, transparent 4.4px);
+  background-position-x:140px;
+  animation-delay:.8s;
+}
+.noel-bulbs-4{
+  background-image:
+    radial-gradient(circle 12px at 35px 27px, rgba(140,190,235,.5) 0 2px, rgba(140,190,235,0) 12px),
+    radial-gradient(circle  5px at 35px 27px, #ffffff 0 1.4px, #78afdc 2.4px 4.2px, transparent 4.4px);
+  background-position-x:210px;
+  animation-delay:1.2s;
+}
+@keyframes bulb-blink{
+  0%, 100%{ opacity:1; }
+  50%     { opacity:.45; }
 }
 
-/* Neige : trois nappes de flocons de tailles et de vitesses différentes,
-   pour la profondeur. Un pseudo-élément de <html> plutôt qu'un élément
-   ajouté au balisage — aucune page n'a à connaître le décor. Le blanc pur
-   serait invisible sur un fond crème : les flocons tirent sur le gris bleu.
-   z-index sous le header (100), au-dessus du contenu. */
-.theme-noel::before{
-  content:""; position:fixed; inset:0; z-index:90; pointer-events:none;
+/* ---- Neige ---- */
+/* Trois nappes : arrière-plan fin et rapide, milieu, premier plan gros et
+   lent. Chaque nappe descend en déplaçant son fond et dérive latéralement
+   par translation — deux propriétés distinctes, donc deux animations sur
+   le même élément sans qu'elles se marchent dessus.
+   Le blanc pur disparaîtrait sur un fond crème : chaque flocon a un cœur
+   blanc cerclé de gris bleu, ce qui le détache sans l'assombrir. */
+.noel-snow{
+  position:fixed; inset:0; z-index:90; pointer-events:none; overflow:hidden;
+}
+.noel-snow i{ position:absolute; left:-5%; right:-5%; top:0; bottom:0; display:block; }
+
+/* Un flocon = un disque plein, cœur blanc qui se dégrade vers un bleu
+   glacier avant de s'éteindre. Le blanc pur seul serait invisible sur un
+   fond crème ; un cœur blanc cerclé de bleu à bord net donnait des petits
+   anneaux, parce qu'à cette taille seul le cerne se voit. Le dégradé
+   continu, lui, se lit comme un flocon. */
+.noel-snow-1{
   background-image:
-    radial-gradient(3px 3px     at 18% 12%, rgba(126,148,172,.50), transparent 60%),
-    radial-gradient(2px 2px     at 62% 38%, rgba(126,148,172,.42), transparent 60%),
-    radial-gradient(2.5px 2.5px at 84% 72%, rgba(126,148,172,.34), transparent 60%);
-  background-size:260px 260px, 190px 190px, 320px 320px;
-  animation:snow-fall 16s linear infinite;
+    radial-gradient(circle 3px at  24px  18px, rgba(157,183,208,.82) 0 40%, rgba(157,183,208,.42) 74%, rgba(157,183,208,0) 100%),
+    radial-gradient(circle 3px at 118px  72px, #fff 0 35%, rgba(126,161,196,.8)  72%, rgba(126,161,196,0) 100%),
+    radial-gradient(circle 3px at 196px  36px, rgba(157,183,208,.82) 0 40%, rgba(157,183,208,.42) 74%, rgba(157,183,208,0) 100%),
+    radial-gradient(circle 3px at  66px 144px, #fff 0 35%, rgba(126,161,196,.8)  72%, rgba(126,161,196,0) 100%),
+    radial-gradient(circle 3px at 162px 186px, rgba(157,183,208,.82) 0 40%, rgba(157,183,208,.42) 74%, rgba(157,183,208,0) 100%),
+    radial-gradient(circle 3px at  36px 228px, #fff 0 35%, rgba(126,161,196,.8)  72%, rgba(126,161,196,0) 100%),
+    radial-gradient(circle 3px at 216px 120px, rgba(157,183,208,.82) 0 40%, rgba(157,183,208,.42) 74%, rgba(157,183,208,0) 100%),
+    radial-gradient(circle 3px at 126px 240px, #fff 0 35%, rgba(126,161,196,.8)  72%, rgba(126,161,196,0) 100%),
+    radial-gradient(circle 3px at 240px 264px, rgba(157,183,208,.82) 0 40%, rgba(157,183,208,.42) 74%, rgba(157,183,208,0) 100%),
+    radial-gradient(circle 3px at  90px 300px, #fff 0 35%, rgba(126,161,196,.8)  72%, rgba(126,161,196,0) 100%);
+  background-size:270px 320px;
+  animation:snow-drop-1 9s linear infinite, snow-sway 7s ease-in-out infinite alternate;
 }
-@keyframes snow-fall{
-  to{ background-position:40px 260px, -30px 190px, 20px 320px; }
+.noel-snow-2{
+  background-image:
+    radial-gradient(circle 4.5px at  54px  30px, rgba(157,183,208,.82) 0 40%, rgba(157,183,208,.42) 74%, rgba(157,183,208,0) 100%),
+    radial-gradient(circle 4.5px at 210px  96px, rgba(157,183,208,.82) 0 40%, rgba(157,183,208,.42) 74%, rgba(157,183,208,0) 100%),
+    radial-gradient(circle 4.5px at 108px 174px, rgba(157,183,208,.82) 0 40%, rgba(157,183,208,.42) 74%, rgba(157,183,208,0) 100%),
+    radial-gradient(circle 4.5px at 288px 216px, rgba(157,183,208,.82) 0 40%, rgba(157,183,208,.42) 74%, rgba(157,183,208,0) 100%),
+    radial-gradient(circle 4.5px at 258px  12px, rgba(157,183,208,.82) 0 40%, rgba(157,183,208,.42) 74%, rgba(157,183,208,0) 100%),
+    radial-gradient(circle 4.5px at  18px 132px, rgba(157,183,208,.82) 0 40%, rgba(157,183,208,.42) 74%, rgba(157,183,208,0) 100%),
+    radial-gradient(circle 4.5px at 174px 288px, rgba(157,183,208,.82) 0 40%, rgba(157,183,208,.42) 74%, rgba(157,183,208,0) 100%),
+    radial-gradient(circle 4.5px at  72px 252px, rgba(157,183,208,.82) 0 40%, rgba(157,183,208,.42) 74%, rgba(157,183,208,0) 100%);
+  background-size:330px 330px;
+  animation:snow-drop-2 14s linear infinite, snow-sway 9s ease-in-out infinite alternate-reverse;
 }
+.noel-snow-3{
+  background-image:
+    radial-gradient(circle 6.5px at  84px  48px, rgba(157,183,208,.82) 0 40%, rgba(157,183,208,.42) 74%, rgba(157,183,208,0) 100%),
+    radial-gradient(circle 6.5px at 264px 162px, rgba(157,183,208,.82) 0 40%, rgba(157,183,208,.42) 74%, rgba(157,183,208,0) 100%),
+    radial-gradient(circle 6.5px at 156px 288px, rgba(157,183,208,.82) 0 40%, rgba(157,183,208,.42) 74%, rgba(157,183,208,0) 100%),
+    radial-gradient(circle 6.5px at  30px 210px, rgba(157,183,208,.82) 0 40%, rgba(157,183,208,.42) 74%, rgba(157,183,208,0) 100%),
+    radial-gradient(circle 6.5px at 330px 342px, rgba(157,183,208,.82) 0 40%, rgba(157,183,208,.42) 74%, rgba(157,183,208,0) 100%),
+    radial-gradient(circle 6.5px at 198px 108px, rgba(157,183,208,.82) 0 40%, rgba(157,183,208,.42) 74%, rgba(157,183,208,0) 100%);
+  background-size:390px 390px;
+  animation:snow-drop-3 21s linear infinite, snow-sway 12s ease-in-out infinite alternate;
+}
+/* La descente vaut exactement une hauteur de tuile, en pixels et non en
+   pourcentage : sur un fond répété, un pourcentage se calcule par rapport
+   à la place restante et ne retombe pas sur la tuile — la boucle sauterait
+   à chaque tour. */
+@keyframes snow-drop-1{ to{ background-position-y:320px; } }
+@keyframes snow-drop-2{ to{ background-position-y:330px; } }
+@keyframes snow-drop-3{ to{ background-position-y:390px; } }
+@keyframes snow-sway{
+  from{ transform:translateX(-18px); }
+  to  { transform:translateX(18px); }
+}
+
+/* ---- Neige accumulée sur la barre du menu ---- */
+/* La fine ligne dorée sous le header devient un rebord enneigé : une bande
+   blanche pleine, et sous elle une file de bosses. */
+.theme-noel .header-rule{
+  height:15px; background-color:transparent;
+  background-image:
+    radial-gradient(circle 8px at 11px 5px, #fff 0 7.5px, transparent 7.7px),
+    linear-gradient(#fff, #fff);
+  background-size:22px 15px, 100% 6px;
+  background-repeat:repeat-x, repeat-x;
+  background-position:0 0, 0 0;
+  filter:drop-shadow(0 2px 2px rgba(90,120,150,.16));
+}
+
+/* ---- Compte à rebours dans le hero ---- */
+.noel-countdown{
+  display:inline-flex; align-items:center; gap:.5rem;
+  margin:0 auto 1.4rem; padding:.4em 1.1em;
+  border-radius:999px; border:1px solid var(--gold-pale);
+  background:rgba(255,255,255,.72);
+  font-size:.9rem; font-weight:600; color:var(--gold-deep);
+}
+.noel-countdown svg{ width:17px; height:17px; flex-shrink:0; }
+
+/* Un décor qui bouge en permanence n'est pas négociable pour qui a demandé
+   moins d'animations : la neige s'arrête, les ampoules restent allumées. */
 @media (prefers-reduced-motion: reduce){
-  .theme-noel::before{ animation:none; }
+  .noel-snow i, .noel-bulbs{ animation:none; }
 }
-/* Mobile : une seule nappe. Un fond animé plein écran tourne en continu,
-   autant lui laisser un seul calque à composer sur batterie. */
+
+/* Mobile : deux nappes au lieu de trois et une guirlande plus courte. Un
+   décor plein écran se compose à chaque image, autant lui donner moins à
+   faire sur batterie. */
 @media (max-width: 720px){
-  .theme-noel::before{
-    background-image:radial-gradient(2.5px 2.5px at 30% 20%, rgba(126,148,172,.44), transparent 60%);
-    background-size:200px 200px;
-    animation-name:snow-fall-solo;
+  .noel-snow-3{ display:none; }
+  .theme-noel .site-header{ top:26px; }
+  .noel-garland{ height:26px; }
+  .noel-garland::before{
+    background-image:radial-gradient(circle 27.8px at 50% -9.8px,
+      transparent 0 26.8px, rgba(52,42,35,.7) 26.8px 28.2px, transparent 28.3px);
+    background-size:52px 26px;
   }
-}
-@keyframes snow-fall-solo{
-  to{ background-position:30px 200px; }
+  .noel-bulbs{ background-size:208px 26px; }
+  .noel-bulbs-1{ background-position-x:0; }
+  .noel-bulbs-2{ background-position-x:52px; }
+  .noel-bulbs-3{ background-position-x:104px; }
+  .noel-bulbs-4{ background-position-x:156px; }
+  .noel-bulbs-1{
+    background-image:
+      radial-gradient(circle 8px at 26px 20.5px, rgba(214,32,58,.3) 0 8px, transparent 8.5px),
+      radial-gradient(circle 4px at 26px 20.5px, #ff5566 0 1.7px, #d6203a 2px 3.6px, transparent 3.8px);
+  }
+  .noel-bulbs-2{
+    background-image:
+      radial-gradient(circle 8px at 26px 20.5px, rgba(217,164,65,.3) 0 8px, transparent 8.5px),
+      radial-gradient(circle 4px at 26px 20.5px, #ffe08a 0 1.7px, #d9a441 2px 3.6px, transparent 3.8px);
+  }
+  .noel-bulbs-3{
+    background-image:
+      radial-gradient(circle 8px at 26px 20.5px, rgba(47,124,74,.3) 0 8px, transparent 8.5px),
+      radial-gradient(circle 4px at 26px 20.5px, #79dd9a 0 1.7px, #2f7c4a 2px 3.6px, transparent 3.8px);
+  }
+  .noel-bulbs-4{
+    background-image:
+      radial-gradient(circle 8px at 26px 20.5px, rgba(120,175,220,.3) 0 8px, transparent 8.5px),
+      radial-gradient(circle 4px at 26px 20.5px, #fff 0 1.7px, #78afdc 2px 3.6px, transparent 3.8px);
+  }
+  .noel-countdown{ font-size:.82rem; padding:.35em .9em; }
 }
 
 /* =========================================================
