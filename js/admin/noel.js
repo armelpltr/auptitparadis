@@ -25,6 +25,22 @@ export function fmtPrix(n) {
   return Number(n || 0).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
+/* Date du jour en AAAA-MM-JJ, dans le fuseau de l'utilisateur : c'est le
+   format des <input type="date">, et deux chaînes de cette forme se
+   comparent dans l'ordre chronologique. */
+function dateDuJour() {
+  const d = new Date();
+  return d.getFullYear() + '-' +
+         String(d.getMonth() + 1).padStart(2, '0') + '-' +
+         String(d.getDate()).padStart(2, '0');
+}
+
+function fmtJour(iso) {
+  const d = new Date(`${iso}T12:00:00`);
+  return Number.isNaN(d.getTime()) ? iso
+    : d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' });
+}
+
 /* ---------- Chargement ---------- */
 export async function loadNoel() {
   try {
@@ -41,6 +57,7 @@ export async function loadNoel() {
     const s = snap.exists() ? snap.data() : {};
     document.getElementById('noel-ouvert').checked = s.ouvert === true;
     document.getElementById('noel-theme').checked  = s.theme  === true;
+    setVal('noel-themeFin', s.themeFin || '');
     setVal('noel-dateDebut', s.dateDebut || '');
     setVal('noel-dateFin',   s.dateFin   || '');
     setVal('noel-message',   s.message   || '');
@@ -201,19 +218,30 @@ export function initNoel() {
      l'autre carte intacte. */
   document.getElementById('saveNoelThemeBtn').addEventListener('click', async () => {
     const theme = document.getElementById('noel-theme').checked;
+    const themeFin = val('noel-themeFin');
+
+    /* Cocher la case avec une date déjà passée n'afficherait rien : le
+       décor s'éteint au lendemain de la date de fin. Autant le dire tout
+       de suite plutôt que de laisser chercher pourquoi rien ne change. */
+    if (theme && themeFin && themeFin < dateDuJour()) {
+      showStatus('Cette date est déjà passée : le décor ne s\'afficherait pas.', true);
+      return;
+    }
 
     const ok = await confirmDialog(
-      theme ? 'Activer l\'habillage de Noël ?' : 'Revenir aux couleurs habituelles ?',
+      theme ? 'Afficher le décor de Noël ?' : 'Retirer le décor de Noël ?',
       theme
-        ? 'Le site passera en rouge et vert pour tous les visiteurs.'
-        : 'Le site reprendra sa palette crème et or.'
+        ? (themeFin
+            ? `Guirlande, neige et bonnet apparaîtront pour tous les visiteurs, jusqu'au ${fmtJour(themeFin)} inclus.`
+            : 'Guirlande, neige et bonnet apparaîtront pour tous les visiteurs, jusqu\'à ce que vous les retiriez.')
+        : 'Le site retrouvera son apparence habituelle.'
     );
     if (!ok) return;
 
     try {
-      await setDoc(doc(db, 'settings', 'noel'), { theme }, { merge: true });
+      await setDoc(doc(db, 'settings', 'noel'), { theme, themeFin }, { merge: true });
       await showSuccess(
-        theme ? 'Habillage activé ✓' : 'Habillage retiré ✓',
+        theme ? 'Décor activé ✓' : 'Décor retiré ✓',
         'Le changement est visible sur le site dans quelques secondes.'
       );
     } catch (err) {

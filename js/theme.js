@@ -1,11 +1,16 @@
 // ============================================================
-// HABILLAGE DE NOËL — palette, guirlande, neige, compte à rebours
+// HABILLAGE DE NOËL — guirlande, neige, bonnet, compte à rebours
 //
-// Le réglage vit dans Firestore (settings/noel.theme), qui n'arrive
-// qu'après un aller-retour réseau : la page se peindrait d'abord en crème
-// puis basculerait en rouge sous les yeux du visiteur. On garde donc le
-// dernier état connu en localStorage pour peindre juste dès la première
-// image ; site-data.js corrige ensuite si la boulangerie a changé d'avis.
+// Le réglage vit dans Firestore (settings/noel : `theme` et `themeFin`),
+// qui n'arrive qu'après un aller-retour réseau : le décor apparaîtrait
+// d'un coup sous les yeux du visiteur, page déjà affichée. On garde donc
+// le dernier état connu en localStorage pour peindre juste dès la
+// première image ; site-data.js corrige ensuite si la boulangerie a
+// changé d'avis.
+//
+// La date de fin est gardée elle aussi, et évaluée ici : sans elle, un
+// visiteur du 3 janvier verrait la guirlande le temps d'un aller-retour
+// réseau avant qu'elle ne disparaisse.
 //
 // Script classique et non module : un module est différé par défaut, donc
 // exécuté après le premier rendu — exactement ce qu'on cherche à éviter.
@@ -15,6 +20,7 @@
 // ============================================================
 (function () {
   var KEY = 'apb-theme-noel';
+  var KEY_FIN = 'apb-theme-noel-fin';
   var DECOR_ID = 'noelDecor';
   var COUNTDOWN_ID = 'noelCountdown';
 
@@ -145,6 +151,26 @@
     actions.parentNode.insertBefore(el, actions);
   }
 
+  /* Date du jour en AAAA-MM-JJ, dans le fuseau du visiteur. Comparée telle
+     quelle à la date de fin : deux chaînes de ce format se comparent dans
+     l'ordre chronologique, sans passer par des objets Date et leurs
+     surprises de fuseau. */
+  function aujourdhui() {
+    var d = new Date();
+    return d.getFullYear() + '-' +
+           String(d.getMonth() + 1).padStart(2, '0') + '-' +
+           String(d.getDate()).padStart(2, '0');
+  }
+
+  /* Le décor est actif si la case est cochée ET que la date de fin n'est
+     pas passée. Date vide = pas d'échéance, la case seule décide. Le
+     dernier jour est inclus : une fin au 31 décembre décore le 31. */
+  function estActif(on, fin) {
+    if (!on) return false;
+    if (!fin) return true;
+    return aujourdhui() <= fin;
+  }
+
   function apply(on) {
     document.documentElement.classList.toggle('theme-noel', !!on);
     if (!on) { removeDecor(); return; }
@@ -154,12 +180,18 @@
     else document.addEventListener('DOMContentLoaded', buildDecor, { once: true });
   }
 
-  // Un navigateur en navigation privée peut refuser localStorage : le thème
+  // Un navigateur en navigation privée peut refuser localStorage : le décor
   // s'appliquera simplement une fois Firestore chargé.
-  try { apply(localStorage.getItem(KEY) === '1'); } catch (e) {}
+  try {
+    apply(estActif(localStorage.getItem(KEY) === '1', localStorage.getItem(KEY_FIN) || ''));
+  } catch (e) {}
 
-  window.setNoelTheme = function (on) {
-    apply(on);
-    try { localStorage.setItem(KEY, on ? '1' : '0'); } catch (e) {}
+  window.setNoelTheme = function (on, fin) {
+    var dateFin = fin || '';
+    apply(estActif(on, dateFin));
+    try {
+      localStorage.setItem(KEY, on ? '1' : '0');
+      localStorage.setItem(KEY_FIN, dateFin);
+    } catch (e) {}
   };
 })();

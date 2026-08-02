@@ -232,12 +232,22 @@
 
       <div class="admin-card">
         <h2>Habillage de Noël</h2>
-        <p class="admin-card-hint">Repeint tout le site en rouge et vert sapin, avec une guirlande sous le menu et de la neige qui tombe. À couper début janvier.</p>
+        <p class="admin-card-hint">Ajoute au site une guirlande sous le menu, de la neige qui tombe, un bonnet sur le logo et un compte à rebours. Les couleurs du site ne changent pas.</p>
 
         <label class="switch-row">
           <input type="checkbox" id="noel-theme">
-          <span>Activer les couleurs de Noël sur le site</span>
+          <span>Afficher le décor de Noël sur le site</span>
         </label>
+
+        <div class="form-row">
+          <label for="noel-themeFin">Dernier jour du décor</label>
+          <input type="date" id="noel-themeFin">
+          <p class="form-row-hint">
+            Le décor s'éteint tout seul au lendemain de cette date — inutile de repasser
+            décocher la case le 2 janvier. Laissez vide pour qu'il reste jusqu'à ce que
+            vous le coupiez à la main.
+          </p>
+        </div>
 
         <div class="card-actions">
           <button type="button" class="btn btn-primary btn-small" id="saveNoelThemeBtn">Enregistrer l'habillage</button>

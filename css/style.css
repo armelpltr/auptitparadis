@@ -834,34 +834,13 @@ p{ margin:0 0 1em; color:var(--ink-soft); }
 /* =========================================================
    HABILLAGE DE NOËL
    Activé depuis l'admin (onglet Noël) : js/theme.js pose la classe
-   .theme-noel sur <html>. Tout le site étant peint à partir des variables
-   de :root, il suffit de les redéfinir. Les quelques couleurs écrites en
-   dur — fonds translucides du header, halo du footer — sont reprises
-   juste en dessous, sans quoi elles resteraient crème sur fond rosé.
-   ========================================================= */
-.theme-noel{
-  --ink:        #241316;
-  --ink-soft:   #4d3033;
-  --cream:      #fdf7f4;
-  --sand:       #f7e2df;
-  --gold:       #b3122a;   /* le rouge de Noël prend la place de l'or */
-  --gold-deep:  #7d0d1e;
-  --gold-pale:  #e9aeae;
-  --icon-ink:   #7d0d1e;
-  --sea:        #2f5d3a;   /* vert sapin en accent secondaire */
-  --sea-pale:   #e6efe7;
-}
+   .theme-noel sur <html>.
 
-/* Fonds translucides calés sur l'ancienne crème (251,246,238) */
-.theme-noel .site-header.is-scrolled{ background:rgba(253,247,244,.35); }
-.theme-noel .open-badge{ background:rgba(253,247,244,.7); }
-.theme-noel .mobile-nav{ background:rgba(253,247,244,.98); }
-.theme-noel .site-footer{
-  background:
-    radial-gradient(120% 75% at 12% 0%, rgba(179,18,42,.28), transparent 62%),
-    radial-gradient(90% 60% at 92% 12%, rgba(47,93,58,.22), transparent 60%),
-    var(--ink);
-}
+   La palette du site ne bouge pas. Une version précédente redéfinissait
+   les variables de :root pour repeindre tout le site en rouge — c'était
+   trop : le décor suffit, et la charte crème et or reste celle de la
+   boulangerie toute l'année. Seul s'ajoute ce qui est réellement de Noël.
+   ========================================================= */
 
 /* --------------------------------------------------------
    Décor. Tout est peint en fonds CSS plutôt qu'en centaines
@@ -1006,25 +985,13 @@ p{ margin:0 0 1em; color:var(--ink-soft); }
   to  { transform:translateX(18px); }
 }
 
-/* ---- Neige accumulée sur la barre du menu ---- */
-/* La fine ligne dorée sous le header devient un rebord enneigé : une bande
-   blanche pleine, et sous elle une file de bosses. */
-.theme-noel .header-rule{
-  height:15px; background-color:transparent;
-  background-image:
-    radial-gradient(circle 8px at 11px 5px, #fff 0 7.5px, transparent 7.7px),
-    linear-gradient(#fff, #fff);
-  background-size:22px 15px, 100% 6px;
-  background-repeat:repeat-x, repeat-x;
-  background-position:0 0, 0 0;
-  filter:drop-shadow(0 2px 2px rgba(90,120,150,.16));
-}
-
 /* ---- Fonds de section translucides, pour laisser voir la neige ---- */
 /* Sans ça, chaque section repeindrait par-dessus : la neige ne resterait
-   visible que dans les interstices, c'est-à-dire nulle part. */
+   visible que dans les interstices, c'est-à-dire nulle part. Ce sont les
+   couleurs habituelles du site, simplement rendues un peu transparentes —
+   crème (251,246,238), sable (241,230,211), vert d'eau (231,238,236). */
 .theme-noel .hero{
-  background:radial-gradient(circle at 50% 18%, rgba(247,226,223,.72) 0%, rgba(253,247,244,.5) 55%);
+  background:radial-gradient(circle at 50% 18%, rgba(241,230,211,.72) 0%, rgba(251,246,238,.5) 55%);
 }
 .theme-noel .specialites,
 .theme-noel .avis,
@@ -1033,13 +1000,13 @@ p{ margin:0 0 1em; color:var(--ink-soft); }
 .theme-noel .block-gallery,
 .theme-noel .page-legale,
 .theme-noel .commande-head,
-.theme-noel .block-text-image:nth-of-type(even){ background:rgba(253,247,244,.8); }
+.theme-noel .block-text-image:nth-of-type(even){ background:rgba(251,246,238,.8); }
 .theme-noel .histoire,
 .theme-noel .presse,
 .theme-noel .block-text-image,
 .theme-noel .commande-body,
-.theme-noel .commande-closed{ background:rgba(247,226,223,.78); }
-.theme-noel .horaires{ background:rgba(230,239,231,.82); }
+.theme-noel .commande-closed{ background:rgba(241,230,211,.78); }
+.theme-noel .horaires{ background:rgba(231,238,236,.82); }
 
 /* ---- Bonnet sur le grand logo du hero ---- */
 /* Le conteneur épouse l'image, ce qui permet de placer le bonnet en

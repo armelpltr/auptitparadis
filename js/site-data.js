@@ -374,14 +374,17 @@ function showLoadError() {
   revealDynamic();
 }
 
-/* Habillage de Noël. js/theme.js a déjà peint la page avec le dernier état
+/* Habillage de Noël. js/theme.js a déjà posé le décor avec le dernier état
    connu ; on ne fait ici que confirmer ou corriger depuis Firestore. Réglage
    rangé dans `settings/noel` avec le reste des commandes de Noël : les deux
-   s'allument et s'éteignent à la même période. */
+   s'allument et s'éteignent à la même période.
+   C'est theme.js qui compare la date de fin au jour courant — il doit
+   déjà savoir le faire sans réseau, autant ne pas dupliquer la règle. */
 async function applyNoelTheme() {
   if (typeof window.setNoelTheme !== 'function') return;
   const snap = await getDoc(doc(db, 'settings', 'noel'));
-  window.setNoelTheme(snap.exists() && snap.data().theme === true);
+  const s = snap.exists() ? snap.data() : {};
+  window.setNoelTheme(s.theme === true, s.themeFin || '');
 }
 
 /* ---------- Lancement ---------- */
