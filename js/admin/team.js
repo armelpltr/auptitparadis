@@ -6,10 +6,14 @@ import { auth, db } from "../firebase-config.js";
 import {
   doc, setDoc, collection, getDocs, updateDoc, deleteDoc
 } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
-import { confirmDialog, showStatus, escapeAttr, val, setVal, fmtDate } from "./ui.js";
+import { confirmDialog, showStatus, escapeAttr, val, fmtDate } from "./ui.js";
 import { WORKER_URL } from "./config.js";
 
 const ROLE_LABELS = { admin: 'Administrateur', editor: 'Éditeur' };
+
+/* Le lien vaut un accès à lui seul, sans être rattaché à une adresse : il ne
+   doit pas rester valable indéfiniment s'il s'égare. */
+const INVITE_VALIDITE_JOURS = 7;
 
 /* Le tout premier compte a été créé à la main dans la console, avant que les
    rôles n'existent : sans rôle inscrit, on le considère administrateur.
@@ -39,10 +43,20 @@ export async function loadTeam() {
       const role = roleOf(r);
       const isMe = r.uid === me.uid;
       const lastOwner = role === 'admin' && ownerCount === 1;
+      const nom = [r.prenom, r.nom].filter(Boolean).join(' ').trim();
+      // Chacun coupe ses propres alertes ; un administrateur coupe celles
+      // des autres. Les règles Firestore appliquent la même limite.
+      const peutRegler = isOwner || isMe;
       return `
       <div class="team-row">
         <div class="team-info">
-          <strong>${escapeAttr(r.email || '(sans e-mail)')}</strong>
+          <strong>${escapeAttr(nom || r.email || '(sans e-mail)')}</strong>
+          ${nom ? `<span>${escapeAttr(r.email || '')}</span>` : ''}
+          ${peutRegler ? `
+            <label class="team-notif">
+              <input type="checkbox" class="team-notif-input" data-uid="${escapeAttr(r.uid)}" ${r.notifications === true ? 'checked' : ''}>
+              <span>Recevoir un e-mail à chaque commande</span>
+            </label>` : ''}
         </div>
         <div class="team-actions">
           ${isOwner && !lastOwner
@@ -66,23 +80,33 @@ export async function loadTeam() {
     listEl.querySelectorAll('.team-role').forEach(sel => {
       sel.addEventListener('change', () => changeRole(sel, sel.dataset.email));
     });
+    listEl.querySelectorAll('.team-notif-input').forEach(box => {
+      box.addEventListener('change', () => changeNotifications(box));
+    });
   } catch (err) {
     listEl.innerHTML = `<p class="admin-card-hint">Liste illisible : ${escapeAttr(err.message)}</p>`;
   }
 
   try {
     const snap = await getDocs(collection(db, 'invites'));
-    invEl.innerHTML = snap.docs.map(d => `
-      <div class="team-row">
+    invEl.innerHTML = snap.docs.map(d => {
+      const inv = d.data();
+      const expire = inv.expiresAt?.toDate ? inv.expiresAt.toDate() : null;
+      const perimee = expire ? expire < new Date() : false;
+      return `
+      <div class="team-row ${perimee ? 'is-expiree' : ''}">
         <div class="team-info">
-          <strong>${escapeAttr(d.id)}</strong>
-          <span>Invitée le ${escapeAttr(fmtDate(d.data().createdAt))}</span>
+          <strong>Lien ${ROLE_LABELS[inv.role] ? ROLE_LABELS[inv.role].toLowerCase() : 'éditeur'}</strong>
+          <span>Créé le ${escapeAttr(fmtDate(inv.createdAt))}${
+            expire ? ` · ${perimee ? 'expiré' : 'expire'} le ${escapeAttr(fmtDate(inv.expiresAt))}` : ''
+          }</span>
         </div>
-        <button type="button" class="btn btn-ghost btn-small invite-cancel" data-email="${escapeAttr(d.id)}">Annuler</button>
-      </div>`).join('') || '<p class="admin-card-hint">Aucune invitation en attente.</p>';
+        <button type="button" class="btn btn-ghost btn-small invite-cancel" data-token="${escapeAttr(d.id)}">Annuler</button>
+      </div>`;
+    }).join('') || '<p class="admin-card-hint">Aucune invitation en attente.</p>';
 
     invEl.querySelectorAll('.invite-cancel').forEach(btn => {
-      btn.addEventListener('click', () => cancelInvite(btn.dataset.email));
+      btn.addEventListener('click', () => cancelInvite(btn.dataset.token));
     });
   } catch (err) {
     invEl.innerHTML = `<p class="admin-card-hint">Invitations illisibles : ${escapeAttr(err.message)}</p>`;
@@ -114,6 +138,19 @@ async function changeRole(select, email) {
   loadTeam();
 }
 
+/* Pas de confirmation : c'est un réglage réversible d'un clic, et le
+   demander à chaque bascule serait plus pénible qu'utile. */
+async function changeNotifications(box) {
+  const actif = box.checked;
+  try {
+    await updateDoc(doc(db, 'admins', box.dataset.uid), { notifications: actif });
+    showStatus(actif ? 'Alertes de commande activées.' : 'Alertes de commande désactivées.');
+  } catch (err) {
+    box.checked = !actif;   // refus des règles : la case reflète l'état réel
+    showStatus('Réglage refusé : ' + err.message, true);
+  }
+}
+
 async function revokeAdmin(uid, email) {
   const ok = await confirmDialog(`Supprimer le compte de ${email} ?`,
     'Son accès et son compte seront supprimés définitivement. Cette action est irréversible.');
@@ -136,11 +173,11 @@ async function revokeAdmin(uid, email) {
   loadTeam();
 }
 
-async function cancelInvite(email) {
-  const ok = await confirmDialog(`Annuler l'invitation de ${email} ?`, 'Le lien déjà transmis cessera de fonctionner.');
+async function cancelInvite(token) {
+  const ok = await confirmDialog('Annuler cette invitation ?', 'Le lien déjà transmis cessera de fonctionner.');
   if (!ok) return;
   try {
-    await deleteDoc(doc(db, 'invites', email));
+    await deleteDoc(doc(db, 'invites', token));
     showStatus('Invitation annulée.');
     loadTeam();
   } catch (err) {
@@ -150,29 +187,25 @@ async function cancelInvite(email) {
 
 export function initTeam() {
   document.getElementById('inviteBtn').addEventListener('click', async () => {
-    const email = val('inviteEmail').toLowerCase();
-    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
-      showStatus('Adresse e-mail invalide.', true);
-      return;
-    }
-
     const token = crypto.randomUUID();
     const btn = document.getElementById('inviteBtn');
     btn.disabled = true;
     try {
       // Le rôle est fixé ici, pas au moment où l'invité crée son compte : les
       // règles vérifient que celui qu'il se donne correspond à l'invitation.
-      await setDoc(doc(db, 'invites', email), {
-        token,
+      // L'expiration aussi est vérifiée côté règles — un lien égaré cesse de
+      // valoir un accès au bout d'une semaine.
+      const expiresAt = new Date(Date.now() + INVITE_VALIDITE_JOURS * 86400000);
+      await setDoc(doc(db, 'invites', token), {
         role: val('inviteRole') || 'editor',
         createdAt: new Date(),
-        createdBy: auth.currentUser.email
+        createdBy: auth.currentUser.email,
+        expiresAt
       });
 
-      const link = `${location.origin}${location.pathname}?invite=${encodeURIComponent(email)}&token=${token}`;
-      document.getElementById('inviteLink').value = link;
+      document.getElementById('inviteLink').value =
+        `${location.origin}${location.pathname}?token=${token}`;
       document.getElementById('inviteResult').hidden = false;
-      setVal('inviteEmail', '');
       loadTeam();
     } catch (err) {
       showStatus("Création de l'invitation impossible : " + err.message, true);

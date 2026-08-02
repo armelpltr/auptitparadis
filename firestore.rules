@@ -31,8 +31,15 @@ service cloud.firestore {
       return isMember() && memberDoc().get('role', 'admin') == 'admin';
     }
 
-    function invite() {
-      return get(/databases/$(database)/documents/invites/$(request.auth.token.email)).data;
+    // Une invitation est désormais désignée par son jeton, plus par l'adresse
+    // de l'invité : c'est lui qui saisit ses coordonnées en arrivant.
+    function inviteByToken(token) {
+      return get(/databases/$(database)/documents/invites/$(token)).data;
+    }
+
+    function inviteValide(token) {
+      return exists(/databases/$(database)/documents/invites/$(token))
+          && inviteByToken(token).expiresAt > request.time;
     }
 
     match /settings/{docId} {
@@ -65,36 +72,50 @@ service cloud.firestore {
     match /admins/{uid} {
       allow read: if isMember();
 
-      // Un invité s'ajoute lui-même, à quatre conditions : il crée bien sa propre
-      // entrée, avec sa propre adresse, il présente le jeton de son invitation,
-      // et il prend le rôle qui y était inscrit — pas celui qu'il voudrait.
+      // Un invité s'ajoute lui-même, à cinq conditions : il crée bien sa propre
+      // entrée, avec sa propre adresse, il présente un jeton d'invitation
+      // encore valable, il prend le rôle qui y était inscrit — pas celui qu'il
+      // voudrait — et il n'écrit aucun champ hors de cette liste.
       allow create: if request.auth != null
                     && request.auth.uid == uid
                     && request.resource.data.email == request.auth.token.email
-                    && exists(/databases/$(database)/documents/invites/$(request.auth.token.email))
-                    && invite().token == request.resource.data.inviteToken
-                    && request.resource.data.role == invite().get('role', 'editor');
+                    && request.resource.data.keys().hasOnly(
+                         ['email', 'prenom', 'nom', 'role', 'inviteToken', 'addedAt', 'notifications'])
+                    && inviteValide(request.resource.data.inviteToken)
+                    && request.resource.data.role == inviteByToken(request.resource.data.inviteToken).get('role', 'editor')
+                    // Personne ne s'abonne aux alertes en entrant : c'est un
+                    // administrateur qui ouvre le robinet, ou soi-même ensuite.
+                    && request.resource.data.get('notifications', false) == false;
 
-      // Seul un admin change les rôles, et rien d'autre que le rôle : sinon on
-      // pourrait réécrire l'e-mail d'une entrée pour se l'approprier.
-      allow update: if isOwner()
-                    && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['role'])
-                    && request.resource.data.role in ['admin', 'editor'];
+      // Un admin change les rôles et les alertes ; chacun coupe les siennes.
+      // Rien d'autre n'est modifiable : réécrire l'e-mail d'une entrée
+      // permettrait de se l'approprier.
+      allow update: if (
+                      isOwner()
+                      && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['role', 'notifications'])
+                      && request.resource.data.get('role', 'admin') in ['admin', 'editor']
+                    ) || (
+                      request.auth != null
+                      && request.auth.uid == uid
+                      && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['notifications'])
+                    );
 
       allow delete: if isOwner();
     }
 
-    // Invitations en attente, une par adresse e-mail.
-    match /invites/{email} {
+    // Invitations en attente, une par jeton.
+    // Le lien vaut désormais accès à lui seul : n'importe qui l'ayant en main
+    // peut créer un compte, avec l'adresse de son choix. D'où l'expiration
+    // vérifiée ci-dessus, et la suppression du jeton dès qu'il a servi.
+    match /invites/{token} {
       allow list:   if isOwner();
-      // L'invité lit la sienne, et seulement la sienne, pour connaître son rôle.
-      allow get:    if isOwner()
-                    || (request.auth != null && request.auth.token.email == email);
+      // L'invité lit son invitation pour connaître le rôle qu'il doit prendre.
+      // Le jeton est un UUID : le connaître, c'est déjà détenir le lien.
+      allow get:    if isOwner() || request.auth != null;
       allow create: if isOwner();
       // Supprimable par un admin (annulation) ou par l'invité une fois son
       // accès créé, pour que le lien ne resserve pas.
-      allow delete: if isOwner()
-                    || (request.auth != null && request.auth.token.email == email);
+      allow delete: if isOwner() || request.auth != null;
     }
   }
 }

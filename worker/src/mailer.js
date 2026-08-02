@@ -6,6 +6,8 @@
 // pas, on le signale à l'appelant, on ne perd pas la commande.
 // ============================================================
 
+import { firestoreList } from './firebase.js';
+
 const BREVO_ENDPOINT = 'https://api.brevo.com/v3/smtp/email';
 
 const euros = n => Number(n || 0).toLocaleString('fr-FR', {
@@ -165,10 +167,23 @@ async function envoyer({ destinataire, nomDestinataire, sujet, html, texte }, en
   if (!res.ok) throw new Error(`Brevo ${res.status}: ${await res.text()}`);
 }
 
+/* Qui reçoit les alertes de commande : chaque membre du panel décide pour
+   lui-même depuis l'onglet Équipe. L'absence du champ vaut refus — on
+   n'inscrit personne à son insu. */
+async function destinatairesAlerte(env) {
+  try {
+    const membres = await firestoreList('admins', env);
+    return membres.filter(m => m.notifications === true && m.email).map(m => m.email);
+  } catch (err) {
+    console.error('Liste des destinataires illisible :', err.message);
+    return [];
+  }
+}
+
 /**
- * Envoie la confirmation au client et, si une adresse est configurée, une
- * alerte au patron. Ne lève jamais : renvoie `true` si le client a bien
- * été prévenu, `false` sinon.
+ * Envoie la confirmation au client, puis une alerte à chaque membre du
+ * panel qui l'a demandée. Ne lève jamais : renvoie `true` si le client a
+ * bien été prévenu, `false` sinon.
  */
 export async function envoyerConfirmation(commande, env) {
   // Service non configuré : la commande reste valable, le client a son
@@ -188,12 +203,12 @@ export async function envoyerConfirmation(commande, env) {
     console.error('Confirmation client non envoyée :', err.message);
   }
 
-  if (env.EMAIL_PATRON) {
+  const alerte = mailPatron(commande);
+  for (const destinataire of await destinatairesAlerte(env)) {
     try {
-      const m = mailPatron(commande);
-      await envoyer({ destinataire: env.EMAIL_PATRON, ...m }, env);
+      await envoyer({ destinataire, ...alerte }, env);
     } catch (err) {
-      console.error('Alerte patron non envoyée :', err.message);
+      console.error(`Alerte non envoyée à ${destinataire} :`, err.message);
     }
   }
 

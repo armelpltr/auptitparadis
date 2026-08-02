@@ -62,14 +62,24 @@
     <h1>Créer votre accès</h1>
     <p class="login-sub">Vous avez été invité à administrer le site.</p>
 
+    <div class="form-row-grid">
+      <div class="form-row">
+        <label for="inviteFormPrenom">Prénom</label>
+        <input type="text" id="inviteFormPrenom" required maxlength="40" autocomplete="given-name">
+      </div>
+      <div class="form-row">
+        <label for="inviteFormNom">Nom</label>
+        <input type="text" id="inviteFormNom" required maxlength="40" autocomplete="family-name">
+      </div>
+    </div>
     <div class="form-row">
       <label for="inviteFormEmail">E-mail</label>
-      <input type="email" id="inviteFormEmail" readonly autocomplete="username">
+      <input type="email" id="inviteFormEmail" required maxlength="120" autocomplete="username">
     </div>
     <div class="form-row">
       <label for="inviteFormPassword">Mot de passe</label>
       <input type="password" id="inviteFormPassword" required minlength="8" autocomplete="new-password">
-      <p class="field-hint">Si vous avez déjà un compte sur ce site, saisissez son mot de passe actuel.</p>
+      <p class="field-hint">8 caractères minimum. Si vous avez déjà un compte sur ce site, saisissez son mot de passe actuel.</p>
     </div>
 
     <p class="login-error" id="inviteError" hidden></p>
@@ -269,22 +279,16 @@
 
       <div class="admin-card" id="teamInviteCard" hidden>
         <h2>Inviter quelqu'un</h2>
-        <p class="admin-card-hint">Un lien est généré, à transmettre à la personne. Elle choisira son mot de passe.</p>
-        <div class="form-row-grid">
-          <div class="form-row">
-            <label for="inviteEmail">Adresse e-mail</label>
-            <input type="email" id="inviteEmail" placeholder="prenom@exemple.fr" autocomplete="off">
-          </div>
-          <div class="form-row">
-            <label for="inviteRole">Rôle</label>
-            <select id="inviteRole">
-              <option value="editor" selected>Éditeur — modifie le contenu</option>
-              <option value="admin">Administrateur — gère aussi les accès</option>
-            </select>
-          </div>
+        <p class="admin-card-hint">Choisissez un rôle, transmettez le lien généré. La personne saisira elle-même son prénom, son nom, son adresse e-mail et son mot de passe.</p>
+        <div class="form-row">
+          <label for="inviteRole">Rôle</label>
+          <select id="inviteRole">
+            <option value="editor" selected>Éditeur — modifie le contenu</option>
+            <option value="admin">Administrateur — gère aussi les accès</option>
+          </select>
         </div>
         <div class="card-actions">
-          <button type="button" class="btn btn-primary btn-small" id="inviteBtn">Créer l'invitation</button>
+          <button type="button" class="btn btn-primary btn-small" id="inviteBtn">Générer un lien</button>
         </div>
 
         <div class="invite-result" id="inviteResult" hidden>
@@ -293,7 +297,12 @@
             <input type="text" id="inviteLink" readonly>
             <button type="button" class="btn btn-ghost btn-small" id="copyInviteBtn">Copier</button>
           </div>
-          <p class="field-hint">Ce lien vaut un accès complet : ne le transmettez qu'à la personne concernée.</p>
+          <p class="field-hint">
+            <strong>Ce lien vaut un accès au panel à lui seul</strong> : contrairement aux
+            invitations précédentes, il n'est plus rattaché à une adresse e-mail. Quiconque
+            l'obtient peut créer un compte. Transmettez-le en main propre, et annulez-le
+            ci-dessous s'il s'égare. Il expire automatiquement au bout de 7 jours.
+          </p>
         </div>
       </div>
 

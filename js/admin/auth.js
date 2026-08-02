@@ -10,7 +10,6 @@ import {
 import {
   doc, getDoc, setDoc, deleteDoc
 } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
-import { setVal } from "./ui.js";
 
 const loginScreen  = document.getElementById('loginScreen');
 const adminApp     = document.getElementById('adminApp');
@@ -19,10 +18,9 @@ const loginError   = document.getElementById('loginError');
 const logoutBtn    = document.getElementById('logoutBtn');
 const inviteScreen = document.getElementById('inviteScreen');
 
-const inviteParams = new URLSearchParams(location.search);
-const pendingInvite = inviteParams.get('invite') && inviteParams.get('token')
-  ? { email: inviteParams.get('invite').toLowerCase(), token: inviteParams.get('token') }
-  : null;
+/* Le lien ne porte plus que le jeton : l'invité saisit lui-même ses
+   coordonnées, on ne les connaît pas au moment de l'inviter. */
+const pendingInvite = new URLSearchParams(location.search).get('token') || null;
 
 /* Créer le compte connecte aussitôt la personne, donc onAuthStateChanged part
    vérifier son appartenance aux admins — alors que l'entrée n'est écrite que
@@ -80,8 +78,9 @@ function inviteErrorMessage(err) {
     return "Un compte existe déjà avec cette adresse, mais ce mot de passe ne correspond pas. Saisissez celui de votre compte existant.";
   }
   if (err.code === 'auth/weak-password') return 'Mot de passe trop court — 8 caractères minimum.';
-  if (err.code === 'permission-denied') {
-    return "Cette invitation n'est plus valable. Elle a peut-être déjà été utilisée ou annulée.";
+  if (err.code === 'auth/invalid-email') return "Format d'adresse e-mail invalide.";
+  if (err.message === 'invitation-introuvable' || err.code === 'permission-denied') {
+    return "Cette invitation n'est plus valable. Elle a peut-être expiré, déjà été utilisée, ou été annulée.";
   }
   return err.message || "La création de l'accès a échoué.";
 }
@@ -134,32 +133,48 @@ export function initAuth(onReady) {
   if (pendingInvite) {
     loginScreen.hidden = true;
     inviteScreen.hidden = false;
-    setVal('inviteFormEmail', pendingInvite.email);
   }
 
   document.getElementById('inviteForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     const errEl = document.getElementById('inviteError');
     errEl.hidden = true;
+
+    const prenom   = document.getElementById('inviteFormPrenom').value.trim();
+    const nom      = document.getElementById('inviteFormNom').value.trim();
+    const email    = document.getElementById('inviteFormEmail').value.trim().toLowerCase();
     const password = document.getElementById('inviteFormPassword').value;
+
+    if (!prenom || !nom) {
+      errEl.textContent = 'Merci d\'indiquer votre prénom et votre nom.';
+      errEl.hidden = false;
+      return;
+    }
 
     acceptingInvite = true;
     try {
-      const cred = await accountForInvite(pendingInvite.email, password);
+      const cred = await accountForInvite(email, password);
 
       // Le rôle vient de l'invitation, pas du client : les règles vérifient qu'il
       // correspond. Lisible seulement maintenant, une fois l'invité authentifié.
-      const inviteSnap = await getDoc(doc(db, 'invites', pendingInvite.email));
-      const role = inviteSnap.exists() ? (inviteSnap.data().role || 'editor') : 'editor';
+      const inviteSnap = await getDoc(doc(db, 'invites', pendingInvite));
+      if (!inviteSnap.exists()) throw new Error('invitation-introuvable');
+      const role = inviteSnap.data().role || 'editor';
 
-      // Le jeton est vérifié par les règles Firestore, pas seulement ici.
+      // Le jeton et son expiration sont vérifiés par les règles Firestore,
+      // pas seulement ici.
       await setDoc(doc(db, 'admins', cred.user.uid), {
-        email: pendingInvite.email,
+        email,
+        prenom,
+        nom,
         role,
-        inviteToken: pendingInvite.token,
-        addedAt: new Date()
+        inviteToken: pendingInvite,
+        addedAt: new Date(),
+        // Personne ne s'abonne aux alertes de commande en entrant : un
+        // administrateur ouvre le robinet depuis l'onglet Équipe.
+        notifications: false
       });
-      await deleteDoc(doc(db, 'invites', pendingInvite.email));
+      await deleteDoc(doc(db, 'invites', pendingInvite));
       history.replaceState({}, '', location.pathname);   // le jeton quitte la barre d'adresse
 
       acceptingInvite = false;

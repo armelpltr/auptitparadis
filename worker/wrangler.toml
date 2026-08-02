@@ -23,8 +23,10 @@ FIREBASE_PROJECT_ID = "au-ptit-paradis"
 # ici puis redéployer : elle est visible par tous les clients.
 EMAIL_EXPEDITEUR = "pltrarmel@gmail.com"
 EMAIL_EXPEDITEUR_NOM = "Au P'tit Paradis"
-# Adresse qui reçoit une alerte à chaque commande. Vide = pas d'alerte.
-EMAIL_PATRON = "armelpltr14@gmail.com"
+#
+# Qui reçoit une alerte à chaque commande n'est plus réglé ici : chaque
+# membre du panel coche ou décoche sa propre case dans l'onglet Équipe.
+# L'absence de réglage vaut refus — personne n'est inscrit à son insu.
 
 # Secrets à injecter :
 #

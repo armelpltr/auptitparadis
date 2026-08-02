@@ -111,6 +111,17 @@
   background:var(--white); color:var(--ink);
 }
 .team-role-fixed{ font-size:.82rem; color:var(--ink-soft); white-space:nowrap; }
+
+/* Abonnement aux alertes de commande, un par personne */
+.team-notif{
+  display:flex; align-items:center; gap:.5rem;
+  margin-top:.4rem; cursor:pointer; user-select:none;
+}
+.team-notif input{ width:15px; height:15px; accent-color:var(--gold-deep); cursor:pointer; flex-shrink:0; }
+.team-notif span{ font-size:.82rem; color:var(--ink-soft); }
+
+/* Invitation dont le délai est passé : elle ne sert plus qu'à être annulée */
+.team-row.is-expiree{ opacity:.55; }
 .admin-card[hidden]{ display:none; }
 .team-revoke:hover, .invite-cancel:hover{ background:#fbe4e0; color:#a13a25; border-color:#fbe4e0; }
 
