@@ -130,17 +130,17 @@ export async function handleA2fRequest(request, env, cors) {
     }
   }
 
-  /* Le compteur d'envois est incrémenté AVANT l'envoi, et de façon
-     atomique : deux demandes simultanées liraient sinon la même valeur, et
-     le plafond ne bornerait plus le nombre d'e-mails réellement partis. */
-  let envois;
-  if (debutFenetre === maintenant) {
-    envois = 1;
-  } else {
-    envois = await firestoreIncrement(chemin, 'sends', env);
-    if (envois > MAX_ENVOIS) {
-      throw httpError('Trop de codes demandés. Réessayez dans une demi-heure.', 429);
-    }
+  /* Le compteur ne compte que les e-mails réellement partis, d'où son nom.
+     La version précédente l'incrémentait avant l'envoi, pour qu'une rafale
+     de demandes simultanées ne puisse pas passer sous le plafond. Mais elle
+     comptait aussi les tentatives infructueuses : quand plus rien ne
+     partait, le quota s'épuisait tout seul et interdisait l'accès une
+     demi-heure durant, sans qu'un seul message ait été envoyé.
+     Le risque écarté est faible ici : cet endpoint exige déjà le jeton d'un
+     membre du panel, et la seule boîte qu'il peut inonder est la sienne. */
+  const envoisFenetre = (debutFenetre === maintenant) ? 0 : (precedent?.sendsOk || 0);
+  if (envoisFenetre >= MAX_ENVOIS) {
+    throw httpError('Trop de codes demandés. Réessayez dans une demi-heure.', 429);
   }
 
   const code = genererCode();
@@ -157,7 +157,7 @@ export async function handleA2fRequest(request, env, cors) {
     sel,
     expiresAt:   maintenant + TTL_MS,
     attempts:    0,
-    sends:       envois,
+    sendsOk:     envoisFenetre,
     windowStart: debutFenetre,
     lastSentAt:  0
   }, env);
@@ -169,9 +169,10 @@ export async function handleA2fRequest(request, env, cors) {
   }
 
   // Envoi confirmé : c'est seulement maintenant que le délai anti-renvoi
-  // commence à courir.
+  // commence à courir et que le quota est entamé.
   await firestoreUpdate(chemin, { lastSentAt: Date.now() }, env);
-  console.log('[a2f] code envoye et horodate');
+  await firestoreIncrement(chemin, 'sendsOk', env);
+  console.log('[a2f] code envoye, horodate et compte');
 
   // L'adresse est renvoyée masquée : le panel affiche « ...@gmail.com »
   // pour lever le doute sur la boîte à consulter, sans l'étaler à l'écran.
