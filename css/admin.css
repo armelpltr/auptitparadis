@@ -21,6 +21,9 @@
 .login-submit{ width:100%; margin-top:.4rem; }
 .login-error{ color:#b3402a; font-size:.88rem; margin:0 0 .8rem; }
 .back-to-site{ display:inline-block; margin-top:1.2rem; font-size:.85rem; color:var(--ink-soft); }
+/* Même allure quand c'est un bouton et non un lien — « Se déconnecter »
+   agit sur la session, ce n'est pas une navigation. */
+button.back-to-site{ background:none; border:none; cursor:pointer; font-family:inherit; }
 
 /* ---------- Form rows (partagé avec le reste de l'admin) ---------- */
 .form-row{ display:flex; flex-direction:column; gap:.4rem; margin-bottom:1.1rem; }
@@ -96,6 +99,22 @@
 .spec-edit-header h3{ font-size:.9rem; margin:0; color:var(--gold-deep); font-weight:700; letter-spacing:.02em; }
 
 .btn-small{ padding:.6em 1.3em; font-size:.88rem; }
+
+/* ---------- Code de vérification ---------- */
+/* Chiffres espacés et centrés : on relit un code à six chiffres bien plus
+   sûrement ainsi qu'en texte courant, surtout recopié depuis un téléphone. */
+.a2f-code{
+  text-align:center; font-size:1.7rem; font-weight:600;
+  letter-spacing:.45em; text-indent:.45em;
+  font-family:var(--font-body);
+}
+.a2f-renvoyer{
+  display:block; margin:.9rem auto 0; padding:.3em .6em;
+  background:none; border:none; cursor:pointer;
+  font-family:inherit; font-size:.86rem; color:var(--gold-deep);
+  text-decoration:underline; text-underline-offset:3px;
+}
+.a2f-renvoyer:hover{ color:var(--ink); }
 
 /* ---------- Équipe & invitations ---------- */
 .team-list{ display:flex; flex-direction:column; gap:.6rem; }

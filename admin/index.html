@@ -55,6 +55,33 @@
   </form>
 </div>
 
+<!-- ===================== ÉCRAN DU CODE À USAGE UNIQUE ===================== -->
+<div class="login-screen" id="a2fScreen" hidden>
+  <form class="login-card" id="a2fForm">
+    <img src="../assets/logo.jpg" alt="Au P'tit Paradis" class="login-logo">
+    <h1>Vérification</h1>
+    <p class="login-sub">
+      Un code à six chiffres vient d'être envoyé à
+      <strong id="a2fIndice">votre adresse</strong>. Il est valable 10 minutes.
+    </p>
+
+    <div class="form-row">
+      <label for="a2fCode">Code reçu par e-mail</label>
+      <!-- inputmode numeric : clavier chiffres sur mobile. Pas type="number",
+           qui perdrait les zéros de tête et afficherait des flèches. -->
+      <input type="text" id="a2fCode" class="a2f-code" inputmode="numeric"
+             autocomplete="one-time-code" maxlength="6" pattern="\d{6}"
+             required placeholder="000000">
+    </div>
+
+    <p class="login-error" id="a2fError" hidden></p>
+
+    <button type="submit" class="btn btn-primary login-submit" id="a2fSubmit">Valider</button>
+    <button type="button" class="a2f-renvoyer" id="a2fRenvoyer">Renvoyer un code</button>
+    <button type="button" class="back-to-site" id="a2fAnnuler">← Se déconnecter</button>
+  </form>
+</div>
+
 <!-- ===================== ÉCRAN D'INVITATION ===================== -->
 <div class="login-screen" id="inviteScreen" hidden>
   <form class="login-card" id="inviteForm">

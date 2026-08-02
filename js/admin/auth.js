@@ -10,6 +10,7 @@ import {
 import {
   doc, getDoc, setDoc, deleteDoc
 } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+import { WORKER_URL } from "./config.js";
 
 const loginScreen  = document.getElementById('loginScreen');
 const adminApp     = document.getElementById('adminApp');
@@ -17,6 +18,8 @@ const loginForm    = document.getElementById('loginForm');
 const loginError   = document.getElementById('loginError');
 const logoutBtn    = document.getElementById('logoutBtn');
 const inviteScreen = document.getElementById('inviteScreen');
+const a2fScreen    = document.getElementById('a2fScreen');
+const a2fError     = document.getElementById('a2fError');
 
 /* Le lien ne porte plus que le jeton : l'invité saisit lui-même ses
    coordonnées, on ne les connaît pas au moment de l'inviter. */
@@ -85,8 +88,59 @@ function inviteErrorMessage(err) {
   return err.message || "La création de l'accès a échoué.";
 }
 
+/* ---------- Double authentification ---------- */
+/* Le mot de passe ouvre la session Firebase, il n'ouvre pas le panel. Il
+   faut ensuite un code à six chiffres reçu par e-mail. Le code est tiré et
+   comparé par le Worker : le navigateur ne le voit jamais avant qu'on le
+   saisisse, et la collection qui le garde n'est lisible par aucun client.
+
+   La preuve du passage est un attribut `a2fUntil` posé sur le compte, donc
+   dans le jeton d'identité — et non un drapeau en mémoire, qu'un rechargement
+   remettrait à zéro et qu'une console remettrait à ce qu'on veut. */
+
+async function appelerWorker(chemin, corps) {
+  const res = await fetch(WORKER_URL + chemin, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(corps)
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok && !('ok' in data)) {
+    throw new Error(data.error || 'Le serveur n\'a pas répondu.');
+  }
+  return data;
+}
+
+/* Lu depuis le jeton fraîchement rafraîchi : un jeton en cache pourrait
+   dater d'avant la pose de l'attribut. */
+async function a2fDejaValidee(user) {
+  try {
+    const res = await user.getIdTokenResult(true);
+    const jusqua = Number(res.claims.a2fUntil || 0);
+    return jusqua > Date.now();
+  } catch {
+    return false;
+  }
+}
+
+async function demanderCode(user) {
+  const data = await appelerWorker('/a2f/request', { idToken: await user.getIdToken() });
+  if (data.indice) document.getElementById('a2fIndice').textContent = data.indice;
+}
+
+function montrerEcranA2F() {
+  loginScreen.hidden = true;
+  inviteScreen.hidden = true;
+  adminApp.hidden = true;
+  a2fScreen.hidden = false;
+  a2fError.hidden = true;
+  const champ = document.getElementById('a2fCode');
+  champ.value = '';
+  champ.focus();
+}
+
 /**
- * Câble les écrans de connexion et d'invitation.
+ * Câble les écrans de connexion, de vérification et d'invitation.
  * `onReady` est appelé une fois l'accès au panel accordé : c'est là que les
  * onglets chargent leurs données.
  */
@@ -110,6 +164,7 @@ export function initAuth(onReady) {
     if (acceptingInvite) return;   // l'accès est en cours de création
     if (!user) {
       loginScreen.hidden = pendingInvite ? true : false;
+      a2fScreen.hidden = true;
       adminApp.hidden = true;
       return;
     }
@@ -117,17 +172,85 @@ export function initAuth(onReady) {
     if (!(await isCurrentUserAdmin(user))) {
       await signOut(auth);
       loginScreen.hidden = false;
+      a2fScreen.hidden = true;
       adminApp.hidden = true;
       loginError.textContent = "Ce compte n'a pas accès à l'administration. Demandez une invitation.";
       loginError.hidden = false;
       return;
     }
 
+    // Membre reconnu, mais le panel n'est pas encore ouvert : il reste le code.
+    if (!(await a2fDejaValidee(user))) {
+      try {
+        await demanderCode(user);
+        montrerEcranA2F();
+      } catch (err) {
+        // Sans code envoyé, personne n'entre : on renvoie à la connexion
+        // plutôt que de laisser un écran de saisie sans issue.
+        await signOut(auth);
+        loginScreen.hidden = false;
+        loginError.textContent = err.message;
+        loginError.hidden = false;
+      }
+      return;
+    }
+
     loginScreen.hidden = true;
     inviteScreen.hidden = true;
+    a2fScreen.hidden = true;
     adminApp.hidden = false;
     onReady();
   });
+
+  /* ---------- Saisie du code ---------- */
+  document.getElementById('a2fForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const bouton = document.getElementById('a2fSubmit');
+    const code = document.getElementById('a2fCode').value.trim();
+    a2fError.hidden = true;
+    bouton.disabled = true;
+    bouton.textContent = 'Vérification…';
+
+    try {
+      const data = await appelerWorker('/a2f/verify', {
+        idToken: await auth.currentUser.getIdToken(),
+        code
+      });
+      if (!data.ok) throw new Error(
+        data.restant > 0 ? `${data.error} Encore ${data.restant} essai${data.restant > 1 ? 's' : ''}.`
+                         : data.error
+      );
+
+      // L'attribut vient d'être posé : sans rafraîchissement forcé, le jeton
+      // en mémoire ne le contient pas encore et on redemanderait un code.
+      await auth.currentUser.getIdToken(true);
+      a2fScreen.hidden = true;
+      loginScreen.hidden = true;
+      inviteScreen.hidden = true;
+      adminApp.hidden = false;
+      onReady();
+    } catch (err) {
+      a2fError.textContent = err.message;
+      a2fError.hidden = false;
+    } finally {
+      bouton.disabled = false;
+      bouton.textContent = 'Valider';
+    }
+  });
+
+  document.getElementById('a2fRenvoyer').addEventListener('click', async () => {
+    a2fError.hidden = true;
+    try {
+      await demanderCode(auth.currentUser);
+      a2fError.textContent = 'Un nouveau code vient de partir.';
+      a2fError.hidden = false;
+    } catch (err) {
+      a2fError.textContent = err.message;
+      a2fError.hidden = false;
+    }
+  });
+
+  document.getElementById('a2fAnnuler').addEventListener('click', () => signOut(auth));
 
   /* ---------- Acceptation d'une invitation ---------- */
   if (pendingInvite) {

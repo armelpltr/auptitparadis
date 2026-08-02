@@ -205,6 +205,48 @@ export async function firestoreCreate(collectionPath, data, env) {
 }
 
 /**
+ * Écrit le document en entier, en écrasant ce qui s'y trouvait. C'est
+ * exactement le comportement d'un PATCH sans `updateMask` — ici il est
+ * voulu : un défi OTP repart toujours de zéro, on ne veut pas qu'un
+ * compteur d'essais d'un défi précédent survive.
+ */
+export async function firestoreSet(path, data, env) {
+  const token = await getAccessToken(env);
+  const res = await fetch(docsUrl(env, `/${path}`), {
+    method: 'PATCH',
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ fields: toFirestoreFields(data) })
+  });
+  if (!res.ok) throw new Error(`Firestore set ${res.status}: ${await res.text()}`);
+}
+
+/**
+ * Incrémente un entier et renvoie sa nouvelle valeur, en une seule
+ * opération côté serveur. Lire puis réécrire ne conviendrait pas : deux
+ * requêtes simultanées liraient le même compteur et le plafond d'essais
+ * ne bornerait plus rien face à une force brute parallèle.
+ */
+export async function firestoreIncrement(path, champ, env) {
+  const token = await getAccessToken(env);
+  const res = await fetch(docsUrl(env, ':commit'), {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      writes: [{
+        transform: {
+          document: `projects/${env.FIREBASE_PROJECT_ID}/databases/(default)/documents/${path}`,
+          fieldTransforms: [{ fieldPath: champ, increment: { integerValue: '1' } }]
+        }
+      }]
+    })
+  });
+  if (!res.ok) throw new Error(`Firestore increment ${res.status}: ${await res.text()}`);
+  const data = await res.json();
+  const v = data.writeResults?.[0]?.transformResults?.[0];
+  return Number(v?.integerValue ?? 0);
+}
+
+/**
  * Met à jour les seuls champs fournis. Sans `updateMask`, l'API REST
  * remplace le document entier : une commande mise à jour sur son statut
  * perdrait ses produits, son client et son total.
@@ -257,6 +299,28 @@ export async function firestoreQueryByField(collectionId, fieldPath, value, env,
 }
 
 /* ---------- Identity Toolkit ---------- */
+
+/**
+ * Pose des attributs personnalisés sur un compte. Ils atterrissent dans le
+ * jeton d'identité du client à son prochain rafraîchissement, et les règles
+ * Firestore peuvent les lire — c'est ce qui permettra, plus tard, d'exiger
+ * côté serveur que la double authentification ait été franchie.
+ *
+ * `customAttributes` est une chaîne JSON, pas un objet : l'API l'exige
+ * ainsi, et un objet passerait silencieusement à la trappe.
+ */
+export async function setCustomClaims(uid, claims, env) {
+  const token = await getAccessToken(env);
+  const res = await fetch(
+    `https://identitytoolkit.googleapis.com/v1/projects/${env.FIREBASE_PROJECT_ID}/accounts:update`,
+    {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ localId: uid, customAttributes: JSON.stringify(claims) })
+    }
+  );
+  if (!res.ok) throw new Error(`Attributs refusés (${res.status}): ${await res.text()}`);
+}
 
 export async function deleteAuthUser(uid, env) {
   const token = await getAccessToken(env);

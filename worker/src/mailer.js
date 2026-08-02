@@ -324,6 +324,66 @@ async function envoyer({ destinataire, nomDestinataire, sujet, html, texte }, en
   if (!res.ok) throw new Error(`Brevo ${res.status}: ${await res.text()}`);
 }
 
+/* ---------- Code de connexion au panel ---------- */
+
+/**
+ * Envoie le code à six chiffres. Renvoie `true` si Brevo l'a accepté :
+ * contrairement aux e-mails de commande, celui-ci est bloquant — sans lui
+ * personne n'entre, et prétendre l'avoir envoyé laisserait quelqu'un
+ * attendre un message qui n'arrive pas.
+ */
+export async function envoyerCodeA2F({ email, prenom, code }, env) {
+  if (!env.BREVO_API_KEY || !env.EMAIL_EXPEDITEUR) return false;
+
+  const html = `
+<div style="font-family:Helvetica,Arial,sans-serif;color:#211c17;max-width:460px;margin:0 auto;">
+  <h1 style="font-size:19px;margin:0 0 4px;">Connexion à l'administration</h1>
+  <p style="color:#4a423a;margin:0 0 22px;">${prenom ? `Bonjour ${esc(prenom)},` : 'Bonjour,'}</p>
+
+  <div style="background:#f1e6d3;border-radius:10px;padding:20px;text-align:center;margin-bottom:22px;">
+    <p style="margin:0 0 6px;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:#4a423a;">
+      Votre code de connexion
+    </p>
+    <p style="margin:0;font-size:34px;font-weight:bold;letter-spacing:.3em;color:#8c5a26;">
+      ${esc(code)}
+    </p>
+    <p style="margin:10px 0 0;font-size:13px;color:#4a423a;">Valable 10 minutes.</p>
+  </div>
+
+  <p style="background:#fbeae6;border-left:3px solid #c0563f;padding:12px 16px;margin:0 0 20px;font-size:14px;">
+    <strong>Vous n'essayez pas de vous connecter ?</strong> Quelqu'un connaît votre
+    mot de passe. Ne communiquez ce code à personne et changez votre mot de passe.
+  </p>
+
+  <p style="color:#4a423a;font-size:13px;margin:0;">Au P'tit Paradis — administration du site</p>
+</div>`;
+
+  const texte = `Connexion à l'administration
+
+${prenom ? `Bonjour ${prenom},` : 'Bonjour,'}
+
+Votre code de connexion : ${code}
+Valable 10 minutes.
+
+Vous n'essayez pas de vous connecter ? Quelqu'un connaît votre mot de
+passe. Ne communiquez ce code à personne et changez votre mot de passe.
+
+Au P'tit Paradis — administration du site`;
+
+  try {
+    await envoyer({
+      destinataire: email,
+      sujet: `Code de connexion — ${code}`,
+      html,
+      texte
+    }, env);
+    return true;
+  } catch (err) {
+    console.error('Code de connexion non envoyé :', err.message);
+    return false;
+  }
+}
+
 /* Qui reçoit les alertes de commande : chaque membre du panel décide pour
    lui-même depuis l'onglet Équipe. L'absence du champ vaut refus — on
    n'inscrit personne à son insu. */
