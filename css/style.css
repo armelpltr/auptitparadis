@@ -114,9 +114,10 @@ p{ margin:0 0 1em; color:var(--ink-soft); }
   height:72px; width:auto; object-fit:contain;
   transition:height .4s var(--ease);
 }
-/* Réduit une fois la page défilée, mais pas au point de devenir illisible :
-   le logo porte le nom de la boutique, il reste le seul repère en haut. */
-.site-header.is-scrolled .brand-logo-header{ height:46px; }
+/* À peine réduit une fois la page défilée : le logo porte le nom de la
+   boutique et reste le seul repère en haut, un rétrécissement marqué le
+   rendait illisible. La barre se resserre, pas lui. */
+.site-header.is-scrolled .brand-logo-header{ height:58px; }
 
 /* Nav droite */
 .nav-right-group{ display:flex; align-items:center; }
@@ -1076,7 +1077,7 @@ p{ margin:0 0 1em; color:var(--ink-soft); }
   /* Le logo prend une part bien plus grande d'un écran étroit : il grandit,
      mais moins qu'en desktop, sinon il chasse le bouton de menu. */
   .brand-logo-header{ height:56px; }
-  .site-header.is-scrolled .brand-logo-header{ height:40px; }
+  .site-header.is-scrolled .brand-logo-header{ height:48px; }
   .commande-main{ padding-top:5.8rem; }
   .produits-grid{ grid-template-columns:1fr; gap:1.1rem; }
   .produit-photo{ aspect-ratio:16/9; }
