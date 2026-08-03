@@ -453,6 +453,21 @@ button.back-to-site{ background:none; border:none; cursor:pointer; font-family:i
 .noel-item-save{ display:flex; justify-content:flex-end; }
 
 /* ---------- Commandes ---------- */
+.orders-stats{
+  display:grid; grid-template-columns:repeat(4, 1fr); gap:1rem;
+  margin-bottom:1.4rem;
+}
+.stat-carte{
+  display:flex; flex-direction:column; gap:.3rem;
+  border:1px solid var(--sand); border-radius:10px;
+  background:var(--white); padding:.9rem 1.1rem;
+}
+.stat-valeur{
+  font-size:1.3rem; font-weight:700; color:var(--gold-deep);
+  overflow-wrap:anywhere; line-height:1.2;
+}
+.stat-label{ font-size:.78rem; color:var(--ink-soft); }
+
 .orders-barre{
   display:grid; grid-template-columns:1fr 1fr auto; gap:1.2rem; align-items:end;
   margin-bottom:.6rem;
@@ -544,6 +559,7 @@ button.back-to-site{ background:none; border:none; cursor:pointer; font-family:i
      largeur — le panel se consulte au comptoir, sur téléphone. */
   .orders-barre{ grid-template-columns:1fr; gap:.9rem; }
   .orders-barre .btn{ width:100%; }
+  .orders-stats{ grid-template-columns:1fr 1fr; }
   .cmd-carte{ padding:1rem 1rem .9rem; }
   .cmd-header{ gap:.6rem; }
   .cmd-retrait{ margin-left:0; flex-basis:100%; }

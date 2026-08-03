@@ -40,6 +40,59 @@ const jourLong = new Intl.DateTimeFormat('fr-FR', { weekday: 'long', day: 'numer
 
 let ordersCache = [];
 
+/* ---------- Statistiques ---------- */
+/* Une commande annulée ne doit peser ni dans le CA prévisionnel ni dans
+   le classement des produits : elle ne sera jamais préparée. */
+const STATUTS_ACTIFS = ['en_attente', 'confirmee', 'prete'];
+
+function calculerStats(list) {
+  const actives = list.filter(o => STATUTS_ACTIFS.includes(o.statut));
+  const ca = actives.reduce((s, o) => s + (o.total || 0), 0);
+
+  const parProduit = new Map();
+  for (const o of list) {
+    if (o.statut === 'annulee') continue;
+    for (const it of (o.items || [])) {
+      parProduit.set(it.nom, (parProduit.get(it.nom) || 0) + (it.quantite || 0));
+    }
+  }
+  let top = null;
+  for (const [nom, qte] of parProduit) {
+    if (!top || qte > top.qte) top = { nom, qte };
+  }
+
+  return {
+    nbActives: actives.length,
+    ca,
+    top,
+    nbRecuperees: list.filter(o => o.statut === 'recuperee').length
+  };
+}
+
+function renderStats() {
+  const zone = document.getElementById('ordersStats');
+  if (!zone) return;
+  const { nbActives, ca, top, nbRecuperees } = calculerStats(ordersCache);
+
+  zone.innerHTML = `
+    <div class="stat-carte">
+      <span class="stat-valeur">${nbActives}</span>
+      <span class="stat-label">Commande${nbActives > 1 ? 's' : ''} en cours</span>
+    </div>
+    <div class="stat-carte">
+      <span class="stat-valeur">${escapeAttr(euros.format(ca))}</span>
+      <span class="stat-label">CA prévisionnel (en cours)</span>
+    </div>
+    <div class="stat-carte">
+      <span class="stat-valeur">${top ? escapeAttr(top.nom) : '—'}</span>
+      <span class="stat-label">${top ? `Le plus demandé (${top.qte})` : 'Aucun produit encore commandé'}</span>
+    </div>
+    <div class="stat-carte">
+      <span class="stat-valeur">${nbRecuperees}</span>
+      <span class="stat-label">Récupérée${nbRecuperees > 1 ? 's' : ''}</span>
+    </div>`;
+}
+
 function toDate(v) {
   if (!v) return null;
   const d = v.toDate ? v.toDate() : new Date(v);
@@ -89,6 +142,7 @@ export async function loadOrders() {
     // Tri côté client : croiser statut et date de retrait dans la requête
     // réclamerait un index composite créé à la main dans la console.
     ordersCache.sort((a, b) => String(a.dateRetrait || '').localeCompare(String(b.dateRetrait || '')));
+    renderStats();
     renderOrders();
   } catch (err) {
     list.innerHTML = `<p class="empty-hint">Commandes illisibles : ${escapeAttr(err.message)}</p>`;
