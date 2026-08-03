@@ -452,6 +452,12 @@ button.back-to-site{ background:none; border:none; cursor:pointer; font-family:i
 
 .noel-item-save{ display:flex; justify-content:flex-end; }
 
+.capacite-list{ display:flex; flex-direction:column; gap:.6rem; margin-bottom:.7rem; }
+.capacite-row{ display:grid; grid-template-columns:1fr 100px auto; gap:.7rem; align-items:center; }
+.capacite-row input{
+  border:1px solid var(--sand); border-radius:6px; padding:.45em .6em; font-family:inherit; font-size:.9rem;
+}
+
 /* ---------- Commandes ---------- */
 .prepa-bloc{
   border:1px solid var(--sand); border-radius:10px;
@@ -573,6 +579,7 @@ button.back-to-site{ background:none; border:none; cursor:pointer; font-family:i
   .noel-item-header h3{ flex-basis:100%; }
   .noel-dispo{ flex:1; text-align:center; }
   .noel-item-save .btn{ width:100%; }
+  .capacite-row{ grid-template-columns:1fr 80px auto; }
 
   /* Commandes : la barre de filtres s'empile, les cartes passent en pleine
      largeur — le panel se consulte au comptoir, sur téléphone. */

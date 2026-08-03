@@ -201,11 +201,13 @@ async function construireLignes(items, dateRetrait, env) {
   const vus = new Set();
   let total = 0;
 
-  // Uniquement calculé si au moins un produit du panier porte une limite :
-  // pas la peine d'interroger les commandes du jour pour rien.
+  // Uniquement calculé si au moins un produit du panier porte une limite
+  // pour CETTE date précise : pas la peine d'interroger les commandes du
+  // jour pour un produit dont la limite ne concerne pas cette date-là.
   const aUneLimite = items.some(item => {
     const p = catalogue.find(pp => pp.id === String(item?.id ?? ''));
-    return p && Number.isInteger(p.capaciteParJour) && p.capaciteParJour > 0;
+    const limite = p?.capacites?.[dateRetrait];
+    return Number.isInteger(limite) && limite > 0;
   });
   const dejaReserve = aUneLimite ? await quantitesReservees(dateRetrait, env) : new Map();
 
@@ -225,7 +227,7 @@ async function construireLignes(items, dateRetrait, env) {
       throw httpError(`Quantité invalide pour « ${produit.nom} » (1 à ${MAX_QUANTITE}).`, 400);
     }
 
-    const capacite = produit.capaciteParJour;
+    const capacite = produit.capacites?.[dateRetrait];
     if (Number.isInteger(capacite) && capacite > 0) {
       const dejaPris = dejaReserve.get(id) || 0;
       const restant = capacite - dejaPris;
