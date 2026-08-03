@@ -514,6 +514,12 @@ button.back-to-site{ background:none; border:none; cursor:pointer; font-family:i
 
 .cmd-supprimer:hover{ background:#a13a25; border-color:#a13a25; color:var(--white); }
 
+.cmd-statut-select{
+  border:1px solid var(--sand); border-radius:999px; background:var(--white);
+  padding:.5em 1.4em .5em 1em; font-family:inherit; font-size:.85rem; font-weight:600;
+  color:var(--ink); cursor:pointer;
+}
+
 .cmd-header{
   display:flex; align-items:center; gap:.9rem; flex-wrap:wrap;
   margin-bottom:.8rem;

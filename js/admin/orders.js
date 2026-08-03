@@ -253,12 +253,11 @@ function renderOrders() {
         ${o.commentaire ? `<p class="cmd-commentaire">« ${escapeAttr(o.commentaire)} »</p>` : ''}
 
         <div class="cmd-actions">
-          ${statut.suivant
-            ? `<button type="button" class="btn btn-primary btn-small" data-action="avancer">${escapeAttr(statut.actionSuivante)}</button>`
-            : ''}
-          ${['recuperee', 'annulee'].includes(o.statut)
-            ? ''
-            : '<button type="button" class="btn btn-ghost btn-small" data-action="annuler">Annuler</button>'}
+          <select class="cmd-statut-select" data-action="statut">
+            ${Object.entries(STATUTS).map(([cle, s]) =>
+              `<option value="${cle}" ${o.statut === cle ? 'selected' : ''}>${escapeAttr(s.label)}</option>`
+            ).join('')}
+          </select>
           <button type="button" class="btn btn-ghost btn-small cmd-supprimer" data-action="supprimer">Supprimer</button>
         </div>
       </article>`;
@@ -266,8 +265,8 @@ function renderOrders() {
 
   list.querySelectorAll('.cmd-carte').forEach(carte => {
     const id = carte.dataset.id;
-    carte.querySelector('[data-action="avancer"]')?.addEventListener('click', () => avancerStatut(id));
-    carte.querySelector('[data-action="annuler"]')?.addEventListener('click', () => annulerCommande(id));
+    const select = carte.querySelector('[data-action="statut"]');
+    select?.addEventListener('change', () => changerStatutViaSelect(id, select.value, select));
     carte.querySelector('[data-action="supprimer"]')?.addEventListener('click', () => supprimerCommande(id));
   });
 }
@@ -282,22 +281,25 @@ async function changerStatut(id, statut) {
   }
 }
 
-async function avancerStatut(id) {
+/* Le menu déroulant permet d'aller dans les deux sens (revenir en arrière
+   inclus) — seule l'annulation garde une confirmation, vu qu'elle n'a pas
+   de retour en arrière simple pour le client. Un choix annulé remet le
+   menu sur son statut d'origine, sinon il resterait affiché sur une valeur
+   qui n'a en réalité pas été enregistrée. */
+async function changerStatutViaSelect(id, nouveauStatut, selectEl) {
   const o = ordersCache.find(x => x.id === id);
-  const suivant = STATUTS[o?.statut]?.suivant;
-  if (!suivant) return;
-  await changerStatut(id, suivant);
-  showStatus(`Commande ${o.code || ''} — ${STATUTS[suivant].label.toLowerCase()}.`);
-}
+  if (!o || nouveauStatut === o.statut) return;
 
-async function annulerCommande(id) {
-  const o = ordersCache.find(x => x.id === id);
-  const ok = await confirmDialog(
-    `Annuler la commande ${o?.code || ''} ?`,
-    `${o?.client ? nomClient(o.client) : 'Le client'} ne sera pas prévenu automatiquement — pensez à l'appeler.`
-  );
-  if (!ok) return;
-  await changerStatut(id, 'annulee');
+  if (nouveauStatut === 'annulee') {
+    const ok = await confirmDialog(
+      `Annuler la commande ${o.code || ''} ?`,
+      `${o.client ? nomClient(o.client) : 'Le client'} ne sera pas prévenu automatiquement — pensez à l'appeler.`
+    );
+    if (!ok) { selectEl.value = o.statut; return; }
+  }
+
+  await changerStatut(id, nouveauStatut);
+  showStatus(`Commande ${o.code || ''} — ${STATUTS[nouveauStatut].label.toLowerCase()}.`);
 }
 
 /* Suppression définitive — utile en phase de test pour vider les commandes
