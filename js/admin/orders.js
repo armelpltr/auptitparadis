@@ -245,6 +245,10 @@ function renderOrders() {
     const statut = STATUTS[o.statut] || { label: o.statut || '—', suivant: null };
     const attente = o.statut === 'en_attente' ? joursDepuis(toDate(o.createdAt)) : 0;
     const alerte = attente >= JOURS_AVANT_ALERTE;
+    /* Le client a lui-même annulé depuis son e-mail : le dossier est clos de
+       son côté. Le rouvrir depuis le panel ferait croire à une commande
+       vivante que personne n'attend plus. */
+    const verrouillee = o.annuleePar === 'client';
 
     const lignes = (o.items || []).map(it => `
       <li><span class="cmd-qte">${escapeAttr(it.quantite)}×</span> ${escapeAttr(it.nom)}
@@ -260,8 +264,8 @@ function renderOrders() {
         </header>
 
         ${alerte ? `<p class="cmd-alerte">Non confirmée depuis ${attente} jour${attente > 1 ? 's' : ''}</p>` : ''}
-        ${o.annuleePar === 'client'
-          ? `<p class="cmd-annulee-client">Annulée par le client${o.annuleeLe ? `, ${fmtMoment(toDate(o.annuleeLe))}` : ''} — rien à faire</p>`
+        ${verrouillee
+          ? `<p class="cmd-annulee-client">Annulée par le client${o.annuleeLe ? `, ${fmtMoment(toDate(o.annuleeLe))}` : ''} — statut verrouillé</p>`
           : ''}
 
         <div class="cmd-client">
@@ -276,17 +280,12 @@ function renderOrders() {
         ${o.commentaire ? `<p class="cmd-commentaire">« ${escapeAttr(o.commentaire)} »</p>` : ''}
 
         <div class="cmd-actions">
-          <select class="cmd-statut-select" data-action="statut">
+          <select class="cmd-statut-select" data-action="statut" ${verrouillee ? 'disabled' : ''}>
             ${Object.entries(STATUTS).map(([cle, s]) =>
               `<option value="${cle}" ${o.statut === cle ? 'selected' : ''}>${escapeAttr(s.label)}</option>`
             ).join('')}
           </select>
-          <select class="cmd-impression-type" data-action="typeTicket">
-            <option value="client">Ticket client</option>
-            <option value="commande">Ticket commande</option>
-            <option value="production">Ticket production</option>
-          </select>
-          <button type="button" class="btn btn-ghost btn-small" data-action="imprimer">Imprimer</button>
+          <button type="button" class="btn btn-ghost btn-small" data-action="imprimer">Imprimer…</button>
           <button type="button" class="btn btn-ghost btn-small cmd-supprimer" data-action="supprimer">Supprimer</button>
         </div>
       </article>`;
@@ -296,10 +295,7 @@ function renderOrders() {
     const id = carte.dataset.id;
     const select = carte.querySelector('[data-action="statut"]');
     select?.addEventListener('change', () => changerStatutViaSelect(id, select.value, select));
-    carte.querySelector('[data-action="imprimer"]')?.addEventListener('click', () => {
-      const type = carte.querySelector('[data-action="typeTicket"]').value;
-      imprimerCommande(id, type);
-    });
+    carte.querySelector('[data-action="imprimer"]')?.addEventListener('click', () => imprimerCommande(id));
     carte.querySelector('[data-action="supprimer"]')?.addEventListener('click', () => supprimerCommande(id));
   });
 }
@@ -322,6 +318,8 @@ async function changerStatut(id, statut) {
 async function changerStatutViaSelect(id, nouveauStatut, selectEl) {
   const o = ordersCache.find(x => x.id === id);
   if (!o || nouveauStatut === o.statut) return;
+  // Le menu est déjà désactivé dans ce cas ; la garde tient si le rendu change.
+  if (o.annuleePar === 'client') { selectEl.value = o.statut; return; }
 
   if (nouveauStatut === 'annulee') {
     const ok = await confirmDialog(
@@ -363,7 +361,10 @@ function nbArticles(o) {
   return (o.items || []).reduce((s, it) => s + (it.quantite || 0), 0);
 }
 
-function ticketHTML(o, type = 'commande') {
+/* Le corps d'un ticket seul, sans en-tête de document : plusieurs peuvent
+   ainsi partir dans la même impression, séparés par un saut de page — donc
+   par une découpe du rouleau. */
+function corpsTicket(o, type = 'commande') {
   const conf = TICKETS[type] || TICKETS.commande;
   const total = nbArticles(o);
 
@@ -461,20 +462,46 @@ function ticketHTML(o, type = 'commande') {
        <p class="t-centre">Merci et à bientôt !</p>`
     : '';
 
+  return `<section class="ticket ${type === 'production' ? 'prod' : ''}">
+  ${entete}
+  <p class="t-bande">${escapeAttr(conf.titre)}</p>
+  ${identite}
+
+  ${client ? `<div class="t-sep"></div>${client}` : ''}
+
+  <div class="t-sep"></div>
+  <table>${enTeteColonnes}${lignes}</table>
+  ${totalLigne}
+
+  ${commentaire}
+  ${pied}
+
+  <p class="t-pied">imprimé le ${escapeAttr(fmtImpression())}</p>
+</section>`;
+}
+
+/* Un seul document pour toute la sélection : ouvrir une fenêtre par ticket
+   ferait tomber le bloqueur de pop-ups dès le deuxième, et obligerait à
+   valider autant de dialogues d'impression. */
+function documentTickets(o, types) {
   return `<!DOCTYPE html>
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<title>${escapeAttr(conf.titre)} ${escapeAttr(o.code || '')}</title>
+<title>Commande ${escapeAttr(o.code || '')}</title>
 <style>
   @page{ size:80mm auto; margin:0; }
-  body{
+  body{ margin:0; font-family:'Courier New', monospace; color:#000; }
+  .ticket{
     width:72mm; margin:0 auto;
     /* La marge basse n'est pas décorative : sans elle, la découpe du rouleau
        passe dans la dernière ligne au lieu du vide qui la suit. */
     padding:3mm 0 14mm;
-    font-family:'Courier New', monospace; font-size:12px; line-height:1.35; color:#000;
+    font-size:12px; line-height:1.35;
   }
+  /* Chaque ticket sur son propre bout de rouleau. */
+  .ticket + .ticket{ break-before:page; page-break-before:always; }
+
   h1{ font-size:15px; text-align:center; margin:0 0 2px; letter-spacing:1px; }
   .t-adresse{ text-align:center; font-size:10px; margin:0 0 6px; }
 
@@ -523,35 +550,64 @@ function ticketHTML(o, type = 'commande') {
   .t-pied{ text-align:center; font-size:9px; margin:8px 0 0; }
 </style>
 </head>
-<body class="${type === 'production' ? 'prod' : ''}">
-  ${entete}
-  <p class="t-bande">${escapeAttr(conf.titre)}</p>
-  ${identite}
-
-  ${client ? `<div class="t-sep"></div>${client}` : ''}
-
-  <div class="t-sep"></div>
-  <table>${enTeteColonnes}${lignes}</table>
-  ${totalLigne}
-
-  ${commentaire}
-  ${pied}
-
-  <p class="t-pied">imprimé le ${escapeAttr(fmtImpression())}</p>
+<body>
+${types.map(t => corpsTicket(o, t)).join('\n')}
 </body>
 </html>`;
 }
 
-function imprimerCommande(id, type = 'commande') {
+/* Le choix se fait au clic sur « Imprimer » plutôt que dans un menu posé en
+   permanence sur chaque carte : on n'y pense qu'au moment d'imprimer, et
+   plusieurs tickets partent souvent ensemble — le client et la production
+   pour une même commande, par exemple. */
+function choisirTypesTickets(o) {
+  return new Promise(resolve => {
+    const overlay = document.getElementById('printOverlay');
+    const cases = [...overlay.querySelectorAll('input[type="checkbox"]')];
+    const ok = document.getElementById('printOk');
+    const cancel = document.getElementById('printCancel');
+
+    document.getElementById('printSub').textContent =
+      `Commande ${o.code || ''} — cochez tout ce qu'il vous faut, les tickets sortiront à la suite.`;
+
+    // Rien de coché n'imprimerait rien : le bouton le dit avant le clic.
+    const majBouton = () => { ok.disabled = !cases.some(c => c.checked); };
+    cases.forEach(c => c.addEventListener('change', majBouton));
+    majBouton();
+
+    overlay.hidden = false;
+
+    function fermer(resultat) {
+      overlay.hidden = true;
+      ok.removeEventListener('click', onOk);
+      cancel.removeEventListener('click', onCancel);
+      overlay.removeEventListener('click', onFond);
+      cases.forEach(c => c.removeEventListener('change', majBouton));
+      resolve(resultat);
+    }
+    const onOk = () => fermer(cases.filter(c => c.checked).map(c => c.value));
+    const onCancel = () => fermer(null);
+    const onFond = e => { if (e.target === overlay) fermer(null); };
+
+    ok.addEventListener('click', onOk);
+    cancel.addEventListener('click', onCancel);
+    overlay.addEventListener('click', onFond);
+  });
+}
+
+async function imprimerCommande(id) {
   const o = ordersCache.find(x => x.id === id);
   if (!o) return;
+
+  const types = await choisirTypesTickets(o);
+  if (!types || !types.length) return;
 
   const fenetre = window.open('', '_blank', 'width=400,height=600');
   if (!fenetre) {
     showStatus("Le navigateur a bloqué l'ouverture de la fenêtre d'impression (pop-up).", true);
     return;
   }
-  fenetre.document.write(ticketHTML(o, type));
+  fenetre.document.write(documentTickets(o, types));
   fenetre.document.close();
 
   /* `document.close()` peut avoir déjà déclenché le load : un `onload` posé

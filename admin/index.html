@@ -469,6 +469,43 @@
   </div>
 </div>
 
+<!-- ===================== MODAL IMPRESSION ===================== -->
+<div class="confirm-overlay" id="printOverlay" hidden>
+  <div class="confirm-modal">
+    <p class="confirm-title">Quels tickets imprimer ?</p>
+    <p class="confirm-sub" id="printSub">Cochez tout ce qu'il vous faut : les tickets sortiront à la suite sur le rouleau.</p>
+
+    <div class="print-choix">
+      <label class="print-option">
+        <input type="checkbox" id="printClient" value="client" checked>
+        <span>
+          <strong>Ticket client</strong>
+          <em>Part avec le client : produits, prix, total. Sans téléphone ni e-mail.</em>
+        </span>
+      </label>
+      <label class="print-option">
+        <input type="checkbox" id="printCommande" value="commande">
+        <span>
+          <strong>Ticket interne</strong>
+          <em>Pour le comptoir : coordonnées complètes, statut, date de réception.</em>
+        </span>
+      </label>
+      <label class="print-option">
+        <input type="checkbox" id="printProduction" value="production">
+        <span>
+          <strong>Ticket production</strong>
+          <em>Pour la cuisine : quantités seules, sans prix, allergies mises en avant.</em>
+        </span>
+      </label>
+    </div>
+
+    <div class="confirm-actions">
+      <button class="btn btn-ghost" id="printCancel">Annuler</button>
+      <button class="btn btn-primary" id="printOk">Imprimer</button>
+    </div>
+  </div>
+</div>
+
 <div class="upload-overlay" id="uploadOverlay" hidden>
   <div class="upload-modal" role="dialog" aria-modal="true" aria-labelledby="uploadTitle">
     <div class="upload-visual">

@@ -520,11 +520,25 @@ button.back-to-site{ background:none; border:none; cursor:pointer; font-family:i
   color:var(--ink); cursor:pointer;
 }
 
-.cmd-impression-type{
-  border:1px solid var(--sand); border-radius:999px; background:var(--white);
-  padding:.5em 1.4em .5em 1em; font-family:inherit; font-size:.85rem;
-  color:var(--ink-soft); cursor:pointer;
+/* Une commande annulée par le client ne se repilote plus : le menu reste
+   affiché pour qu'on lise son état, mais il ne s'ouvre pas. */
+.cmd-statut-select:disabled{
+  opacity:.55; cursor:not-allowed; background:var(--cream, #f7f3ec);
 }
+
+/* ---------- Choix des tickets à imprimer ---------- */
+.print-choix{ display:flex; flex-direction:column; gap:.55rem; margin-bottom:1.6rem; }
+
+.print-option{
+  display:flex; align-items:flex-start; gap:.7rem; cursor:pointer;
+  border:1px solid var(--sand); border-radius:10px; padding:.7rem .85rem;
+  transition:border-color .15s ease, background .15s ease;
+}
+.print-option:hover{ border-color:var(--gold-deep); }
+.print-option:has(input:checked){ border-color:var(--gold-deep); background:rgba(198,160,74,.08); }
+.print-option input{ margin-top:.15rem; accent-color:var(--gold-deep); flex-shrink:0; }
+.print-option strong{ display:block; font-size:.9rem; color:var(--ink); }
+.print-option em{ display:block; font-style:normal; font-size:.78rem; color:var(--ink-soft); margin-top:.15rem; }
 
 .cmd-header{
   display:flex; align-items:center; gap:.9rem; flex-wrap:wrap;
@@ -605,6 +619,15 @@ button.back-to-site{ background:none; border:none; cursor:pointer; font-family:i
   .cmd-retrait{ margin-left:0; flex-basis:100%; }
   .cmd-client{ flex-direction:column; gap:.25rem; }
   .cmd-actions .btn{ flex:1; }
+
+  /* Sur mobile la modale d'impression prend la largeur : les libellés des
+     trois tickets ne tiennent pas sur une ligne autrement. */
+  .print-option{ padding:.6rem .7rem; }
+  .print-option em{ font-size:.74rem; }
+  .print-choix{ margin-bottom:1.2rem; }
+  #printOverlay .confirm-actions{ flex-direction:column-reverse; }
+  #printOverlay .confirm-actions .btn{ width:100%; }
+
   .hour-row{ grid-template-columns:1fr 1fr; }
   .hour-row > .row-remove{ grid-column:span 2; width:100%; border-radius:6px; }
 
