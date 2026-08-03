@@ -363,8 +363,10 @@
         <div class="form-row">
           <label for="inviteRole">Rôle</label>
           <select id="inviteRole">
-            <option value="editor" selected>Éditeur — modifie le contenu</option>
-            <option value="admin">Administrateur — gère aussi les accès</option>
+            <option value="editor" selected>Réglages du site — contenu seulement</option>
+            <option value="admin">Administrateur — site, commandes et accès</option>
+            <!-- Masqué à qui n'est pas déjà super-administrateur, cf. team.js -->
+            <option value="superadmin" hidden>Super-administrateur — tout</option>
           </select>
         </div>
         <div class="card-actions">

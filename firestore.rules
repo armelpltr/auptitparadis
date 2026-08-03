@@ -7,9 +7,10 @@ rules_version = '2';
 // des invitations existent, n'importe qui peut se créer un compte Firebase, et
 // un simple `request.auth != null` lui aurait ouvert l'écriture.
 //
-// Deux rôles :
-//   admin   — modifie le contenu ET gère les accès
-//   editor  — modifie le contenu uniquement
+// Trois rôles :
+//   superadmin — tout, et seul à pouvoir nommer ou retirer un superadmin
+//   admin      — le site, les commandes et les accès de l'équipe
+//   editor     — le contenu du site uniquement : ni commandes, ni accès
 
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -24,12 +25,25 @@ service cloud.firestore {
           && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
     }
 
-    // Rôle admin. Le défaut à 'admin' couvre le tout premier compte, créé à la
-    // main dans la console avant que les rôles n'existent : sans lui, il perdrait
-    // la main sur les accès.
-    function isOwner() {
-      return isMember() && memberDoc().get('role', 'admin') == 'admin';
+    // Le défaut à 'admin' couvre le tout premier compte, créé à la main dans
+    // la console avant que les rôles n'existent : sans lui, il perdrait la
+    // main sur les accès.
+    function myRole() {
+      return memberDoc().get('role', 'admin');
     }
+
+    // Gère les accès, les commandes et le catalogue de Noël.
+    function isOwner() {
+      return isMember() && myRole() in ['superadmin', 'admin'];
+    }
+
+    // Au-dessus : seul un superadmin touche à un autre superadmin. C'est ce
+    // qui laisse un recours si un administrateur fait n'importe quoi avec les
+    // accès — il ne peut pas retirer celui qui pourrait le corriger.
+    function isSuper() {
+      return isMember() && myRole() == 'superadmin';
+    }
+
 
     // Une invitation est désormais désignée par son jeton, plus par l'adresse
     // de l'invité : c'est lui qui saisit ses coordonnées en arrivant.
@@ -42,9 +56,18 @@ service cloud.firestore {
           && inviteByToken(token).expiresAt > request.time;
     }
 
+    // Contenu du site : ouvert aux trois rôles, c'est le métier de base du
+    // panel. Exception plus bas pour `settings/noel`.
     match /settings/{docId} {
       allow read:  if true;
-      allow write: if isMember();
+      allow write: if isMember() && docId != 'noel';
+    }
+
+    // Ouverture des commandes, dates de retrait, délai d'annulation : cela
+    // engage la boutique, pas seulement l'apparence du site.
+    match /settings/noel {
+      allow read:  if true;
+      allow write: if isOwner();
     }
 
     match /blocks/{blockId} {
@@ -53,10 +76,11 @@ service cloud.firestore {
     }
 
     // Catalogue des commandes de Noël (bûches, coffrets). Le site public le
-    // lit pour afficher les produits ; seul le panel les modifie.
+    // lit pour afficher les produits ; il porte des prix, donc il suit les
+    // commandes et non le contenu.
     match /noel_produits/{produitId} {
       allow read:  if true;
-      allow write: if isMember();
+      allow write: if isOwner();
     }
 
     // Commandes des clients. Rien n'est ouvert au public, pas même la
@@ -64,13 +88,19 @@ service cloud.firestore {
     // Turnstile avant d'écrire avec la clé de service — laquelle contourne
     // ces règles. Une création directe depuis le navigateur permettrait de
     // remplir la boîte de commandes en ignorant la vérification anti-bot.
+    // En lecture, elles portent nom, téléphone et e-mail de clients : le
+    // rôle « réglages du site » n'y a pas accès.
     match /orders/{orderId} {
-      allow read, write: if isMember();
+      allow read, write: if isOwner();
     }
 
     // Personnes ayant accès au panel.
     match /admins/{uid} {
-      allow read: if isMember();
+      // Chacun lit sa propre entrée — c'est ainsi que le panel connaît son
+      // rôle. La liste complète, elle, porte les adresses de toute l'équipe
+      // et reste réservée à ceux qui gèrent les accès.
+      allow get:  if isMember();
+      allow list: if isOwner();
 
       // Un invité s'ajoute lui-même, à cinq conditions : il crée bien sa propre
       // entrée, avec sa propre adresse, il présente un jeton d'invitation
@@ -87,20 +117,28 @@ service cloud.firestore {
                     // administrateur qui ouvre le robinet, ou soi-même ensuite.
                     && request.resource.data.get('notifications', false) == false;
 
-      // Un admin change les rôles et les alertes ; chacun coupe les siennes.
-      // Rien d'autre n'est modifiable : réécrire l'e-mail d'une entrée
-      // permettrait de se l'approprier.
+      // Un gestionnaire d'accès change les rôles et les alertes ; chacun
+      // coupe les siennes. Rien d'autre n'est modifiable : réécrire l'e-mail
+      // d'une entrée permettrait de se l'approprier.
+      //
+      // Deux verrous sur le rôle : on ne touche pas à un superadmin sans
+      // l'être, et on n'en nomme pas un sans l'être non plus. Sans le
+      // premier, un admin rétrograde le compte qui pourrait le corriger ;
+      // sans le second, il s'y promeut lui-même.
       allow update: if (
                       isOwner()
                       && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['role', 'notifications'])
-                      && request.resource.data.get('role', 'admin') in ['admin', 'editor']
+                      && request.resource.data.get('role', 'admin') in ['superadmin', 'admin', 'editor']
+                      && (resource.data.get('role', 'admin') != 'superadmin' || isSuper())
+                      && (request.resource.data.get('role', 'admin') != 'superadmin' || isSuper())
                     ) || (
                       request.auth != null
                       && request.auth.uid == uid
                       && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['notifications'])
                     );
 
-      allow delete: if isOwner();
+      allow delete: if isOwner()
+                    && (resource.data.get('role', 'admin') != 'superadmin' || isSuper());
     }
 
     // Invitations en attente, une par jeton.
@@ -112,7 +150,11 @@ service cloud.firestore {
       // L'invité lit son invitation pour connaître le rôle qu'il doit prendre.
       // Le jeton est un UUID : le connaître, c'est déjà détenir le lien.
       allow get:    if isOwner() || request.auth != null;
-      allow create: if isOwner();
+      // Inviter un superadmin est réservé aux superadmins : sans ce contrôle,
+      // un administrateur se fabrique une invitation superadmin, l'accepte
+      // avec une seconde adresse, et le verrou du dessus ne vaut plus rien.
+      allow create: if isOwner()
+                    && (request.resource.data.get('role', 'editor') != 'superadmin' || isSuper());
       // Supprimable par un admin (annulation) ou par l'invité une fois son
       // accès créé, pour que le lien ne resserve pas.
       allow delete: if isOwner() || request.auth != null;

@@ -9,7 +9,20 @@ import {
 import { confirmDialog, showStatus, escapeAttr, val, fmtDate } from "./ui.js";
 import { WORKER_URL } from "./config.js";
 
-const ROLE_LABELS = { admin: 'Administrateur', editor: 'Éditeur' };
+/* Trois rôles :
+     superadmin — tout, et seul à pouvoir toucher aux autres superadmins
+     admin      — tout le site, les commandes et les accès
+     editor     — le contenu du site seulement, ni commandes ni accès
+   Un admin gère l'équipe, mais ne peut ni promouvoir quelqu'un
+   superadmin ni retirer un superadmin : c'est ce qui garde une main
+   au-dessus de la sienne si le panel est mal manipulé. */
+const ROLE_LABELS = {
+  superadmin: 'Super-administrateur',
+  admin:      'Administrateur',
+  editor:     'Réglages du site'
+};
+
+const GERE_EQUIPE = ['superadmin', 'admin'];
 
 /* Le lien vaut un accès à lui seul, sans être rattaché à une adresse : il ne
    doit pas rester valable indéfiniment s'il s'égare. */
@@ -32,17 +45,23 @@ export async function loadTeam() {
     const rows = snap.docs.map(d => ({ uid: d.id, ...d.data() }));
 
     myRole = roleOf(rows.find(r => r.uid === me.uid) || {});
-    const isOwner = myRole === 'admin';
-    // Ne pas laisser retirer ou rétrograder le dernier administrateur :
-    // plus personne ne pourrait gérer les accès.
-    const ownerCount = rows.filter(r => roleOf(r) === 'admin').length;
+    const isOwner = GERE_EQUIPE.includes(myRole);
+    const isSuper = myRole === 'superadmin';
+    // Ne pas laisser retirer ou rétrograder le dernier de ceux qui gèrent
+    // les accès : plus personne ne pourrait en redonner.
+    const ownerCount = rows.filter(r => GERE_EQUIPE.includes(roleOf(r))).length;
 
-    applyRoleToUI(isOwner);
+    applyRoleToUI(isOwner, isSuper);
 
     listEl.innerHTML = rows.map(r => {
       const role = roleOf(r);
       const isMe = r.uid === me.uid;
-      const lastOwner = role === 'admin' && ownerCount === 1;
+      const lastOwner = GERE_EQUIPE.includes(role) && ownerCount === 1;
+      /* Un superadmin n'est modifiable que par un superadmin. Sans ça, le
+         patron pourrait rétrograder ou supprimer le compte qui lui sert de
+         recours. */
+      const intouchable = role === 'superadmin' && !isSuper;
+      const modifiable = isOwner && !lastOwner && !intouchable;
       const nom = [r.prenom, r.nom].filter(Boolean).join(' ').trim();
       // Chacun coupe ses propres alertes ; un administrateur coupe celles
       // des autres. Les règles Firestore appliquent la même limite.
@@ -59,15 +78,18 @@ export async function loadTeam() {
             </label>` : ''}
         </div>
         <div class="team-actions">
-          ${isOwner && !lastOwner
+          ${modifiable
             ? `<select class="team-role" data-uid="${escapeAttr(r.uid)}" data-email="${escapeAttr(r.email || '')}">
-                 <option value="editor" ${role === 'editor' ? 'selected' : ''}>Éditeur</option>
-                 <option value="admin"  ${role === 'admin'  ? 'selected' : ''}>Administrateur</option>
+                 ${Object.entries(ROLE_LABELS)
+                   // Seul un superadmin peut en nommer un autre.
+                   .filter(([v]) => v !== 'superadmin' || isSuper)
+                   .map(([v, l]) => `<option value="${v}" ${role === v ? 'selected' : ''}>${l}</option>`)
+                   .join('')}
                </select>`
-            : `<span class="team-role-fixed">${ROLE_LABELS[role]}</span>`}
+            : `<span class="team-role-fixed">${ROLE_LABELS[role] || role}</span>`}
           ${isMe
             ? '<span class="team-you">compte actuel</span>'
-            : isOwner && !lastOwner
+            : modifiable
               ? `<button type="button" class="btn btn-ghost btn-small team-revoke" data-uid="${escapeAttr(r.uid)}" data-email="${escapeAttr(r.email || '')}">Supprimer</button>`
               : ''}
         </div>
@@ -113,20 +135,29 @@ export async function loadTeam() {
   }
 }
 
-/* Un éditeur garde l'onglet Équipe pour voir qui a accès, mais rien pour agir :
-   les règles refuseraient de toute façon, autant ne pas afficher les boutons. */
-function applyRoleToUI(isOwner) {
+/* Qui ne gère pas les accès garde l'onglet Équipe pour voir qui a accès,
+   mais rien pour agir : les règles refuseraient de toute façon, autant ne
+   pas afficher les boutons. Le choix « super-administrateur » à
+   l'invitation n'apparaît qu'aux superadmins. */
+function applyRoleToUI(isOwner, isSuper) {
   document.getElementById('teamInviteCard').hidden = !isOwner;
   document.getElementById('teamInvitesCard').hidden = !isOwner;
+  const optSuper = document.querySelector('#inviteRole option[value="superadmin"]');
+  if (optSuper) optSuper.hidden = !isSuper;
 }
+
+const CONSEQUENCES = {
+  superadmin: 'Cette personne pourra tout faire, y compris gérer les autres super-administrateurs.',
+  admin:      'Cette personne pourra gérer le site, les commandes et les accès de l\'équipe.',
+  editor:     'Cette personne pourra modifier le contenu du site, mais ni voir les commandes ni gérer les accès.'
+};
 
 async function changeRole(select, email) {
   const role = select.value;
-  const label = role === 'admin' ? 'administrateur' : 'éditeur';
-  const ok = await confirmDialog(`Passer ${email} en ${label} ?`,
-    role === 'admin'
-      ? 'Cette personne pourra aussi inviter et révoquer des accès.'
-      : "Cette personne pourra toujours modifier le contenu, mais plus gérer les accès.");
+  const ok = await confirmDialog(
+    `Passer ${email} en « ${ROLE_LABELS[role].toLowerCase()} » ?`,
+    CONSEQUENCES[role] || ''
+  );
   if (!ok) { loadTeam(); return; }   // annulation : on remet le select à l'état réel
 
   try {

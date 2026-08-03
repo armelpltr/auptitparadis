@@ -9,7 +9,7 @@
 // ============================================================
 
 import { initAuth } from "./admin/auth.js";
-import { initTabs } from "./admin/tabs.js";
+import { initTabs, appliquerRole } from "./admin/tabs.js";
 import { initSettings, loadSettings } from "./admin/settings.js";
 import { initBlocks, loadBlocks } from "./admin/blocks.js";
 import { initTeam, loadTeam } from "./admin/team.js";
@@ -23,10 +23,18 @@ initTeam();
 initNoel();
 initOrders();
 
-initAuth(() => {
+/* Chaque onglet ne charge ses données que si le rôle y donne droit :
+   sinon les règles Firestore refusent la lecture et l'onglet, masqué,
+   afficherait quand même son message d'erreur au premier plan. */
+initAuth((role) => {
+  appliquerRole(role);
+
   loadSettings();
   loadBlocks();
-  loadTeam();
-  loadNoel();
-  loadOrders();
+
+  if (role === 'superadmin' || role === 'admin') {
+    loadTeam();
+    loadNoel();
+    loadOrders();
+  }
 });

@@ -33,9 +33,11 @@ async function requireAdmin(request, env) {
   // Rôle absent = administrateur : le tout premier compte a été créé à la main
   // dans la console, avant que les rôles n'existent. Même défaut que les règles.
   const role = doc.fields?.role?.stringValue ?? 'admin';
-  if (role !== 'admin') throw httpError('Seul un administrateur peut supprimer un compte.', 403);
+  if (!['superadmin', 'admin'].includes(role)) {
+    throw httpError('Seul un administrateur peut supprimer un compte.', 403);
+  }
 
-  return caller;
+  return { ...caller, role };
 }
 
 export async function handleDeleteUser(request, env, cors) {
@@ -53,8 +55,15 @@ export async function handleDeleteUser(request, env, cors) {
   const target = admins.find(a => a.uid === uid);
   if (!target) return json({ error: "Ce compte n'a pas accès à l'administration." }, 404, cors);
 
-  const owners = admins.filter(a => a.role === 'admin');
-  if (target.role === 'admin' && owners.length <= 1) {
+  // Un superadmin ne se supprime que par un superadmin. Même verrou que dans
+  // les règles Firestore : un administrateur ne doit pas pouvoir effacer le
+  // compte qui pourrait corriger ses erreurs.
+  if (target.role === 'superadmin' && caller.role !== 'superadmin') {
+    return json({ error: 'Seul un super-administrateur peut supprimer un super-administrateur.' }, 403, cors);
+  }
+
+  const owners = admins.filter(a => ['superadmin', 'admin'].includes(a.role));
+  if (owners.length <= 1 && owners.some(a => a.uid === uid)) {
     return json({ error: 'Impossible de supprimer le dernier administrateur.' }, 400, cors);
   }
 

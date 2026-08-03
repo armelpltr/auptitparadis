@@ -76,11 +76,18 @@ function loginErrorMessage(err) {
 /* Être connecté ne donne pas accès : il faut figurer dans `admins`.
    Les règles Firestore appliquent la même condition côté serveur — cette
    vérification-ci ne fait qu'éviter d'afficher un panel inutilisable. */
-async function isCurrentUserAdmin(user) {
+/* Renvoie le rôle du compte, ou null s'il n'a pas accès au panel.
+   Le rôle sert ensuite à n'ouvrir que les onglets qui le concernent — les
+   règles Firestore appliquent la même limite côté serveur, celle-ci n'est
+   qu'un confort d'affichage.
+   Défaut à 'admin' quand le champ manque : le tout premier compte a été
+   créé à la main avant que les rôles n'existent. */
+async function roleOfCurrentUser(user) {
   try {
-    return (await getDoc(doc(db, 'admins', user.uid))).exists();
+    const snap = await getDoc(doc(db, 'admins', user.uid));
+    return snap.exists() ? (snap.data().role || 'admin') : null;
   } catch {
-    return false;   // règles refusant la lecture = pas admin
+    return null;   // règles refusant la lecture = pas membre
   }
 }
 
@@ -218,7 +225,8 @@ export function initAuth(onReady) {
       return;
     }
 
-    if (!(await isCurrentUserAdmin(user))) {
+    const role = await roleOfCurrentUser(user);
+    if (!role) {
       await signOut(auth);
       loginScreen.hidden = false;
       a2fScreen.hidden = true;
@@ -251,7 +259,7 @@ export function initAuth(onReady) {
     inviteScreen.hidden = true;
     a2fScreen.hidden = true;
     adminApp.hidden = false;
-    onReady();
+    onReady(role);
   });
 
   /* ---------- Saisie du code ---------- */
@@ -280,7 +288,7 @@ export function initAuth(onReady) {
       loginScreen.hidden = true;
       inviteScreen.hidden = true;
       adminApp.hidden = false;
-      onReady();
+      onReady(await roleOfCurrentUser(auth.currentUser));
     } catch (err) {
       a2fError.textContent = err.message;
       a2fError.hidden = false;
@@ -356,7 +364,8 @@ export function initAuth(onReady) {
       inviteScreen.hidden = true;
       loginScreen.hidden = true;
       adminApp.hidden = false;
-      onReady();
+      // Le rôle vient de l'invitation qu'on vient d'accepter.
+      onReady(role);
     } catch (err) {
       acceptingInvite = false;
       errEl.textContent = inviteErrorMessage(err);
