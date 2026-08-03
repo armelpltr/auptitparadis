@@ -317,92 +317,165 @@ async function changerStatutViaSelect(id, nouveauStatut, selectEl) {
    sur le dialogue d'impression du navigateur, pas sur un pilote ESC/POS —
    on choisit l'imprimante SAGA comme n'importe quelle autre, depuis le
    même poste que la caisse. */
-const TITRES_TICKET = {
-  client:     'COMMANDE',
-  commande:   'COMMANDE — INTERNE',
-  production: 'À PRODUIRE'
+/* Chaque type a un lecteur et une question différents, d'où trois mises en
+   page et non une seule avec des champs masqués :
+   - client     : il cherche son code et ce qu'il a payé ;
+   - commande   : le comptoir cherche qui appeler et où en est le dossier ;
+   - production : la cuisine cherche un jour, des quantités et une allergie. */
+const TICKETS = {
+  client:     { titre: 'COMMANDE',           prix: true,  coordonnees: false, boutique: true  },
+  commande:   { titre: 'COMMANDE — INTERNE', prix: true,  coordonnees: true,  boutique: true  },
+  production: { titre: 'À PRODUIRE',         prix: false, coordonnees: false, boutique: false }
 };
 
+/* Le ticket est un instantané : sur un rouleau qui traîne, savoir de quand
+   il date évite de préparer une commande depuis modifiée ou annulée. */
+function fmtImpression() {
+  return new Date().toLocaleString('fr-FR', {
+    day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'
+  });
+}
+
+function nbArticles(o) {
+  return (o.items || []).reduce((s, it) => s + (it.quantite || 0), 0);
+}
+
 function ticketHTML(o, type = 'commande') {
-  const avecPrix = type !== 'production';
-  const avecCoordonnees = type !== 'client';
+  const conf = TICKETS[type] || TICKETS.commande;
+  const total = nbArticles(o);
 
   const lignes = (o.items || []).map(it => `
     <tr>
-      <td>${it.quantite}×</td>
-      <td>${escapeAttr(it.nom)}</td>
-      ${avecPrix ? `<td class="ticket-droite">${escapeAttr(euros.format((it.prixUnitaire || 0) * (it.quantite || 0)))}</td>` : ''}
+      <td class="t-qte">${escapeAttr(it.quantite)}×</td>
+      <td class="t-nom">${escapeAttr(it.nom)}</td>
+      ${conf.prix ? `<td class="t-prix">${escapeAttr(euros.format((it.prixUnitaire || 0) * (it.quantite || 0)))}</td>` : ''}
     </tr>`).join('');
 
-  const entete = type === 'production'
-    ? '' // pas de nom/adresse de la boutique : ce ticket ne quitte jamais la cuisine
-    : `<h1>Au P'tit Paradis</h1>
-       <p class="ticket-adresse">1 Place du Petit Enfer<br>14530 Luc-sur-Mer</p>`;
+  const entete = conf.boutique
+    ? `<h1>Au P'tit Paradis</h1>
+       <p class="t-adresse">1 Place du Petit Enfer — 14530 Luc-sur-Mer</p>`
+    : ''; // ce ticket ne quitte jamais la cuisine : l'adresse y est du bruit
 
-  const coordonnees = avecCoordonnees
-    ? `<p class="ticket-info"><strong>Client :</strong> ${escapeAttr(nomClient(o.client))}</p>
-       <p class="ticket-info"><strong>Téléphone :</strong> ${escapeAttr(fmtTelephone(o.client?.telephone))}</p>
-       ${o.client?.email ? `<p class="ticket-info"><strong>E-mail :</strong> ${escapeAttr(o.client.email)}</p>` : ''}`
-    : `<p class="ticket-info"><strong>Client :</strong> ${escapeAttr(nomClient(o.client))}</p>`;
+  /* Le code passe en tête sur les tickets de comptoir — c'est par lui qu'on
+     retrouve la commande. En production c'est la date qui commande le
+     travail : elle prend la vedette, le code reste en rappel discret. */
+  const identite = type === 'production'
+    ? `<p class="t-jour">${escapeAttr(fmtDateRetrait(o.dateRetrait))}</p>
+       <p class="t-rappel">${escapeAttr(nomClient(o.client))} — ${escapeAttr(o.code || '——')}</p>`
+    : `<p class="t-code">${escapeAttr(o.code || '——')}</p>
+       <p class="t-jour-libelle">RETRAIT</p>
+       <p class="t-jour">${escapeAttr(fmtDateRetrait(o.dateRetrait))}</p>`;
 
-  const total = avecPrix
-    ? `<div class="ticket-ligne"></div>
+  const client = conf.coordonnees
+    ? `<p class="t-info"><strong>Client :</strong> ${escapeAttr(nomClient(o.client))}</p>
+       <p class="t-info"><strong>Tél :</strong> ${escapeAttr(fmtTelephone(o.client?.telephone))}</p>
+       ${o.client?.email ? `<p class="t-info"><strong>E-mail :</strong> ${escapeAttr(o.client.email)}</p>` : ''}
+       <p class="t-info"><strong>Statut :</strong> ${escapeAttr((STATUTS[o.statut] || {}).label || o.statut || '—')}</p>
+       ${toDate(o.createdAt) ? `<p class="t-info"><strong>Reçue le :</strong> ${escapeAttr(fmtMoment(toDate(o.createdAt)))}</p>` : ''}`
+    : type === 'client'
+      ? `<p class="t-info"><strong>Client :</strong> ${escapeAttr(nomClient(o.client))}</p>`
+      : '';
+
+  const totalLigne = conf.prix
+    ? `<div class="t-sep-fort"></div>
        <table>
-         <tr><td class="ticket-total">TOTAL</td><td></td><td class="ticket-droite ticket-total">${escapeAttr(euros.format(o.total || 0))}</td></tr>
+         <tr><td class="t-total">TOTAL</td><td></td><td class="t-prix t-total">${escapeAttr(euros.format(o.total || 0))}</td></tr>
        </table>`
-    : '';
+    : `<p class="t-compte">${total} article${total > 1 ? 's' : ''} au total</p>`;
 
   // Le commentaire compte double en production : c'est le seul endroit où
   // une allergie ou une demande particulière peut encore être vue avant
   // que le produit ne soit fait.
   const commentaire = o.commentaire
-    ? `<p class="ticket-commentaire ${type === 'production' ? 'ticket-commentaire-fort' : ''}">« ${escapeAttr(o.commentaire)} »</p>`
+    ? type === 'production'
+      ? `<div class="t-sep"></div>
+         <div class="t-note-forte">
+           <p class="t-note-titre">DEMANDE PARTICULIÈRE</p>
+           <p class="t-note-texte">${escapeAttr(o.commentaire)}</p>
+         </div>`
+      : `<div class="t-sep"></div>
+         <p class="t-note">« ${escapeAttr(o.commentaire)} »</p>`
     : '';
 
   const pied = type === 'client'
-    ? `<div class="ticket-ligne"></div><p class="ticket-info" style="text-align:center">Merci et à bientôt !</p>`
+    ? `<div class="t-sep"></div>
+       <p class="t-centre t-fort">À présenter au retrait</p>
+       <p class="t-centre">Merci et à bientôt !</p>`
     : '';
 
   return `<!DOCTYPE html>
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<title>${escapeAttr(TITRES_TICKET[type] || 'Commande')} ${escapeAttr(o.code || '')}</title>
+<title>${escapeAttr(conf.titre)} ${escapeAttr(o.code || '')}</title>
 <style>
   @page{ size:80mm auto; margin:0; }
   body{
-    width:72mm; margin:0 auto; padding:3mm 0;
-    font-family:'Courier New', monospace; font-size:12px; color:#000;
+    width:72mm; margin:0 auto;
+    /* La marge basse n'est pas décorative : sans elle, la découpe du rouleau
+       passe dans la dernière ligne au lieu du vide qui la suit. */
+    padding:3mm 0 14mm;
+    font-family:'Courier New', monospace; font-size:12px; line-height:1.35; color:#000;
   }
-  h1{ font-size:14px; text-align:center; margin:0 0 2px; }
-  .ticket-adresse{ text-align:center; font-size:10px; margin:0 0 8px; }
-  .ticket-titre{ text-align:center; font-weight:bold; margin:8px 0 2px; font-size:13px; }
-  .ticket-code{ text-align:center; font-size:16px; font-weight:bold; margin:0 0 8px; }
-  .ticket-ligne{ border-top:1px dashed #000; margin:6px 0; }
-  table{ width:100%; border-collapse:collapse; margin:6px 0; }
+  h1{ font-size:15px; text-align:center; margin:0 0 2px; letter-spacing:1px; }
+  .t-adresse{ text-align:center; font-size:10px; margin:0 0 6px; }
+
+  /* Bandeau inversé : sur du thermique c'est le repère qu'on retrouve d'un
+     coup d'œil dans une pile de tickets, sans avoir à lire. */
+  .t-bande{
+    background:#000; color:#fff;
+    -webkit-print-color-adjust:exact; print-color-adjust:exact;
+    text-align:center; font-weight:bold; font-size:13px; letter-spacing:1px;
+    padding:2px 0; margin:6px 0 5px;
+  }
+
+  .t-code{ text-align:center; font-size:22px; font-weight:bold; letter-spacing:2px; margin:0 0 6px; }
+  .t-jour-libelle{ text-align:center; font-size:10px; letter-spacing:2px; margin:0; }
+  .t-jour{ text-align:center; font-size:16px; font-weight:bold; margin:0 0 4px; }
+  .t-rappel{ text-align:center; font-size:12px; margin:2px 0 4px; }
+
+  .t-sep{ border-top:1px dashed #000; margin:5px 0; }
+  .t-sep-fort{ border-top:2px solid #000; margin:5px 0; }
+
+  table{ width:100%; border-collapse:collapse; margin:5px 0; }
   td{ padding:1px 0; vertical-align:top; }
-  .ticket-droite{ text-align:right; }
-  .ticket-total{ font-weight:bold; font-size:14px; }
-  .ticket-info{ margin:2px 0; }
-  .ticket-commentaire{ margin-top:6px; font-style:italic; }
-  .ticket-commentaire-fort{ font-size:15px; font-weight:bold; font-style:normal; border:1px solid #000; padding:3px 5px; }
+  /* Un nom de produit long doit se replier sous lui-même sans pousser le
+     prix hors du rouleau : les colonnes chiffrées gardent leur largeur. */
+  .t-qte{ width:14%; font-weight:bold; white-space:nowrap; }
+  .t-nom{ word-break:break-word; padding-right:3px; }
+  .t-prix{ width:28%; text-align:right; white-space:nowrap; }
+  .t-total{ font-weight:bold; font-size:14px; }
+
+  /* En cuisine le ticket se lit à bout de bras, posé sur un plan de travail. */
+  .prod .t-qte, .prod .t-nom{ font-size:15px; line-height:1.5; }
+  .t-compte{ text-align:center; font-size:11px; margin:4px 0 0; }
+
+  .t-info{ margin:2px 0; }
+  .t-centre{ text-align:center; margin:2px 0; }
+  .t-fort{ font-weight:bold; }
+  .t-note{ margin:4px 0; font-style:italic; }
+  .t-note-forte{ border:2px solid #000; padding:4px 5px; margin:4px 0; }
+  .t-note-titre{ font-size:10px; letter-spacing:1px; margin:0 0 2px; }
+  .t-note-texte{ font-size:15px; font-weight:bold; margin:0; word-break:break-word; }
+
+  .t-pied{ text-align:center; font-size:9px; margin:8px 0 0; }
 </style>
 </head>
-<body>
+<body class="${type === 'production' ? 'prod' : ''}">
   ${entete}
-  <p class="ticket-titre">${escapeAttr(TITRES_TICKET[type] || '')}</p>
-  <p class="ticket-code">${escapeAttr(o.code || '——')}</p>
+  <p class="t-bande">${escapeAttr(conf.titre)}</p>
+  ${identite}
 
-  <div class="ticket-ligne"></div>
-  ${coordonnees}
-  <p class="ticket-info"><strong>Retrait :</strong> ${escapeAttr(fmtDateRetrait(o.dateRetrait))}</p>
+  ${client ? `<div class="t-sep"></div>${client}` : ''}
 
-  <div class="ticket-ligne"></div>
+  <div class="t-sep"></div>
   <table>${lignes}</table>
-  ${total}
+  ${totalLigne}
 
   ${commentaire}
   ${pied}
+
+  <p class="t-pied">imprimé le ${escapeAttr(fmtImpression())}</p>
 </body>
 </html>`;
 }
@@ -419,9 +492,15 @@ function imprimerCommande(id, type = 'commande') {
   fenetre.document.write(ticketHTML(o, type));
   fenetre.document.close();
 
-  // Laisse le temps au document de se poser avant d'appeler l'impression —
-  // un print() immédiat part parfois sur une page encore vide.
-  fenetre.onload = () => fenetre.print();
+  /* `document.close()` peut avoir déjà déclenché le load : un `onload` posé
+     après ne partirait alors jamais. On imprime donc tout de suite si le
+     document est prêt, et on attend seulement s'il ne l'est pas. */
+  const lancer = () => {
+    fenetre.focus();
+    fenetre.print();
+  };
+  if (fenetre.document.readyState === 'complete') lancer();
+  else fenetre.addEventListener('load', lancer, { once: true });
 }
 
 /* Suppression définitive — utile en phase de test pour vider les commandes
