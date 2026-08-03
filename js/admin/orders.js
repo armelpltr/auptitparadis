@@ -205,7 +205,7 @@ function renderOrders() {
   const visibles = ordersCache.filter(o => {
     if (!statutsVoulus.includes(o.statut)) return false;
     if (!recherche) return true;
-    return [o.code, o.client?.nom, o.client?.telephone]
+    return [o.code, o.client?.prenom, o.client?.nom, o.client?.nomComplet, o.client?.telephone, o.client?.email]
       .some(v => String(v || '').toLowerCase().includes(recherche));
   });
 
