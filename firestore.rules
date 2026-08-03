@@ -134,25 +134,29 @@ service cloud.firestore {
                     // administrateur qui ouvre le robinet, ou soi-même ensuite.
                     && request.resource.data.get('notifications', false) == false;
 
-      // Un gestionnaire d'accès change les rôles et les alertes ; chacun
-      // coupe les siennes. Rien d'autre n'est modifiable : réécrire l'e-mail
-      // d'une entrée permettrait de se l'approprier.
+      // Deux `allow update` plutôt qu'une condition à deux branches : le
+      // parser des règles refuse la forme `if (…) || (…)` sur plusieurs
+      // lignes, et deux autorisations pour la même opération se combinent
+      // de toute façon en « l'une ou l'autre ».
+
+      // Un gestionnaire d'accès change les rôles et les alertes. Rien
+      // d'autre n'est modifiable : réécrire l'e-mail d'une entrée
+      // permettrait de se l'approprier.
       //
       // Deux verrous sur le rôle : on ne touche pas à un superadmin sans
       // l'être, et on n'en nomme pas un sans l'être non plus. Sans le
       // premier, un admin rétrograde le compte qui pourrait le corriger ;
       // sans le second, il s'y promeut lui-même.
-      allow update: if (
-                      isOwner()
-                      && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['role', 'notifications'])
-                      && request.resource.data.get('role', 'admin') in ['superadmin', 'admin', 'editor']
-                      && (resource.data.get('role', 'admin') != 'superadmin' || isSuper())
-                      && (request.resource.data.get('role', 'admin') != 'superadmin' || isSuper())
-                    ) || (
-                      request.auth != null
-                      && request.auth.uid == uid
-                      && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['notifications'])
-                    );
+      allow update: if isOwner()
+                    && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['role', 'notifications'])
+                    && request.resource.data.get('role', 'admin') in ['superadmin', 'admin', 'editor']
+                    && (resource.data.get('role', 'admin') != 'superadmin' || isSuper())
+                    && (request.resource.data.get('role', 'admin') != 'superadmin' || isSuper());
+
+      // Chacun coupe ses propres alertes, sans toucher à son rôle.
+      allow update: if request.auth != null
+                    && request.auth.uid == uid
+                    && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['notifications']);
 
       allow delete: if isOwner()
                     && (resource.data.get('role', 'admin') != 'superadmin' || isSuper());

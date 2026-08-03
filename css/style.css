@@ -226,7 +226,10 @@ p{ margin:0 0 1em; color:var(--ink-soft); }
 @keyframes draw{ to{ stroke-dashoffset:0; } }
 
 .hero-inner{ position:relative; z-index:1; max-width:720px; }
-.hero-logo{ width:600px; max-width:90vw; mix-blend-mode:multiply; display:block; margin:0 auto; }
+/* Plus de mix-blend-mode : il servait à effacer le fond blanc de l'ancien
+   logo. Le nouveau est détouré, et le mélange ne ferait plus que salir son
+   or en le multipliant avec la photo du hero. */
+.hero-logo{ width:600px; max-width:90vw; display:block; margin:0 auto; }
 .hero h1{
   font-size:clamp(3rem, 8vw, 5.2rem); letter-spacing:.01em; margin-top:0;
 }
