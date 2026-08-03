@@ -110,7 +110,7 @@
     </div>
     <div class="form-row">
       <label for="inviteFormPassword">Mot de passe</label>
-      <input type="password" id="inviteFormPassword" required minlength="12" autocomplete="new-password">
+      <input type="password" id="inviteFormPassword" required minlength="8" autocomplete="new-password">
 
       <!-- Jauge remplie par motdepasse.js. aria-live pour que la mesure soit
            annoncée aux lecteurs d'écran, qui ne voient pas la barre. -->
@@ -128,6 +128,13 @@
         N'utilisez pas un mot de passe déjà employé ailleurs. S'il fuite d'un autre
         site, c'est cette administration qui s'ouvre avec.
       </p>
+    </div>
+
+    <div class="form-row">
+      <label for="inviteFormPassword2">Confirmer le mot de passe</label>
+      <input type="password" id="inviteFormPassword2" required minlength="8" autocomplete="new-password">
+      <!-- Ne dit rien tant que la comparaison n'a pas de sens : voir auth.js -->
+      <p class="mdp-confirme" id="mdpConfirme" aria-live="polite" hidden></p>
     </div>
 
     <p class="login-error" id="inviteError" hidden></p>

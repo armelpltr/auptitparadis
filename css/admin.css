@@ -117,6 +117,11 @@ button.back-to-site{ background:none; border:none; cursor:pointer; font-family:i
 .field-hint--alerte{
   border-left:2px solid #c8853a; padding-left:.7rem; color:var(--ink);
 }
+
+.mdp-confirme{ font-size:.8rem; margin:.4rem 0 0; font-weight:600; }
+.mdp-confirme[hidden]{ display:none; }
+.mdp-confirme.is-ok{ color:#2c6b2f; }
+.mdp-confirme.is-different{ color:#a13a25; }
 .admin-card[hidden]{ display:none; }
 
 /* Carte d'action irrattrapable : le liseré rouge la distingue des réglages

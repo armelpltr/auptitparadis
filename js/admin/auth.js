@@ -377,8 +377,49 @@ export function initAuth(onReady) {
       ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   }
 
+  /* ---------- Confirmation ---------- */
+  const mdpChamp2   = document.getElementById('inviteFormPassword2');
+  const mdpConfirme = document.getElementById('mdpConfirme');
+
+  /* Rien n'est dit tant que la comparaison n'a pas de sens. Annoncer « ne
+     correspond pas » au premier caractère retapé est agaçant et faux : la
+     saisie n'est simplement pas finie. On attend donc que la confirmation
+     ait rattrapé le mot de passe en longueur, sauf si elle est déjà juste —
+     auquel cas on le dit tout de suite.
+     Ce silence ne vaut que pour la frappe de la confirmation elle-même.
+     Quand c'est le mot de passe qui change ensuite, la confirmation était
+     finie : la voir devenir obsolète doit se signaler tout de suite, d'où
+     `toujours`. */
+  function rafraichirConfirmation(toujours = false) {
+    if (!mdpChamp2) return;
+    const mdp = mdpChamp.value;
+    const copie = mdpChamp2.value;
+
+    if (!copie) { mdpConfirme.hidden = true; return; }
+
+    const identiques = copie === mdp;
+    if (!identiques && !toujours && copie.length < mdp.length) {
+      mdpConfirme.hidden = true;
+      return;
+    }
+
+    mdpConfirme.hidden = false;
+    mdpConfirme.classList.toggle('is-ok', identiques);
+    mdpConfirme.classList.toggle('is-different', !identiques);
+    mdpConfirme.textContent = identiques
+      ? 'Les deux saisies correspondent.'
+      : 'Les deux saisies diffèrent.';
+  }
+
   if (mdpChamp) {
-    mdpChamp.addEventListener('input', rafraichirJauge);
+    mdpChamp.addEventListener('input', () => {
+      rafraichirJauge();
+      // Corriger le mot de passe après avoir confirmé doit relancer la
+      // comparaison, sinon un « correspondent » périmé reste affiché.
+      rafraichirConfirmation(true);
+    });
+    mdpChamp2?.addEventListener('input', () => rafraichirConfirmation());
+
     // Le nom et l'adresse entrent dans l'évaluation : les changer après coup
     // doit rejuger le mot de passe déjà saisi.
     ['inviteFormEmail', 'inviteFormPrenom', 'inviteFormNom'].forEach(id =>
@@ -399,6 +440,15 @@ export function initAuth(onReady) {
 
     if (!prenom || !nom) {
       errEl.textContent = 'Merci d\'indiquer votre prénom et votre nom.';
+      errEl.hidden = false;
+      return;
+    }
+
+    /* La confirmation se vérifie avant la solidité : se voir reprocher la
+       composition d'un mot de passe qu'on a de toute façon mal recopié fait
+       corriger la mauvaise chose. */
+    if (password !== document.getElementById('inviteFormPassword2').value) {
+      errEl.textContent = 'Les deux mots de passe saisis ne correspondent pas.';
       errEl.hidden = false;
       return;
     }
