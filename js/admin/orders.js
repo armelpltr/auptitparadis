@@ -8,7 +8,7 @@
 
 import { db } from "../firebase-config.js";
 import {
-  doc, collection, getDocs, updateDoc, deleteDoc
+  doc, collection, getDoc, getDocs, updateDoc, deleteDoc
 } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 import { confirmDialog, showStatus, escapeAttr } from "./ui.js";
 
@@ -39,6 +39,28 @@ const euros = new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR
 const jourLong = new Intl.DateTimeFormat('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
 
 let ordersCache = [];
+
+/* Entête des tickets : lue une fois dans les réglages du site plutôt que
+   codée en dur, pour qu'un changement d'adresse ou de téléphone n'oblige
+   pas à repasser par le code. Chargée à part des commandes : si elle
+   manque, les tickets sortent sans entête mais sortent quand même. */
+let boutiqueCache = null;
+
+async function chargerBoutique() {
+  try {
+    const snap = await getDoc(doc(db, 'settings', 'site'));
+    const s = snap.exists() ? snap.data() : {};
+    boutiqueCache = {
+      nom:      s.entreprise?.raisonSociale || '',
+      siret:    s.entreprise?.siret || '',
+      adresse1: s.horaires?.address1 || '',
+      adresse2: s.horaires?.address2 || '',
+      tel:      s.horaires?.phoneDisplay || s.horaires?.phone || ''
+    };
+  } catch {
+    boutiqueCache = { nom: '', siret: '', adresse1: '', adresse2: '', tel: '' };
+  }
+}
 
 /* ---------- Statistiques ---------- */
 /* Une commande annulée ne doit peser ni dans le CA prévisionnel ni dans
@@ -182,6 +204,7 @@ function renderPrepa() {
 /* ---------- Chargement ---------- */
 export async function loadOrders() {
   const list = document.getElementById('ordersList');
+  if (!boutiqueCache) chargerBoutique(); // sans await : n'a d'effet qu'à l'impression
   try {
     const snap = await getDocs(collection(db, 'orders'));
     ordersCache = snap.docs.map(d => ({ id: d.id, ...d.data() }));
@@ -323,10 +346,62 @@ async function changerStatutViaSelect(id, nouveauStatut, selectEl) {
    - commande   : le comptoir cherche qui appeler et où en est le dossier ;
    - production : la cuisine cherche un jour, des quantités et une allergie. */
 const TICKETS = {
-  client:     { titre: 'COMMANDE',           prix: true,  coordonnees: false, boutique: true  },
-  commande:   { titre: 'COMMANDE — INTERNE', prix: true,  coordonnees: true,  boutique: true  },
-  production: { titre: 'À PRODUIRE',         prix: false, coordonnees: false, boutique: false }
+  client:     { titre: 'COMMANDE',           prix: true,  coordonnees: false, boutique: true,  barres: true  },
+  commande:   { titre: 'COMMANDE — INTERNE', prix: true,  coordonnees: true,  boutique: true,  barres: true  },
+  production: { titre: 'À PRODUIRE',         prix: false, coordonnees: false, boutique: false, barres: false }
 };
+
+/* ---------- Code-barres ---------- */
+/* Code 128 B, écrit ici plutôt qu'importé : une bibliothèque de plus pour
+   dessiner des rectangles noirs ne se justifie pas, et le ticket doit
+   pouvoir s'imprimer même si un CDN est injoignable.
+   Les 107 motifs de la norme : trois chiffres de barres et trois d'espaces,
+   onze modules chacun (treize pour le stop, qui porte une barre de plus). */
+const C128 = ('212222,222122,222221,121223,121322,131222,122213,122312,132212,221213,' +
+'221312,231212,112232,122132,122231,113222,123122,123221,223211,221132,' +
+'221231,213212,223112,312131,311222,321122,321221,312212,322112,322211,' +
+'212123,212321,232121,111323,131123,131321,112313,132113,132311,211313,' +
+'231113,231311,112133,112331,132131,113123,113321,133121,313121,211331,' +
+'231131,213113,213311,213131,311123,311321,331121,312113,312311,332111,' +
+'314111,221411,431111,111224,111422,121124,121421,141122,141221,112214,' +
+'112412,122114,122411,142112,142211,241211,221114,413111,241112,134111,' +
+'111242,121142,121241,114212,124112,124211,411212,421112,421211,212141,' +
+'214121,412121,111143,111341,131141,114113,114311,411113,411311,113141,' +
+'114131,311141,411131,211412,211214,211232,2331112').split(',');
+
+const C128_START_B = 104;
+const C128_STOP    = 106;
+
+/* Le SVG s'impose sur un canvas : l'imprimante thermique rastérise elle-même
+   à 203 dpi, une image bitmap redimensionnée sortirait baveuse et la
+   douchette refuserait de lire. */
+function codeBarresSVG(texte) {
+  const t = String(texte || '');
+  // Code 128 B ne couvre que l'ASCII imprimable : hors de là, pas de barres
+  // plutôt qu'un code-barres faux qu'une douchette lirait de travers.
+  if (!t || [...t].some(c => c.charCodeAt(0) < 32 || c.charCodeAt(0) > 126)) return '';
+
+  let somme = C128_START_B;
+  let motifs = C128[C128_START_B];
+  [...t].forEach((c, i) => {
+    const v = c.charCodeAt(0) - 32;
+    somme += (i + 1) * v;
+    motifs += C128[v];
+  });
+  motifs += C128[somme % 103] + C128[C128_STOP];
+
+  // Les chiffres donnent des largeurs qui alternent barre, espace, barre...
+  const rects = [];
+  let x = 0;
+  [...motifs].forEach((chiffre, i) => {
+    const l = Number(chiffre);
+    if (i % 2 === 0) rects.push(`<rect x="${x}" y="0" width="${l}" height="30"/>`);
+    x += l;
+  });
+
+  return `<svg class="t-barres" viewBox="0 0 ${x} 30" preserveAspectRatio="none"
+    xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">${rects.join('')}</svg>`;
+}
 
 /* Le ticket est un instantané : sur un rouleau qui traîne, savoir de quand
    il date évite de préparer une commande depuis modifiée ou annulée. */
@@ -344,16 +419,35 @@ function ticketHTML(o, type = 'commande') {
   const conf = TICKETS[type] || TICKETS.commande;
   const total = nbArticles(o);
 
+  /* Prix unitaire *et* total de ligne, comme sur les tickets de caisse : sans
+     l'unitaire, un client qui commande deux fois le même produit ne peut pas
+     vérifier le calcul. */
+  const enTeteColonnes = conf.prix
+    ? `<tr class="t-colonnes">
+         <td class="t-qte">PCE</td>
+         <td class="t-nom">PRODUIT</td>
+         <td class="t-pu">€/UN</td>
+         <td class="t-prix">TOTAL</td>
+       </tr>`
+    : '';
+
   const lignes = (o.items || []).map(it => `
     <tr>
       <td class="t-qte">${escapeAttr(it.quantite)}×</td>
       <td class="t-nom">${escapeAttr(it.nom)}</td>
-      ${conf.prix ? `<td class="t-prix">${escapeAttr(euros.format((it.prixUnitaire || 0) * (it.quantite || 0)))}</td>` : ''}
+      ${conf.prix ? `
+        <td class="t-pu">${escapeAttr(euros.format(it.prixUnitaire || 0))}</td>
+        <td class="t-prix">${escapeAttr(euros.format((it.prixUnitaire || 0) * (it.quantite || 0)))}</td>` : ''}
     </tr>`).join('');
 
+  const b = boutiqueCache || {};
   const entete = conf.boutique
-    ? `<h1>Au P'tit Paradis</h1>
-       <p class="t-adresse">1 Place du Petit Enfer — 14530 Luc-sur-Mer</p>`
+    ? `<h1>${escapeAttr(b.nom || "Au P'tit Paradis")}</h1>
+       <p class="t-adresse">
+         ${[b.adresse1, b.adresse2].filter(Boolean).map(escapeAttr).join('<br>')}
+         ${b.tel ? `<br>Tél : ${escapeAttr(b.tel)}` : ''}
+         ${b.siret ? `<br>Siret : ${escapeAttr(b.siret)}` : ''}
+       </p>`
     : ''; // ce ticket ne quitte jamais la cuisine : l'adresse y est du bruit
 
   /* Le code passe en tête sur les tickets de comptoir — c'est par lui qu'on
@@ -366,20 +460,28 @@ function ticketHTML(o, type = 'commande') {
        <p class="t-jour-libelle">RETRAIT</p>
        <p class="t-jour">${escapeAttr(fmtDateRetrait(o.dateRetrait))}</p>`;
 
+  /* Une commande web et une commande prise au comptoir finissent dans la même
+     pile de tickets : sans cette mention, impossible de savoir laquelle est
+     déjà dans le logiciel de caisse et laquelle n'y est pas. */
+  const recue = toDate(o.createdAt);
+  const origine = `<p class="t-info"><strong>Commande en ligne</strong>${
+    recue ? ` — reçue le ${escapeAttr(fmtMoment(recue))}` : ''}</p>`;
+
   const client = conf.coordonnees
     ? `<p class="t-info"><strong>Client :</strong> ${escapeAttr(nomClient(o.client))}</p>
        <p class="t-info"><strong>Tél :</strong> ${escapeAttr(fmtTelephone(o.client?.telephone))}</p>
        ${o.client?.email ? `<p class="t-info"><strong>E-mail :</strong> ${escapeAttr(o.client.email)}</p>` : ''}
        <p class="t-info"><strong>Statut :</strong> ${escapeAttr((STATUTS[o.statut] || {}).label || o.statut || '—')}</p>
-       ${toDate(o.createdAt) ? `<p class="t-info"><strong>Reçue le :</strong> ${escapeAttr(fmtMoment(toDate(o.createdAt)))}</p>` : ''}`
+       ${origine}`
     : type === 'client'
-      ? `<p class="t-info"><strong>Client :</strong> ${escapeAttr(nomClient(o.client))}</p>`
+      ? `<p class="t-info"><strong>Client :</strong> ${escapeAttr(nomClient(o.client))}</p>
+         ${origine}`
       : '';
 
   const totalLigne = conf.prix
     ? `<div class="t-sep-fort"></div>
        <table>
-         <tr><td class="t-total">TOTAL</td><td></td><td class="t-prix t-total">${escapeAttr(euros.format(o.total || 0))}</td></tr>
+         <tr><td class="t-total" colspan="3">TOTAL</td><td class="t-prix t-total">${escapeAttr(euros.format(o.total || 0))}</td></tr>
        </table>`
     : `<p class="t-compte">${total} article${total > 1 ? 's' : ''} au total</p>`;
 
@@ -397,10 +499,28 @@ function ticketHTML(o, type = 'commande') {
          <p class="t-note">« ${escapeAttr(o.commentaire)} »</p>`
     : '';
 
+  /* La date d'annulation est figée à la commande et déjà annoncée par e-mail :
+     l'imprimer évite au client de rouvrir sa boîte mail pour la retrouver. */
+  const limite = toDate(o.annulableJusqua);
+  const annulation = (type === 'client' && limite && limite > new Date())
+    ? `<p class="t-centre t-petit">Annulable jusqu'au ${escapeAttr(jourLong.format(limite))}</p>`
+    : '';
+
   const pied = type === 'client'
     ? `<div class="t-sep"></div>
        <p class="t-centre t-fort">À présenter au retrait</p>
+       ${annulation}
        <p class="t-centre">Merci et à bientôt !</p>`
+    : '';
+
+  /* Le code-barres porte le code de commande : passé à la douchette, il
+     atterrit dans le champ de recherche de l'onglet Commandes, qui filtre
+     déjà sur ce code. Rien de plus à brancher. */
+  const barres = (conf.barres && o.code)
+    ? `<div class="t-barres-bloc">
+         ${codeBarresSVG(o.code)}
+         <p class="t-barres-txt">${escapeAttr(o.code)}</p>
+       </div>`
     : '';
 
   return `<!DOCTYPE html>
@@ -439,11 +559,14 @@ function ticketHTML(o, type = 'commande') {
 
   table{ width:100%; border-collapse:collapse; margin:5px 0; }
   td{ padding:1px 0; vertical-align:top; }
-  /* Un nom de produit long doit se replier sous lui-même sans pousser le
-     prix hors du rouleau : les colonnes chiffrées gardent leur largeur. */
-  .t-qte{ width:14%; font-weight:bold; white-space:nowrap; }
-  .t-nom{ word-break:break-word; padding-right:3px; }
-  .t-prix{ width:28%; text-align:right; white-space:nowrap; }
+  /* Quatre colonnes sur 72 mm : le nom se replie sous lui-même, les colonnes
+     chiffrées gardent leur largeur, sinon un prix finirait hors du rouleau —
+     c'est exactement ce qui tronque les tickets de la caisse. */
+  .t-qte{ width:11%; font-weight:bold; white-space:nowrap; }
+  .t-nom{ word-break:break-word; padding-right:3px; font-size:11px; }
+  .t-pu{ width:21%; text-align:right; white-space:nowrap; font-size:11px; }
+  .t-prix{ width:24%; text-align:right; white-space:nowrap; }
+  .t-colonnes td{ font-size:9px; letter-spacing:1px; border-bottom:1px solid #000; padding-bottom:2px; }
   .t-total{ font-weight:bold; font-size:14px; }
 
   /* En cuisine le ticket se lit à bout de bras, posé sur un plan de travail. */
@@ -458,7 +581,14 @@ function ticketHTML(o, type = 'commande') {
   .t-note-titre{ font-size:10px; letter-spacing:1px; margin:0 0 2px; }
   .t-note-texte{ font-size:15px; font-weight:bold; margin:0; word-break:break-word; }
 
+  .t-petit{ font-size:10px; }
   .t-pied{ text-align:center; font-size:9px; margin:8px 0 0; }
+
+  /* Une douchette a besoin de blanc autour des barres pour accrocher, et
+     d'une hauteur suffisante pour tolérer un passage de travers. */
+  .t-barres-bloc{ text-align:center; margin:10px 0 0; padding:2mm 0; }
+  .t-barres{ width:56mm; height:14mm; display:block; margin:0 auto; }
+  .t-barres-txt{ font-size:10px; letter-spacing:3px; margin:1px 0 0; }
 </style>
 </head>
 <body class="${type === 'production' ? 'prod' : ''}">
@@ -469,11 +599,12 @@ function ticketHTML(o, type = 'commande') {
   ${client ? `<div class="t-sep"></div>${client}` : ''}
 
   <div class="t-sep"></div>
-  <table>${lignes}</table>
+  <table>${enTeteColonnes}${lignes}</table>
   ${totalLigne}
 
   ${commentaire}
   ${pied}
+  ${barres}
 
   <p class="t-pied">imprimé le ${escapeAttr(fmtImpression())}</p>
 </body>

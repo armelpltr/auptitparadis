@@ -305,6 +305,13 @@ export async function loadSettings() {
       setVal('set-facebook',    s.horaires.facebook);
       setVal('set-mapUrl',      s.horaires.mapUrl);
     }
+
+    // Mentions d'entreprise : elles ne servent qu'aux tickets imprimés, d'où
+    // leur place à part et non dans `horaires` avec les contacts du site.
+    if (s.entreprise) {
+      setVal('set-raisonSociale', s.entreprise.raisonSociale);
+      setVal('set-siret',         s.entreprise.siret);
+    }
   } catch (err) {
     showStatus('Impossible de charger les réglages existants (' + err.message + ')', true);
   }
@@ -370,6 +377,10 @@ const SETTINGS_SECTIONS = {
         instagram: val('set-instagram'),
         facebook: val('set-facebook'),
         mapUrl: val('set-mapUrl')
+      },
+      entreprise: {
+        raisonSociale: val('set-raisonSociale'),
+        siret: val('set-siret')
       }
     })
   }
