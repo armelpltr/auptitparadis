@@ -346,9 +346,9 @@ async function changerStatutViaSelect(id, nouveauStatut, selectEl) {
    - commande   : le comptoir cherche qui appeler et où en est le dossier ;
    - production : la cuisine cherche un jour, des quantités et une allergie. */
 const TICKETS = {
-  client:     { titre: 'COMMANDE',           prix: true,  coordonnees: false, boutique: true,  barres: true  },
-  commande:   { titre: 'COMMANDE — INTERNE', prix: true,  coordonnees: true,  boutique: true,  barres: true  },
-  production: { titre: 'À PRODUIRE',         prix: false, coordonnees: false, boutique: false, barres: false }
+  client:     { titre: 'CLIENT',     prix: true,  coordonnees: false, boutique: true,  barres: true  },
+  commande:   { titre: 'INTERNE',    prix: true,  coordonnees: true,  boutique: true,  barres: true  },
+  production: { titre: 'À PRODUIRE', prix: false, coordonnees: false, boutique: false, barres: false }
 };
 
 /* ---------- Code-barres ---------- */
@@ -540,12 +540,12 @@ function ticketHTML(o, type = 'commande') {
   h1{ font-size:15px; text-align:center; margin:0 0 2px; letter-spacing:1px; }
   .t-adresse{ text-align:center; font-size:10px; margin:0 0 6px; }
 
-  /* Bandeau inversé : sur du thermique c'est le repère qu'on retrouve d'un
-     coup d'œil dans une pile de tickets, sans avoir à lire. */
+  /* Cadre fin plutôt qu'un aplat noir : sur du thermique un fond plein use
+     la tête d'impression et ralentit la sortie pour rien. Le cadre et
+     l'espacement des lettres suffisent à retrouver le titre dans une pile. */
   .t-bande{
-    background:#000; color:#fff;
-    -webkit-print-color-adjust:exact; print-color-adjust:exact;
-    text-align:center; font-weight:bold; font-size:13px; letter-spacing:1px;
+    border:1px solid #000;
+    text-align:center; font-weight:bold; font-size:13px; letter-spacing:3px;
     padding:2px 0; margin:6px 0 5px;
   }
 
