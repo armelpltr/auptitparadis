@@ -120,15 +120,27 @@ async function roleOfCurrentUser(user) {
    qui répond à quiconque détient la clé API — donc à n'importe quel visiteur.
    La déporter permet de fermer cette porte dans la console sans empêcher les
    invités d'entrer : se connecter reste permis, s'inscrire ne l'est plus. */
-async function creerAccesViaWorker(email, password, prenom, nom) {
+async function creerAccesViaWorker(charge) {
   const res = await fetch(`${WORKER_URL}/invite/accept`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ token: pendingInvite, prenom, nom, email, password })
+    body: JSON.stringify({ token: pendingInvite, ...charge })
   });
   const corps = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(corps.error || "La création de l'accès a échoué.");
   return corps.role || 'editor';
+}
+
+/* Le prénom et le nom restent demandés même par Google : `displayName` est
+   un champ libre, souvent un pseudonyme, parfois vide. On s'en sert comme
+   repli quand les champs n'ont pas été remplis, pas comme source. */
+function nomDepuis(user, prenom, nom) {
+  if (prenom && nom) return { prenom, nom };
+  const morceaux = String(user.displayName || '').trim().split(/\s+/);
+  return {
+    prenom: prenom || morceaux[0] || 'Prénom',
+    nom: nom || morceaux.slice(1).join(' ') || 'Nom'
+  };
 }
 
 function inviteErrorMessage(err) {
@@ -386,6 +398,51 @@ export function initAuth(onReady) {
     inviteScreen.hidden = false;
   }
 
+  /* Créer son accès par Google. L'ordre est inverse de celui du mot de
+     passe : la fenêtre surgissante ouvre d'abord la session, et c'est le
+     jeton d'identité qui en résulte qu'on présente au Worker. On ne lui
+     envoie donc aucune adresse — il lit celle du jeton, qu'on ne peut pas
+     falsifier, là où un champ de formulaire se remplit comme on veut. */
+  document.getElementById('inviteGoogleBtn')?.addEventListener('click', async () => {
+    const errEl = document.getElementById('inviteError');
+    errEl.hidden = true;
+
+    acceptingInvite = true;
+    try {
+      const cred = await signInWithPopup(auth, google);
+      const { prenom, nom } = nomDepuis(
+        cred.user,
+        document.getElementById('inviteFormPrenom').value.trim(),
+        document.getElementById('inviteFormNom').value.trim()
+      );
+
+      const role = await creerAccesViaWorker({
+        prenom, nom, idToken: await cred.user.getIdToken()
+      });
+
+      /* Le jeton en main ne porte pas encore l'accès qui vient d'être écrit.
+         Le rafraîchir évite que la vérification suivante retombe sur une
+         version périmée et referme le panel aussitôt ouvert. */
+      await cred.user.getIdToken(true);
+
+      history.replaceState({}, '', location.pathname);
+
+      acceptingInvite = false;
+      inviteScreen.hidden = true;
+      loginScreen.hidden = true;
+      adminApp.hidden = false;
+      onReady(role);
+    } catch (err) {
+      acceptingInvite = false;
+      errEl.textContent = GOOGLE_ERRORS[err?.code] || inviteErrorMessage(err);
+      errEl.hidden = false;
+      /* L'accès n'a pas été accordé : la session Google ouverte au passage
+         n'a plus lieu d'être, et le compte tout juste créé sera nettoyé par
+         la garde d'accès au prochain passage. */
+      if (auth.currentUser) await signOut(auth);
+    }
+  });
+
   document.getElementById('inviteForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     const errEl = document.getElementById('inviteError');
@@ -407,7 +464,7 @@ export function initAuth(onReady) {
       /* Le Worker fait tout d'un bloc : il relit l'invitation, crée le
          compte, écrit l'entrée `admins` et consomme le jeton. Le rôle qu'il
          renvoie vient de l'invitation, jamais de ce formulaire. */
-      const role = await creerAccesViaWorker(email, password, prenom, nom);
+      const role = await creerAccesViaWorker({ prenom, nom, email, password });
 
       // L'accès existe : il ne reste qu'à ouvrir la session, avec le mot de
       // passe que la personne vient de choisir. Se connecter reste permis
