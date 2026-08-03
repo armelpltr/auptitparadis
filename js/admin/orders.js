@@ -258,6 +258,7 @@ function renderOrders() {
               `<option value="${cle}" ${o.statut === cle ? 'selected' : ''}>${escapeAttr(s.label)}</option>`
             ).join('')}
           </select>
+          <button type="button" class="btn btn-ghost btn-small" data-action="imprimer">Imprimer</button>
           <button type="button" class="btn btn-ghost btn-small cmd-supprimer" data-action="supprimer">Supprimer</button>
         </div>
       </article>`;
@@ -267,6 +268,7 @@ function renderOrders() {
     const id = carte.dataset.id;
     const select = carte.querySelector('[data-action="statut"]');
     select?.addEventListener('change', () => changerStatutViaSelect(id, select.value, select));
+    carte.querySelector('[data-action="imprimer"]')?.addEventListener('click', () => imprimerCommande(id));
     carte.querySelector('[data-action="supprimer"]')?.addEventListener('click', () => supprimerCommande(id));
   });
 }
@@ -300,6 +302,87 @@ async function changerStatutViaSelect(id, nouveauStatut, selectEl) {
 
   await changerStatut(id, nouveauStatut);
   showStatus(`Commande ${o.code || ''} — ${STATUTS[nouveauStatut].label.toLowerCase()}.`);
+}
+
+/* ---------- Impression ---------- */
+/* Un ticket au format du rouleau existant (80mm) : la mise en page compte
+   sur le dialogue d'impression du navigateur, pas sur un pilote ESC/POS —
+   on choisit l'imprimante SAGA comme n'importe quelle autre, depuis le
+   même poste que la caisse. */
+function ticketHTML(o) {
+  const lignes = (o.items || []).map(it => `
+    <tr>
+      <td>${it.quantite}×</td>
+      <td>${escapeAttr(it.nom)}</td>
+      <td class="ticket-droite">${escapeAttr(euros.format((it.prixUnitaire || 0) * (it.quantite || 0)))}</td>
+    </tr>`).join('');
+
+  return `<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Commande ${escapeAttr(o.code || '')}</title>
+<style>
+  @page{ size:80mm auto; margin:0; }
+  body{
+    width:72mm; margin:0 auto; padding:3mm 0;
+    font-family:'Courier New', monospace; font-size:12px; color:#000;
+  }
+  h1{ font-size:14px; text-align:center; margin:0 0 2px; }
+  .ticket-adresse{ text-align:center; font-size:10px; margin:0 0 8px; }
+  .ticket-titre{ text-align:center; font-weight:bold; margin:8px 0 2px; font-size:13px; }
+  .ticket-code{ text-align:center; font-size:16px; font-weight:bold; margin:0 0 8px; }
+  .ticket-ligne{ border-top:1px dashed #000; margin:6px 0; }
+  table{ width:100%; border-collapse:collapse; margin:6px 0; }
+  td{ padding:1px 0; vertical-align:top; }
+  .ticket-droite{ text-align:right; }
+  .ticket-total{ font-weight:bold; font-size:14px; }
+  .ticket-info{ margin:2px 0; }
+  .ticket-commentaire{ margin-top:6px; font-style:italic; }
+</style>
+</head>
+<body>
+  <h1>Au P'tit Paradis</h1>
+  <p class="ticket-adresse">1 Place du Petit Enfer<br>14530 Luc-sur-Mer</p>
+
+  <p class="ticket-titre">COMMANDE SITE</p>
+  <p class="ticket-code">${escapeAttr(o.code || '——')}</p>
+
+  <div class="ticket-ligne"></div>
+  <p class="ticket-info"><strong>Client :</strong> ${escapeAttr(nomClient(o.client))}</p>
+  <p class="ticket-info"><strong>Téléphone :</strong> ${escapeAttr(fmtTelephone(o.client?.telephone))}</p>
+  ${o.client?.email ? `<p class="ticket-info"><strong>E-mail :</strong> ${escapeAttr(o.client.email)}</p>` : ''}
+  <p class="ticket-info"><strong>Retrait :</strong> ${escapeAttr(fmtDateRetrait(o.dateRetrait))}</p>
+
+  <div class="ticket-ligne"></div>
+  <table>${lignes}</table>
+  <div class="ticket-ligne"></div>
+  <table>
+    <tr><td class="ticket-total">TOTAL</td><td></td><td class="ticket-droite ticket-total">${escapeAttr(euros.format(o.total || 0))}</td></tr>
+  </table>
+
+  ${o.commentaire ? `<p class="ticket-commentaire">« ${escapeAttr(o.commentaire)} »</p>` : ''}
+  <div class="ticket-ligne"></div>
+  <p class="ticket-info" style="text-align:center">Merci et à bientôt !</p>
+</body>
+</html>`;
+}
+
+function imprimerCommande(id) {
+  const o = ordersCache.find(x => x.id === id);
+  if (!o) return;
+
+  const fenetre = window.open('', '_blank', 'width=400,height=600');
+  if (!fenetre) {
+    showStatus("Le navigateur a bloqué l'ouverture de la fenêtre d'impression (pop-up).", true);
+    return;
+  }
+  fenetre.document.write(ticketHTML(o));
+  fenetre.document.close();
+
+  // Laisse le temps au document de se poser avant d'appeler l'impression —
+  // un print() immédiat part parfois sur une page encore vide.
+  fenetre.onload = () => fenetre.print();
 }
 
 /* Suppression définitive — utile en phase de test pour vider les commandes
