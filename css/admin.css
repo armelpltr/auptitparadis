@@ -100,6 +100,30 @@ button.back-to-site{ background:none; border:none; cursor:pointer; font-family:i
 
 .btn-small{ padding:.6em 1.3em; font-size:.88rem; }
 
+/* ---------- Connexion Google ---------- */
+/* Séparateur « ou » : un filet de chaque côté du mot, obtenu en laissant
+   le fond de la carte recouvrir le milieu de la ligne. */
+.login-ou{
+  position:relative; margin:1.3rem 0; text-align:center;
+  font-size:.8rem; color:var(--ink-soft);
+}
+.login-ou::before{
+  content:""; position:absolute; top:50%; left:0; right:0;
+  height:1px; background:var(--sand);
+}
+.login-ou span{ position:relative; background:var(--white); padding:0 .8rem; }
+
+.btn-google{
+  display:flex; align-items:center; justify-content:center; gap:.7rem;
+  width:100%; padding:.75em 1em; cursor:pointer;
+  border:1.5px solid var(--sand); border-radius:var(--radius);
+  background:var(--white); color:var(--ink);
+  font-family:var(--font-body); font-size:.95rem; font-weight:600;
+  transition:border-color .25s var(--ease), background .25s var(--ease);
+}
+.btn-google:hover{ border-color:var(--gold-pale); background:var(--cream); }
+.btn-google svg{ width:19px; height:19px; flex-shrink:0; }
+
 /* ---------- Code de vérification ---------- */
 /* Chiffres espacés et centrés : on relit un code à six chiffres bien plus
    sûrement ainsi qu'en texte courant, surtout recopié depuis un téléphone. */

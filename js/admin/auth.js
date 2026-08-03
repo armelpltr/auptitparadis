@@ -5,7 +5,8 @@
 import { auth, db } from "../firebase-config.js";
 import {
   signInWithEmailAndPassword, createUserWithEmailAndPassword,
-  onAuthStateChanged, signOut
+  onAuthStateChanged, signOut,
+  GoogleAuthProvider, signInWithPopup
 } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
 import {
   doc, getDoc, setDoc, deleteDoc
@@ -46,8 +47,21 @@ const LOGIN_ERRORS = {
   'auth/api-key-not-valid':     'Clé API Firebase invalide dans firebase-config.js.'
 };
 
+/* La connexion Google échoue autrement que celle par mot de passe : la
+   plupart des cas viennent de la fenêtre surgissante ou d'un réglage du
+   projet, pas d'une erreur de saisie. */
+const GOOGLE_ERRORS = {
+  'auth/popup-closed-by-user':      'Fenêtre Google fermée avant la fin.',
+  'auth/cancelled-popup-request':   'Connexion Google annulée.',
+  'auth/popup-blocked':             "Votre navigateur a bloqué la fenêtre Google. Autorisez-la, ou connectez-vous avec votre mot de passe.",
+  'auth/operation-not-allowed':     "La connexion Google n'est pas activée sur le projet. Firebase Console > Authentication > Sign-in method > Google > Activer.",
+  'auth/unauthorized-domain':       "Domaine non autorisé. Ajoute armelpltr.github.io dans Firebase Console > Authentication > Settings > Domaines autorisés.",
+  'auth/account-exists-with-different-credential':
+    "Un compte existe déjà avec cette adresse et un mot de passe. Connectez-vous avec le mot de passe."
+};
+
 function loginErrorMessage(err) {
-  const known = LOGIN_ERRORS[err && err.code];
+  const known = LOGIN_ERRORS[err && err.code] || GOOGLE_ERRORS[err && err.code];
   if (known) return known;
   return `Connexion impossible (${(err && err.code) || 'erreur inconnue'}).`;
 }
@@ -159,6 +173,27 @@ export function initAuth(onReady) {
     const password = document.getElementById('loginPassword').value;
     try {
       await signInWithEmailAndPassword(auth, email, password);
+    } catch (err) {
+      loginError.textContent = loginErrorMessage(err);
+      loginError.hidden = false;
+    }
+  });
+
+  /* Connexion Google. Rien de plus à faire ensuite : onAuthStateChanged
+     prend le relais, vérifie l'appartenance au panel et réclame le code
+     comme pour une connexion par mot de passe. Un compte Google ne donne
+     donc pas d'accès par lui-même — il faut toujours figurer dans `admins`.
+
+     `prompt: select_account` force le choix du compte : sur un poste
+     partagé, ou avec plusieurs comptes Google ouverts, Google reconnecte
+     sinon silencieusement le dernier utilisé. */
+  const google = new GoogleAuthProvider();
+  google.setCustomParameters({ prompt: 'select_account' });
+
+  document.getElementById('googleBtn').addEventListener('click', async () => {
+    loginError.hidden = true;
+    try {
+      await signInWithPopup(auth, google);
     } catch (err) {
       loginError.textContent = loginErrorMessage(err);
       loginError.hidden = false;
