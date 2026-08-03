@@ -322,6 +322,53 @@ export async function setCustomClaims(uid, claims, env) {
   if (!res.ok) throw new Error(`Attributs refusés (${res.status}): ${await res.text()}`);
 }
 
+/**
+ * Crée un compte Firebase avec les droits d'administration, par l'API
+ * `projects/.../accounts` et non par le `accounts:signUp` public.
+ *
+ * C'est toute la différence : `signUp` répond à qui présente la clé API,
+ * donc à n'importe quel visiteur, et reste ouvert même quand on interdit
+ * l'inscription publique dans la console. Cette route-ci exige la clé de
+ * service, que seul ce Worker détient — l'inscription peut donc être fermée
+ * partout ailleurs sans empêcher les invités d'entrer.
+ *
+ * Renvoie l'identifiant du compte créé, ou null si l'adresse est déjà prise :
+ * l'appelant décide alors quoi en faire, selon qu'il attendait ou non un
+ * compte préexistant.
+ */
+export async function createAuthUser({ email, password }, env) {
+  const token = await getAccessToken(env);
+  const res = await fetch(
+    `https://identitytoolkit.googleapis.com/v1/projects/${env.FIREBASE_PROJECT_ID}/accounts`,
+    {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password, emailVerified: false }),
+    }
+  );
+
+  const corps = await res.json().catch(() => ({}));
+  if (res.ok) return corps.localId;
+  if (corps?.error?.message === 'EMAIL_EXISTS') return null;
+  throw new Error(`Création du compte refusée (${res.status}): ${corps?.error?.message || ''}`);
+}
+
+/** Retrouve un compte par son adresse. Null s'il n'existe pas. */
+export async function findAuthUserByEmail(email, env) {
+  const token = await getAccessToken(env);
+  const res = await fetch(
+    `https://identitytoolkit.googleapis.com/v1/projects/${env.FIREBASE_PROJECT_ID}/accounts:lookup`,
+    {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: [email] }),
+    }
+  );
+  if (!res.ok) throw new Error(`Recherche du compte refusée (${res.status})`);
+  const corps = await res.json().catch(() => ({}));
+  return corps.users?.[0] || null;
+}
+
 export async function deleteAuthUser(uid, env) {
   const token = await getAccessToken(env);
   const res = await fetch(

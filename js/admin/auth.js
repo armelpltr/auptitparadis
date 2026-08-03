@@ -3,13 +3,16 @@
 // ============================================================
 
 import { auth, db } from "../firebase-config.js";
+/* Plus de createUserWithEmailAndPassword : créer un compte est passé côté
+   Worker, seul moyen de fermer l'inscription publique. Il ne reste ici que
+   de quoi ouvrir une session et lire son propre accès. */
 import {
-  signInWithEmailAndPassword, createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
   onAuthStateChanged, signOut,
   GoogleAuthProvider, signInWithPopup
 } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
 import {
-  doc, getDoc, setDoc, deleteDoc
+  doc, getDoc
 } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 import { WORKER_URL } from "./config.js";
 import { showMessage } from "./ui.js";
@@ -112,17 +115,20 @@ async function roleOfCurrentUser(user) {
   }
 }
 
-/* Le lien doit marcher que la personne ait déjà un compte ou non. Si l'adresse
-   est connue de Firebase, on se connecte au compte existant au lieu d'en créer
-   un : l'entrée `admins` se crée ensuite de la même façon, le jeton reste
-   vérifié par les règles. */
-async function accountForInvite(email, password) {
-  try {
-    return await createUserWithEmailAndPassword(auth, email, password);
-  } catch (err) {
-    if (err.code !== 'auth/email-already-in-use') throw err;
-    return await signInWithEmailAndPassword(auth, email, password);
-  }
+/* Le compte n'est plus créé ici mais par le Worker, avec la clé de service.
+   Le navigateur ne peut créer un compte que par l'inscription publique, celle
+   qui répond à quiconque détient la clé API — donc à n'importe quel visiteur.
+   La déporter permet de fermer cette porte dans la console sans empêcher les
+   invités d'entrer : se connecter reste permis, s'inscrire ne l'est plus. */
+async function creerAccesViaWorker(email, password, prenom, nom) {
+  const res = await fetch(`${WORKER_URL}/invite/accept`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ token: pendingInvite, prenom, nom, email, password })
+  });
+  const corps = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(corps.error || "La création de l'accès a échoué.");
+  return corps.role || 'editor';
 }
 
 function inviteErrorMessage(err) {
@@ -398,28 +404,16 @@ export function initAuth(onReady) {
 
     acceptingInvite = true;
     try {
-      const cred = await accountForInvite(email, password);
+      /* Le Worker fait tout d'un bloc : il relit l'invitation, crée le
+         compte, écrit l'entrée `admins` et consomme le jeton. Le rôle qu'il
+         renvoie vient de l'invitation, jamais de ce formulaire. */
+      const role = await creerAccesViaWorker(email, password, prenom, nom);
 
-      // Le rôle vient de l'invitation, pas du client : les règles vérifient qu'il
-      // correspond. Lisible seulement maintenant, une fois l'invité authentifié.
-      const inviteSnap = await getDoc(doc(db, 'invites', pendingInvite));
-      if (!inviteSnap.exists()) throw new Error('invitation-introuvable');
-      const role = inviteSnap.data().role || 'editor';
+      // L'accès existe : il ne reste qu'à ouvrir la session, avec le mot de
+      // passe que la personne vient de choisir. Se connecter reste permis
+      // même lorsque l'inscription publique est fermée.
+      await signInWithEmailAndPassword(auth, email, password);
 
-      // Le jeton et son expiration sont vérifiés par les règles Firestore,
-      // pas seulement ici.
-      await setDoc(doc(db, 'admins', cred.user.uid), {
-        email,
-        prenom,
-        nom,
-        role,
-        inviteToken: pendingInvite,
-        addedAt: new Date(),
-        // Personne ne s'abonne aux alertes de commande en entrant : un
-        // administrateur ouvre le robinet depuis l'onglet Équipe.
-        notifications: false
-      });
-      await deleteDoc(doc(db, 'invites', pendingInvite));
       history.replaceState({}, '', location.pathname);   // le jeton quitte la barre d'adresse
 
       acceptingInvite = false;

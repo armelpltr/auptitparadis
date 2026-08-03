@@ -2,10 +2,12 @@
 // auptitparadis-worker — routeur
 //
 // Ce que le navigateur ne peut pas couvrir seul :
-//   POST /delete-user   supprimer le compte Firebase de quelqu'un d'autre
-//   POST /order         enregistrer une commande après vérification anti-bot
-//   POST /order/manage  relire une commande depuis le lien reçu par e-mail
-//   POST /order/cancel  l'annuler tant que le délai le permet
+//   POST /delete-user    supprimer le compte Firebase de quelqu'un d'autre
+//   POST /order          enregistrer une commande après vérification anti-bot
+//   POST /order/manage   relire une commande depuis le lien reçu par e-mail
+//   POST /order/cancel   l'annuler tant que le délai le permet
+//   POST /invite/accept  créer un accès à partir d'une invitation, ce qui
+//                        permet de fermer l'inscription publique
 //
 // Les deux passent par la clé de service, qui ne peut pas vivre dans du
 // JavaScript servi aux visiteurs. Ce Worker est le seul endroit où elle
@@ -17,6 +19,7 @@ import { handleDeleteUser } from './admin-delete.js';
 import { handleOrder } from './orders.js';
 import { handleOrderManage, handleOrderCancel } from './order-manage.js';
 import { handleA2fRequest, handleA2fVerify } from './a2f.js';
+import { handleInviteAccept } from './invite-accept.js';
 
 const ROUTES = {
   '/delete-user': handleDeleteUser,
@@ -25,6 +28,7 @@ const ROUTES = {
   '/order/cancel': handleOrderCancel,
   '/a2f/request': handleA2fRequest,
   '/a2f/verify': handleA2fVerify,
+  '/invite/accept': handleInviteAccept,
 };
 
 export default {

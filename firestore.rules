@@ -45,17 +45,6 @@ service cloud.firestore {
     }
 
 
-    // Une invitation est désormais désignée par son jeton, plus par l'adresse
-    // de l'invité : c'est lui qui saisit ses coordonnées en arrivant.
-    function inviteByToken(token) {
-      return get(/databases/$(database)/documents/invites/$(token)).data;
-    }
-
-    function inviteValide(token) {
-      return exists(/databases/$(database)/documents/invites/$(token))
-          && inviteByToken(token).expiresAt > request.time;
-    }
-
     // Les deux façons de modifier une entrée d'admins, sorties en fonctions
     // pour que l'autorisation elle-meme tienne sur une ligne : le parser des
     // regles bute sur une condition a deux branches parenthesees.
@@ -145,20 +134,12 @@ service cloud.firestore {
       allow get:  if isMember();
       allow list: if isOwner();
 
-      // Un invité s'ajoute lui-même, à cinq conditions : il crée bien sa propre
-      // entrée, avec sa propre adresse, il présente un jeton d'invitation
-      // encore valable, il prend le rôle qui y était inscrit — pas celui qu'il
-      // voudrait — et il n'écrit aucun champ hors de cette liste.
-      allow create: if request.auth != null
-                    && request.auth.uid == uid
-                    && request.resource.data.email == request.auth.token.email
-                    && request.resource.data.keys().hasOnly(
-                         ['email', 'prenom', 'nom', 'role', 'inviteToken', 'addedAt', 'notifications'])
-                    && inviteValide(request.resource.data.inviteToken)
-                    && request.resource.data.role == inviteByToken(request.resource.data.inviteToken).get('role', 'editor')
-                    // Personne ne s'abonne aux alertes en entrant : c'est un
-                    // administrateur qui ouvre le robinet, ou soi-même ensuite.
-                    && request.resource.data.get('notifications', false) == false;
+      // Plus aucune création depuis un navigateur. C'est le Worker qui écrit
+      // cette entrée, avec la cle de service, laquelle contourne ces règles.
+      // Auparavant l'invité s'ajoutait lui-même, ce qui obligeait à laisser
+      // l'inscription ouverte à tous pour qu'il puisse d'abord se créer un
+      // compte : n'importe quel visiteur pouvait alors s'en fabriquer un.
+      allow create: if false;
 
       // Les deux cas sont definis plus haut, en fonctions.
       allow update: if majParGestionnaire() || majDeSesAlertes(uid);
@@ -168,22 +149,24 @@ service cloud.firestore {
     }
 
     // Invitations en attente, une par jeton.
-    // Le lien vaut désormais accès à lui seul : n'importe qui l'ayant en main
-    // peut créer un compte, avec l'adresse de son choix. D'où l'expiration
-    // vérifiée ci-dessus, et la suppression du jeton dès qu'il a servi.
+    // Le lien vaut accès à lui seul : qui l'a en main obtient un accès, avec
+    // l'adresse de son choix. D'où l'expiration, et la suppression du jeton
+    // dès qu'il a servi.
     match /invites/{token} {
       allow list:   if isOwner();
-      // L'invité lit son invitation pour connaître le rôle qu'il doit prendre.
-      // Le jeton est un UUID : le connaître, c'est déjà détenir le lien.
-      allow get:    if isOwner() || request.auth != null;
+      // Lecture et suppression étaient ouvertes à tout compte connecté, pour
+      // que l'invité lise son rôle puis consomme son jeton. Ce détour n'a plus
+      // lieu d'être : le Worker fait les deux avec la clé de service. La
+      // condition ne protégeait d'ailleurs rien, un compte s'obtenant en
+      // quelques secondes — seul le secret du jeton comptait vraiment.
+      allow get:    if isOwner();
       // Inviter un superadmin est réservé aux superadmins : sans ce contrôle,
       // un administrateur se fabrique une invitation superadmin, l'accepte
       // avec une seconde adresse, et le verrou du dessus ne vaut plus rien.
       allow create: if isOwner()
                     && (request.resource.data.get('role', 'editor') != 'superadmin' || isSuper());
-      // Supprimable par un admin (annulation) ou par l'invité une fois son
-      // accès créé, pour que le lien ne resserve pas.
-      allow delete: if isOwner() || request.auth != null;
+      // Annulation d'une invitation depuis l'onglet Équipe.
+      allow delete: if isOwner();
     }
   }
 }
