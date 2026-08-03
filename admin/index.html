@@ -10,22 +10,20 @@
      balise. Aucun script inline ici, donc pas de 'unsafe-inline' pour les
      scripts — un contenu injecté ne peut pas s'exécuter.
 
-     apis.google.com est indispensable à la connexion Google : signInWithPopup
-     charge de là son api.js et y ouvre une iframe pour dialoguer avec la
-     fenêtre surgissante. Sans cette autorisation, le script est bloqué, le
-     canal ne s'établit pas, et Firebase remonte un auth/internal-error qui
-     ne dit rien de sa vraie cause. -->
+     apis.google.com et accounts.google.com ont disparu avec la connexion
+     Google : ils ne servaient qu'à la fenêtre surgissante. Une politique
+     n'autorise que ce dont la page se sert encore. -->
 <meta http-equiv="Content-Security-Policy" content="
   default-src 'self';
   base-uri 'self';
   object-src 'none';
   form-action 'self';
-  script-src 'self' https://www.gstatic.com https://apis.google.com;
+  script-src 'self' https://www.gstatic.com;
   style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
   font-src 'self' https://fonts.gstatic.com data:;
   img-src 'self' data: blob: https:;
-  connect-src 'self' https://firestore.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://www.googleapis.com https://apis.google.com https://api.cloudinary.com https://auptitparadis-worker.armelpltr14-ad6.workers.dev;
-  frame-src https://au-ptit-paradis.firebaseapp.com https://apis.google.com https://accounts.google.com;
+  connect-src 'self' https://firestore.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://www.googleapis.com https://api.cloudinary.com https://auptitparadis-worker.armelpltr14-ad6.workers.dev;
+  frame-src https://au-ptit-paradis.firebaseapp.com;
 ">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 
@@ -57,20 +55,6 @@
     <p class="login-error" id="loginError" hidden></p>
 
     <button type="submit" class="btn btn-primary login-submit">Se connecter</button>
-
-    <p class="login-ou"><span>ou</span></p>
-
-    <!-- Le logo est dessiné plutôt que chargé : une image distante de plus
-         à autoriser dans la CSP, pour quatre aplats de couleur. -->
-    <button type="button" class="btn-google" id="googleBtn">
-      <svg viewBox="0 0 48 48" aria-hidden="true">
-        <path fill="#4285F4" d="M45.1 24.5c0-1.6-.1-3.2-.4-4.7H24v8.9h11.8c-.5 2.7-2 5-4.4 6.6v5.5h7.1c4.2-3.8 6.6-9.5 6.6-16.3z"/>
-        <path fill="#34A853" d="M24 46c6 0 11-2 14.6-5.2l-7.1-5.5c-2 1.3-4.5 2.1-7.5 2.1-5.8 0-10.7-3.9-12.4-9.1H4.3v5.7C7.9 41.1 15.4 46 24 46z"/>
-        <path fill="#FBBC05" d="M11.6 28.3c-.4-1.3-.7-2.7-.7-4.3s.3-3 .7-4.3v-5.7H4.3C2.8 16.9 2 20.3 2 24s.8 7.1 2.3 10l7.3-5.7z"/>
-        <path fill="#EA4335" d="M24 10.6c3.3 0 6.2 1.1 8.5 3.3l6.3-6.3C35 4.1 30 2 24 2 15.4 2 7.9 6.9 4.3 14l7.3 5.7c1.7-5.2 6.6-9.1 12.4-9.1z"/>
-      </svg>
-      Continuer avec Google
-    </button>
 
     <a href="../index.html" class="back-to-site">← Retour au site</a>
   </form>
@@ -126,8 +110,23 @@
     </div>
     <div class="form-row">
       <label for="inviteFormPassword">Mot de passe</label>
-      <input type="password" id="inviteFormPassword" required minlength="8" autocomplete="new-password">
-      <p class="field-hint">8 caractères minimum. Si vous avez déjà un compte sur ce site, saisissez son mot de passe actuel.</p>
+      <input type="password" id="inviteFormPassword" required minlength="12" autocomplete="new-password">
+
+      <!-- Jauge remplie par motdepasse.js. aria-live pour que la mesure soit
+           annoncée aux lecteurs d'écran, qui ne voient pas la barre. -->
+      <div class="mdp-jauge" id="mdpJauge" hidden>
+        <div class="mdp-barre"><span id="mdpBarreRemplie"></span></div>
+        <p class="mdp-verdict" id="mdpVerdict" aria-live="polite"></p>
+      </div>
+
+      <p class="field-hint">
+        <strong>12 caractères minimum.</strong> Une phrase dont vous vous souvenez
+        vaut mieux qu'un mot compliqué : longue, elle résiste bien plus longtemps.
+      </p>
+      <p class="field-hint field-hint--alerte">
+        N'utilisez pas un mot de passe déjà employé ailleurs. S'il fuite d'un autre
+        site, c'est cette administration qui s'ouvre avec.
+      </p>
     </div>
 
     <p class="login-error" id="inviteError" hidden></p>

@@ -3,19 +3,21 @@
 // ============================================================
 
 import { auth, db } from "../firebase-config.js";
-/* Plus de createUserWithEmailAndPassword : créer un compte est passé côté
-   Worker, seul moyen de fermer l'inscription publique. Il ne reste ici que
-   de quoi ouvrir une session et lire son propre accès. */
+/* Ni création de compte ni connexion Google : la première est passée côté
+   Worker, seul moyen de fermer l'inscription publique, et la seconde a été
+   retirée — un fournisseur d'identité tiers crée le compte avant qu'on ait
+   pu vérifier quoi que ce soit. Il ne reste ici que de quoi ouvrir une
+   session par mot de passe et lire son propre accès. */
 import {
   signInWithEmailAndPassword,
-  onAuthStateChanged, signOut,
-  GoogleAuthProvider, signInWithPopup
+  onAuthStateChanged, signOut
 } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
 import {
   doc, getDoc
 } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 import { WORKER_URL } from "./config.js";
 import { showMessage } from "./ui.js";
+import { evaluerMotDePasse, LONGUEUR_MINIMALE } from "./motdepasse.js";
 
 const loginScreen  = document.getElementById('loginScreen');
 const adminApp     = document.getElementById('adminApp');
@@ -57,39 +59,8 @@ const LOGIN_ERRORS = {
   'auth/api-key-not-valid':       'Connexion indisponible (auth/api-key-not-valid).'
 };
 
-/* La connexion Google échoue autrement que celle par mot de passe : la
-   plupart des cas viennent de la fenêtre surgissante ou d'un réglage du
-   projet, pas d'une erreur de saisie. */
-/* Ces trois-là ne viennent jamais de la personne qui se connecte mais d'un
-   réglage du projet Firebase : lui répéter un code d'erreur ne l'avance à
-   rien, alors qu'elle a un mot de passe sous la main. On dit donc quoi
-   faire tout de suite, et le code reste en fin de phrase pour le jour où
-   quelqu'un doit corriger la console. */
-const REPLI_MOT_DE_PASSE = 'Connectez-vous avec votre mot de passe en attendant';
-
-const GOOGLE_ERRORS = {
-  'auth/popup-closed-by-user':      'Fenêtre Google fermée avant la fin.',
-  'auth/cancelled-popup-request':   'Connexion Google annulée.',
-  'auth/popup-blocked':             "Votre navigateur a bloqué la fenêtre Google. Autorisez-la, ou connectez-vous avec votre mot de passe.",
-  'auth/operation-not-allowed':     `La connexion Google n'est pas activée sur ce site. ${REPLI_MOT_DE_PASSE} (auth/operation-not-allowed).`,
-  'auth/unauthorized-domain':       `Ce domaine n'est pas autorisé pour la connexion Google. ${REPLI_MOT_DE_PASSE} (auth/unauthorized-domain).`,
-  /* Erreur fourre-tout de Firebase : le plus souvent le fournisseur Google
-     est activé mais son identifiant OAuth est incomplet côté console. Ça
-     peut aussi être un simple incident réseau, d'où le « réessayez ». */
-  'auth/internal-error':            `La connexion Google ne répond pas. Réessayez dans un instant ; si cela persiste, la configuration Google du projet est à vérifier. ${REPLI_MOT_DE_PASSE} (auth/internal-error).`,
-  'auth/network-request-failed':    `Connexion Google impossible : le réseau n'a pas répondu. Vérifiez la connexion, puis réessayez (auth/network-request-failed).`,
-  /* L'inscription est fermée : Google ne peut plus créer de compte, il ne
-     peut que connecter un compte existant. Une adresse inconnue tombe donc
-     ici, et non sur la garde d'accès — c'est le refus voulu, pas une panne,
-     d'où un message qui parle d'accès et non de configuration. */
-  'auth/admin-restricted-operation':
-    "Ce compte Google n'a pas accès à l'administration. Les accès se créent sur invitation.",
-  'auth/account-exists-with-different-credential':
-    "Un compte existe déjà avec cette adresse et un mot de passe. Connectez-vous avec le mot de passe."
-};
-
 function loginErrorMessage(err) {
-  const known = LOGIN_ERRORS[err && err.code] || GOOGLE_ERRORS[err && err.code];
+  const known = LOGIN_ERRORS[err && err.code];
   if (known) return known;
   return `Connexion impossible (${(err && err.code) || 'erreur inconnue'}).`;
 }
@@ -234,27 +205,6 @@ export function initAuth(onReady) {
     }
   });
 
-  /* Connexion Google. Rien de plus à faire ensuite : onAuthStateChanged
-     prend le relais, vérifie l'appartenance au panel et réclame le code
-     comme pour une connexion par mot de passe. Un compte Google ne donne
-     donc pas d'accès par lui-même — il faut toujours figurer dans `admins`.
-
-     `prompt: select_account` force le choix du compte : sur un poste
-     partagé, ou avec plusieurs comptes Google ouverts, Google reconnecte
-     sinon silencieusement le dernier utilisé. */
-  const google = new GoogleAuthProvider();
-  google.setCustomParameters({ prompt: 'select_account' });
-
-  document.getElementById('googleBtn').addEventListener('click', async () => {
-    loginError.hidden = true;
-    try {
-      await signInWithPopup(auth, google);
-    } catch (err) {
-      loginError.textContent = loginErrorMessage(err);
-      loginError.hidden = false;
-    }
-  });
-
   logoutBtn.addEventListener('click', () => signOut(auth));
 
   onAuthStateChanged(auth, async (user) => {
@@ -393,6 +343,50 @@ export function initAuth(onReady) {
     inviteScreen.hidden = false;
   }
 
+  /* ---------- Jauge de solidité ---------- */
+  /* Elle se met à jour à la frappe, mais n'apparaît qu'une fois la saisie
+     commencée : une barre rouge devant un champ encore vide se lit comme un
+     reproche avant même d'avoir essayé. */
+  const mdpChamp   = document.getElementById('inviteFormPassword');
+  const mdpJauge   = document.getElementById('mdpJauge');
+  const mdpBarre   = document.getElementById('mdpBarreRemplie');
+  const mdpVerdict = document.getElementById('mdpVerdict');
+
+  function rafraichirJauge() {
+    const valeur = mdpChamp.value;
+    mdpJauge.hidden = valeur.length === 0;
+    if (!valeur) return;
+
+    const { score, libelle, defauts, accepte } = evaluerMotDePasse(valeur, [
+      document.getElementById('inviteFormEmail').value,
+      document.getElementById('inviteFormPrenom').value,
+      document.getElementById('inviteFormNom').value
+    ]);
+
+    mdpBarre.dataset.score = String(score);
+    mdpVerdict.classList.toggle('is-refuse', !accepte);
+    // Le premier reproche seulement : les corriger arrive un à un, et les
+    // empiler décourage plus que ça n'aide.
+    mdpVerdict.innerHTML = defauts.length
+      ? `<strong>${escapeTexte(libelle)}</strong> — ${escapeTexte(defauts[0])}`
+      : `<strong>${escapeTexte(libelle)}</strong>`;
+  }
+
+  function escapeTexte(s) {
+    return String(s ?? '').replace(/[&<>"']/g, c =>
+      ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  }
+
+  if (mdpChamp) {
+    mdpChamp.addEventListener('input', rafraichirJauge);
+    // Le nom et l'adresse entrent dans l'évaluation : les changer après coup
+    // doit rejuger le mot de passe déjà saisi.
+    ['inviteFormEmail', 'inviteFormPrenom', 'inviteFormNom'].forEach(id =>
+      document.getElementById(id)?.addEventListener('input', () => {
+        if (mdpChamp.value) rafraichirJauge();
+      }));
+  }
+
   document.getElementById('inviteForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     const errEl = document.getElementById('inviteError');
@@ -405,6 +399,18 @@ export function initAuth(onReady) {
 
     if (!prenom || !nom) {
       errEl.textContent = 'Merci d\'indiquer votre prénom et votre nom.';
+      errEl.hidden = false;
+      return;
+    }
+
+    /* Le mot de passe est rejugé au moment d'envoyer, et pas seulement à la
+       frappe : le champ a pu être rempli par un gestionnaire de mots de
+       passe, ou l'adresse changée après coup. */
+    const verdict = evaluerMotDePasse(password, [email, prenom, nom]);
+    if (!verdict.accepte) {
+      errEl.textContent = verdict.defauts.length
+        ? `Mot de passe refusé : ${verdict.defauts.join(', ')}.`
+        : `Le mot de passe doit faire au moins ${LONGUEUR_MINIMALE} caractères.`;
       errEl.hidden = false;
       return;
     }

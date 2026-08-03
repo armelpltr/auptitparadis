@@ -89,6 +89,34 @@ button.back-to-site{ background:none; border:none; cursor:pointer; font-family:i
   background:var(--gold); border-radius:2px; flex-shrink:0;
 }
 .admin-card-hint{ font-size:.86rem; color:var(--ink-soft); margin-bottom:1.4rem; margin-top:-.4rem; }
+
+/* ---------- Solidité du mot de passe ---------- */
+.mdp-jauge{ margin:.6rem 0 .2rem; }
+.mdp-jauge[hidden]{ display:none; }
+
+.mdp-barre{
+  height:5px; border-radius:999px; background:var(--sand);
+  overflow:hidden;
+}
+/* La largeur ET la couleur portent la même information : sur un écran mal
+   calibré, ou pour qui distingue mal le rouge du vert, la longueur du
+   remplissage suffit à se situer. */
+.mdp-barre span{
+  display:block; height:100%; width:0; border-radius:999px;
+  background:#a13a25; transition:width .25s ease, background-color .25s ease;
+}
+.mdp-barre span[data-score="1"]{ width:25%;  background:#a13a25; }
+.mdp-barre span[data-score="2"]{ width:50%;  background:#c8853a; }
+.mdp-barre span[data-score="3"]{ width:75%;  background:#7a8f3f; }
+.mdp-barre span[data-score="4"]{ width:100%; background:#3f9142; }
+
+.mdp-verdict{ font-size:.8rem; margin:.35rem 0 0; color:var(--ink-soft); }
+.mdp-verdict strong{ color:var(--ink); }
+.mdp-verdict.is-refuse strong{ color:#a13a25; }
+
+.field-hint--alerte{
+  border-left:2px solid #c8853a; padding-left:.7rem; color:var(--ink);
+}
 .admin-card[hidden]{ display:none; }
 
 /* Carte d'action irrattrapable : le liseré rouge la distingue des réglages

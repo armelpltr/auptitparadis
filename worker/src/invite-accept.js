@@ -29,6 +29,41 @@ import {
 
 const ROLES = ['superadmin', 'admin', 'editor'];
 
+/* Même exigence que la jauge du formulaire, redite ici parce qu'un contrôle
+   qui ne vit que dans le navigateur se contourne en appelant cette route
+   directement. Volontairement plus fruste que la version affichée : celle-ci
+   guide pendant la saisie, celle-là ne fait que barrer le passage aux mots
+   de passe qu'on ne veut voir sur aucun accès.
+   De la longueur plutôt qu'un assortiment obligatoire de majuscules et de
+   symboles, comme le recommandent aujourd'hui l'ANSSI et le NIST. */
+const LONGUEUR_MINIMALE = 12;
+
+const MOTS_TROP_ATTENDUS = [
+  'motdepasse', 'password', 'azerty', 'qwerty', 'iloveyou', 'admin',
+  'boulangerie', 'patisserie', 'paradis', 'ptitparadis', 'lucsurmer',
+  'bonjour', 'soleil', 'chocolat', 'baguette', 'croissant'
+];
+
+function verifierMotDePasse(mdp, personnel) {
+  if (mdp.length < LONGUEUR_MINIMALE || mdp.length > 200) {
+    throw httpError(`Le mot de passe doit faire au moins ${LONGUEUR_MINIMALE} caractères.`, 400);
+  }
+  const bas = mdp.toLowerCase();
+  if (MOTS_TROP_ATTENDUS.some(m => bas.includes(m))) {
+    throw httpError('Mot de passe trop attendu. Choisissez-en un autre.', 400);
+  }
+  if (/(.)\1{3,}/.test(mdp)) {
+    throw httpError('Mot de passe refusé : évitez de répéter le même caractère.', 400);
+  }
+  const reprend = personnel
+    .map(v => String(v || '').toLowerCase().split('@')[0])
+    .filter(v => v.length >= 4)
+    .some(v => bas.includes(v));
+  if (reprend) {
+    throw httpError('Mot de passe refusé : évitez votre nom ou votre adresse.', 400);
+  }
+}
+
 function texte(v, { min = 0, max, champ }) {
   const s = String(v ?? '').trim();
   if (s.length < min) throw httpError(`${champ} est trop court.`, 400);
@@ -51,10 +86,7 @@ export async function handleInviteAccept(request, env, cors) {
   if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
     throw httpError('Adresse e-mail invalide.', 400);
   }
-  // Même minimum que le formulaire, revérifié ici : le navigateur peut mentir.
-  if (password.length < 8 || password.length > 200) {
-    throw httpError('Le mot de passe doit faire au moins 8 caractères.', 400);
-  }
+  verifierMotDePasse(password, [email, prenom, nom]);
 
   /* L'invitation est relue côté serveur : jusqu'ici c'étaient les règles
      Firestore qui la validaient, ce qui supposait un client déjà authentifié
