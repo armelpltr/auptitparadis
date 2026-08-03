@@ -525,9 +525,12 @@ p{ margin:0 0 1em; color:var(--ink-soft); }
 
 /* Colonne marque */
 .footer-brand-link{ display:inline-flex; align-items:center; gap:.9rem; text-decoration:none; margin-bottom:1rem; }
+/* Le logo porte désormais son propre fond blanc : plus de retrait intérieur
+   ni de fond translucide sous lui, qui laissaient un anneau terne entre le
+   disque blanc et la bordure. Il remplit la pastille, que l'arrondi découpe. */
 .footer-logo{
-  height:54px; width:54px; border-radius:50%; object-fit:contain; padding:4px;
-  background:rgba(251,246,238,.08); border:1px solid rgba(231,199,154,.22); flex-shrink:0;
+  height:54px; width:54px; border-radius:50%; object-fit:cover;
+  background:var(--white); border:1px solid rgba(231,199,154,.22); flex-shrink:0;
   transition:transform .3s var(--ease), border-color .3s var(--ease);
 }
 .footer-brand-link:hover .footer-logo{ transform:scale(1.05) rotate(-3deg); border-color:var(--gold); }
