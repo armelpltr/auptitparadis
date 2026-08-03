@@ -100,6 +100,29 @@ function dateIso(v) {
   return s;
 }
 
+/* L'heure envoyée par le navigateur est revérifiée ici : le formulaire ne
+   propose que des créneaux valables, mais rien n'oblige un client à passer
+   par le formulaire. Sans plage réglée, la commande n'a pas d'heure et n'en
+   attend pas — c'est l'état des commandes passées avant cette option. */
+function heureCreneau(v, periode) {
+  const s = String(v ?? '').trim();
+  if (!periode.heureDebut || !periode.heureFin) return '';
+
+  if (!/^\d{2}:\d{2}$/.test(s)) throw httpError('Heure de retrait invalide.', 400);
+  if (s < periode.heureDebut || s > periode.heureFin) {
+    throw httpError("L'heure de retrait est en dehors des créneaux proposés.", 400);
+  }
+
+  const pas = [15, 30, 60].includes(Number(periode.pasCreneauMinutes))
+    ? Number(periode.pasCreneauMinutes) : 30;
+  const [h, m] = s.split(':').map(Number);
+  const [hd, md] = periode.heureDebut.split(':').map(Number);
+  if (h > 23 || m > 59 || (h * 60 + m - (hd * 60 + md)) % pas !== 0) {
+    throw httpError("L'heure de retrait ne correspond à aucun créneau proposé.", 400);
+  }
+  return s;
+}
+
 /* ---------- Turnstile ---------- */
 
 async function verifierTurnstile(token, request, env) {
@@ -286,6 +309,7 @@ export async function handleOrder(request, env, cors) {
   if (dateRetrait < periode.dateDebut || dateRetrait > periode.dateFin) {
     throw httpError('La date de retrait est en dehors de la période proposée.', 400);
   }
+  const heureRetrait = heureCreneau(body.heureRetrait, periode);
 
   const prenom = texte(body.client?.prenom, { min: 2, max: 40, champ: 'Le prénom' });
   const nom    = texte(body.client?.nom,    { min: 2, max: 40, champ: 'Le nom' });
@@ -330,6 +354,7 @@ export async function handleOrder(request, env, cors) {
     items: lignes,
     total,
     dateRetrait,
+    heureRetrait,
     commentaire,
     manageToken,
     annulableJusqua
@@ -341,5 +366,5 @@ export async function handleOrder(request, env, cors) {
   // enregistrée dont l'e-mail échoue reste une commande valable.
   const emailEnvoye = await envoyerConfirmation(commande, env);
 
-  return json({ ok: true, code, total, dateRetrait, emailEnvoye, email: client.email }, 200, cors);
+  return json({ ok: true, code, total, dateRetrait, heureRetrait, emailEnvoye, email: client.email }, 200, cors);
 }

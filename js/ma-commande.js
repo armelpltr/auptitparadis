@@ -100,7 +100,10 @@
 
     texte('gestionCode', cmd.code || '——————');
     texte('gestionStatut', STATUTS[cmd.statut] || cmd.statut || '—');
-    texte('gestionRetrait', jourLisible(cmd.dateRetrait));
+    // Les commandes passées avant les créneaux n'ont pas d'heure : le jour
+    // seul reste alors affiché, sans « à  » qui pendrait dans le vide.
+    texte('gestionRetrait', jourLisible(cmd.dateRetrait) +
+      (cmd.heureRetrait ? ' à ' + String(cmd.heureRetrait).replace(':', 'h') : ''));
     texte('gestionTotal', euros.format(cmd.total || 0));
 
     var statutEl = $('gestionStatut');

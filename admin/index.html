@@ -335,6 +335,32 @@
           </div>
         </div>
 
+        <div class="form-row-grid">
+          <div class="form-row">
+            <label for="noel-heureDebut">Premier créneau de retrait</label>
+            <input type="time" id="noel-heureDebut" step="900" placeholder="09:00">
+          </div>
+          <div class="form-row">
+            <label for="noel-heureFin">Dernier créneau de retrait</label>
+            <input type="time" id="noel-heureFin" step="900" placeholder="18:00">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <label for="noel-pasCreneau">Espacement des créneaux</label>
+          <div class="form-row-suffixe">
+            <select id="noel-pasCreneau">
+              <option value="15">Toutes les 15 minutes</option>
+              <option value="30" selected>Toutes les 30 minutes</option>
+              <option value="60">Toutes les heures</option>
+            </select>
+          </div>
+          <p class="form-row-hint">
+            Le client choisit un jour <strong>et</strong> une heure de retrait dans cette plage.
+            Laissez les deux heures vides pour ne demander que le jour, comme avant.
+          </p>
+        </div>
+
         <div class="form-row">
           <label for="noel-delaiAnnulation">Délai d'annulation en ligne</label>
           <div class="form-row-suffixe">

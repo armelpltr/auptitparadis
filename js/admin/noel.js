@@ -96,6 +96,9 @@ export async function loadNoel() {
     setVal('noel-dateDebut', s.dateDebut || '');
     setVal('noel-dateFin',   s.dateFin   || '');
     setVal('noel-message',   s.message   || '');
+    setVal('noel-heureDebut', s.heureDebut || '');
+    setVal('noel-heureFin',   s.heureFin   || '');
+    setVal('noel-pasCreneau', String(s.pasCreneauMinutes || 30));
     // Réglage absent = pas d'annulation en ligne : c'est l'état des
     // commandes déjà passées avant l'ajout de cette option.
     setVal('noel-delaiAnnulation', String(s.delaiAnnulationJours ?? 0));
@@ -334,10 +337,25 @@ export function initNoel() {
     );
     if (!ok) return;
 
+    /* Les deux heures vont ensemble : une seule renseignée ne décrit aucune
+       plage, et le formulaire de commande ne saurait quoi proposer. */
+    const heureDebut = val('noel-heureDebut');
+    const heureFin   = val('noel-heureFin');
+    if (Boolean(heureDebut) !== Boolean(heureFin)) {
+      showStatus('Renseignez les deux heures de retrait, ou aucune des deux.', true);
+      return;
+    }
+    if (heureDebut && heureFin <= heureDebut) {
+      showStatus('Le dernier créneau de retrait doit être après le premier.', true);
+      return;
+    }
+
     try {
       await setDoc(doc(db, 'settings', 'noel'), {
         ouvert, dateDebut: debut, dateFin: fin, message: val('noel-message'),
-        delaiAnnulationJours: delaiBrut
+        delaiAnnulationJours: delaiBrut,
+        heureDebut, heureFin,
+        pasCreneauMinutes: Number(val('noel-pasCreneau')) || 30
       }, { merge: true });
       await showSuccess('Période enregistrée ✓', 'La page de commande est à jour.');
     } catch (err) {

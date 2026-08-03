@@ -56,6 +56,7 @@ function vuePublique(commande) {
     statut: commande.statut || 'en_attente',
     prenom: commande.client?.prenom || '',
     dateRetrait: commande.dateRetrait || '',
+    heureRetrait: commande.heureRetrait || '',
     items: (commande.items || []).map(it => ({
       nom: it.nom, quantite: it.quantite, prixUnitaire: it.prixUnitaire
     })),

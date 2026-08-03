@@ -22,6 +22,15 @@ function jourLisible(iso) {
   });
 }
 
+/* Le retrait tel qu'on l'annonce au client : le jour seul tant qu'aucun
+   créneau horaire n'est proposé, sinon le jour et l'heure. Les commandes
+   passées avant les créneaux n'ont pas d'heure et gardent leur affichage. */
+function retraitLisible(commande) {
+  const jour = jourLisible(commande.dateRetrait);
+  if (!jour || !commande.heureRetrait) return jour;
+  return `${jour} à ${String(commande.heureRetrait).replace(':', 'h')}`;
+}
+
 /* Date limite d'annulation : jour ET heure, parce qu'elle tombe rarement à
    minuit. Forcée sur le fuseau de Paris — le Worker tourne en UTC, et une
    limite affichée avec une heure de retard se retourne contre nous. */
@@ -68,8 +77,8 @@ function lignesTexte(items) {
 }
 
 function mailClient(commande, env) {
-  const { code, client, items, total, dateRetrait } = commande;
-  const jour = jourLisible(dateRetrait);
+  const { code, client, items, total } = commande;
+  const jour = retraitLisible(commande);
 
   /* Le bloc de gestion ne s'affiche que si les deux conditions sont
      réunies : une page où aller, et un délai encore ouvert. Annoncer un
@@ -152,7 +161,8 @@ Au P'tit Paradis — Luc-sur-Mer`;
 /* ---------- Annulation par le client ---------- */
 
 function mailClientAnnulation(commande, env) {
-  const { code, client, items, total, dateRetrait } = commande;
+  const { code, client, items, total } = commande;
+  const retrait = retraitLisible(commande);
   const lienCommander = env.SITE_URL
     ? `${env.SITE_URL.replace(/\/+$/, '')}/commander.html`
     : '';
@@ -175,7 +185,7 @@ function mailClientAnnulation(commande, env) {
   </div>
 
   <p style="margin:0 0 8px;color:#4a423a;">
-    <strong>Retrait qui était prévu :</strong> ${esc(jourLisible(dateRetrait))}
+    <strong>Retrait qui était prévu :</strong> ${esc(retrait)}
   </p>
 
   <table style="width:100%;border-collapse:collapse;margin:16px 0;color:#6b6156;">
@@ -213,7 +223,7 @@ function mailClientAnnulation(commande, env) {
 Bonjour ${client.prenom || client.nom},
 
 RÉSERVATION ANNULÉE — code ${code}
-Retrait qui était prévu : ${jourLisible(dateRetrait)}
+Retrait qui était prévu : ${retrait}
 
 ${lignesTexte(items)}
 
@@ -234,13 +244,14 @@ Au P'tit Paradis — Luc-sur-Mer`;
 function mailPatronAnnulation(commande) {
   const { code, client, items, total, dateRetrait } = commande;
   const nom = client.nomComplet || `${client.prenom} ${client.nom}`;
+  const retrait = retraitLisible(commande);
 
   const html = `
 <div style="font-family:Helvetica,Arial,sans-serif;color:#211c17;max-width:520px;margin:0 auto;">
   <h1 style="font-size:18px;margin:0 0 16px;">Réservation annulée par le client — ${esc(code)}</h1>
   <p style="margin:0 0 4px;"><strong>${esc(nom)}</strong></p>
   <p style="margin:0 0 4px;">${esc(client.telephone)} · ${esc(client.email)}</p>
-  <p style="margin:0 0 16px;"><strong>Retrait qui était prévu :</strong> ${esc(jourLisible(dateRetrait))}</p>
+  <p style="margin:0 0 16px;"><strong>Retrait qui était prévu :</strong> ${esc(retrait)}</p>
   <table style="width:100%;border-collapse:collapse;">
     ${lignesHtml(items)}
     <tr>
@@ -255,7 +266,7 @@ function mailPatronAnnulation(commande) {
 
 ${nom}
 ${client.telephone} · ${client.email}
-Retrait qui était prévu : ${jourLisible(dateRetrait)}
+Retrait qui était prévu : ${retrait}
 
 ${lignesTexte(items)}
 
@@ -269,13 +280,14 @@ La commande est déjà passée en « Annulée » dans le panel. Rien à faire.`;
 function mailPatron(commande) {
   const { code, client, items, total, dateRetrait, commentaire } = commande;
   const nom = client.nomComplet || `${client.prenom} ${client.nom}`;
+  const retrait = retraitLisible(commande);
 
   const html = `
 <div style="font-family:Helvetica,Arial,sans-serif;color:#211c17;max-width:520px;margin:0 auto;">
   <h1 style="font-size:18px;margin:0 0 16px;">Nouvelle réservation — ${esc(code)}</h1>
   <p style="margin:0 0 4px;"><strong>${esc(nom)}</strong></p>
   <p style="margin:0 0 4px;">${esc(client.telephone)} · ${esc(client.email)}</p>
-  <p style="margin:0 0 16px;"><strong>Retrait :</strong> ${esc(jourLisible(dateRetrait))}</p>
+  <p style="margin:0 0 16px;"><strong>Retrait :</strong> ${esc(retrait)}</p>
   <table style="width:100%;border-collapse:collapse;">
     ${lignesHtml(items)}
     <tr>
@@ -291,7 +303,7 @@ function mailPatron(commande) {
 
 ${nom}
 ${client.telephone} · ${client.email}
-Retrait : ${jourLisible(dateRetrait)}
+Retrait : ${retrait}
 
 ${lignesTexte(items)}
 

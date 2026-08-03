@@ -144,6 +144,17 @@ function fmtDateRetrait(iso) {
   return Number.isNaN(d.getTime()) ? iso : jourLong.format(d);
 }
 
+function fmtHeure(hhmm) {
+  return hhmm ? String(hhmm).replace(':', 'h') : '';
+}
+
+/* Le jour, et l'heure quand il y en a une : les commandes passées avant les
+   créneaux n'en portent pas et doivent rester lisibles telles quelles. */
+function fmtRetrait(o) {
+  const jour = fmtDateRetrait(o.dateRetrait);
+  return o.heureRetrait ? `${jour} à ${fmtHeure(o.heureRetrait)}` : jour;
+}
+
 /* Les premières commandes n'avaient qu'un champ `nom` : on retombe dessus
    plutôt que d'afficher « (sans nom) » sur un historique parfaitement bon. */
 function nomClient(c) {
@@ -213,7 +224,12 @@ export async function loadOrders() {
     ordersCache = snap.docs.map(d => ({ id: d.id, ...d.data() }));
     // Tri côté client : croiser statut et date de retrait dans la requête
     // réclamerait un index composite créé à la main dans la console.
-    ordersCache.sort((a, b) => String(a.dateRetrait || '').localeCompare(String(b.dateRetrait || '')));
+    /* L'heure entre dans le tri : sur une même journée, c'est l'ordre dans
+       lequel les clients se présentent au comptoir. Les commandes sans heure
+       passent en tête de leur journée, faute de mieux. */
+    ordersCache.sort((a, b) =>
+      `${a.dateRetrait || ''} ${a.heureRetrait || ''}`
+        .localeCompare(`${b.dateRetrait || ''} ${b.heureRetrait || ''}`));
     renderStats();
     renderPrepa();
     renderOrders();
@@ -263,7 +279,7 @@ function renderOrders() {
         <header class="cmd-header">
           <span class="cmd-code">${escapeAttr(o.code || '——')}</span>
           <span class="cmd-statut statut-${escapeAttr(o.statut || 'inconnu')}">${statut.emoji || ''} ${escapeAttr(statut.label)}</span>
-          <span class="cmd-retrait">Retrait ${escapeAttr(fmtDateRetrait(o.dateRetrait))}</span>
+          <span class="cmd-retrait">Retrait ${escapeAttr(fmtRetrait(o))}</span>
         </header>
 
         ${alerte ? `<p class="cmd-alerte">Non confirmée depuis ${attente} jour${attente > 1 ? 's' : ''}</p>` : ''}
@@ -413,12 +429,18 @@ function corpsTicket(o, type = 'commande') {
   /* Le code passe en tête sur les tickets de comptoir — c'est par lui qu'on
      retrouve la commande. En production c'est la date qui commande le
      travail : elle prend la vedette, le code reste en rappel discret. */
+  const heure = o.heureRetrait
+    ? `<p class="t-heure">${escapeAttr(fmtHeure(o.heureRetrait))}</p>`
+    : '';
+
   const identite = type === 'production'
     ? `<p class="t-jour">${escapeAttr(fmtDateRetrait(o.dateRetrait))}</p>
+       ${heure}
        <p class="t-rappel">${escapeAttr(nomClient(o.client))} — ${escapeAttr(o.code || '——')}</p>`
     : `<p class="t-code">${escapeAttr(o.code || '——')}</p>
        <p class="t-jour-libelle">RETRAIT</p>
-       <p class="t-jour">${escapeAttr(fmtDateRetrait(o.dateRetrait))}</p>`;
+       <p class="t-jour">${escapeAttr(fmtDateRetrait(o.dateRetrait))}</p>
+       ${heure}`;
 
   /* Une commande web et une commande prise au comptoir finissent dans la même
      pile de tickets : sans cette mention, impossible de savoir laquelle est
@@ -546,6 +568,9 @@ function documentTickets(o, types) {
   .t-code{ text-align:center; font-size:22px; font-weight:bold; letter-spacing:2px; margin:0 0 6px; }
   .t-jour-libelle{ text-align:center; font-size:10px; letter-spacing:2px; margin:0; }
   .t-jour{ text-align:center; font-size:16px; font-weight:bold; margin:0 0 4px; }
+  /* L'heure est ce qu'on cherche en premier au comptoir quand la journée est
+     chargée : elle se lit plus gros que le jour. */
+  .t-heure{ text-align:center; font-size:20px; font-weight:bold; margin:0 0 4px; }
   .t-rappel{ text-align:center; font-size:12px; margin:2px 0 4px; }
 
   .t-sep{ border-top:1px dashed #000; margin:5px 0; }

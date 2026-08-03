@@ -129,12 +129,20 @@
           <strong id="panierTotalValeur">0,00 €</strong>
         </div>
 
-        <div class="form-field">
-          <label for="ordDate" id="ordDateLabel">Jour de retrait</label>
-          <!-- Le <select> reste la source de vérité ; commande.js construit
-               par-dessus une liste stylable, la liste native étant dessinée
-               par le système et hors de portée du CSS. -->
-          <select id="ordDate" required></select>
+        <div class="form-duo">
+          <div class="form-field">
+            <label for="ordDate" id="ordDateLabel">Jour de retrait</label>
+            <!-- Le <select> reste la source de vérité ; commande.js construit
+                 par-dessus une liste stylable, la liste native étant dessinée
+                 par le système et hors de portée du CSS. -->
+            <select id="ordDate" required></select>
+          </div>
+          <!-- Masqué tant qu'aucune plage horaire n'est réglée côté admin :
+               la commande continue alors de ne porter qu'un jour. -->
+          <div class="form-field" id="ordHeureChamp" hidden>
+            <label for="ordHeure" id="ordHeureLabel">Heure de retrait</label>
+            <select id="ordHeure"></select>
+          </div>
         </div>
 
         <div class="form-duo">

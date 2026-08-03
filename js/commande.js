@@ -150,6 +150,37 @@ function remplirDates(dateDebut, dateFin) {
   return options.length > 0;
 }
 
+/* ---------- Heures de retrait ---------- */
+/* Des créneaux et non une heure libre : la boutique n'est pas ouverte à
+   toute heure, et un champ libre produit des demandes intenables. La plage
+   et l'espacement viennent des réglages ; sans plage, on ne demande que le
+   jour, comme avant. */
+function remplirHeures(heureDebut, heureFin, pasMinutes) {
+  if (!heureDebut || !heureFin) return false;
+
+  const enMinutes = (hhmm) => {
+    const [h, m] = String(hhmm).split(':').map(Number);
+    return Number.isFinite(h) && Number.isFinite(m) ? h * 60 + m : null;
+  };
+
+  const debut = enMinutes(heureDebut);
+  const fin   = enMinutes(heureFin);
+  const pas   = [15, 30, 60].includes(Number(pasMinutes)) ? Number(pasMinutes) : 30;
+  if (debut === null || fin === null || fin < debut) return false;
+
+  const options = [];
+  for (let m = debut; m <= fin && options.length < 96; m += pas) {
+    const hhmm = `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
+    options.push(`<option value="${hhmm}">${escapeHTML(hhmm.replace(':', 'h'))}</option>`);
+  }
+  if (!options.length) return false;
+
+  $('ordHeure').innerHTML = options.join('');
+  $('ordHeureChamp').hidden = false;
+  $('ordHeure').required = true;
+  return true;
+}
+
 /* ---------- Liste déroulante habillée ---------- */
 /* La liste ouverte d'un <select> est dessinée par le système : ni sa police,
    ni ses couleurs, ni ses arrondis ne suivent le reste du formulaire. On la
@@ -312,6 +343,9 @@ async function envoyerCommande(e) {
         items: [...panier].map(([id, quantite]) => ({ id, quantite })),
         client: { prenom, nom, telephone: tel, email },
         dateRetrait: $('ordDate').value,
+        // Vide tant qu'aucune plage horaire n'est réglée : le Worker le sait
+        // et n'exige alors pas d'heure.
+        heureRetrait: $('ordHeureChamp').hidden ? '' : $('ordHeure').value,
         commentaire: $('ordCommentaire').value.trim()
       })
     });
@@ -339,8 +373,9 @@ function afficherSucces(body) {
   $('succesCode').textContent = body.code || '';
 
   const date = body.dateRetrait ? jourLong.format(new Date(`${body.dateRetrait}T12:00:00`)) : '';
+  const heure = body.heureRetrait ? ` à ${body.heureRetrait.replace(':', 'h')}` : '';
   $('succesDetail').textContent = date
-    ? `Retrait le ${date} — ${euros.format(body.total || 0)} à régler sur place.`
+    ? `Retrait le ${date}${heure} — ${euros.format(body.total || 0)} à régler sur place.`
     : '';
 
   // Ne rien promettre que le serveur n'ait fait : il répond s'il a écrit
@@ -382,10 +417,13 @@ function afficherSucces(body) {
     return;
   }
 
+  const heuresOk = remplirHeures(periode.heureDebut, periode.heureFin, periode.pasCreneauMinutes);
+
   $('commandeBody').hidden = false;
   // Après l'affichage : la liste mesure ses positions, ce qu'un conteneur
   // encore masqué ne permet pas.
   habillerSelecteur($('ordDate'), 'ordDateLabel');
+  if (heuresOk) habillerSelecteur($('ordHeure'), 'ordHeureLabel');
   $('commandeForm').addEventListener('submit', envoyerCommande);
 
   try {
