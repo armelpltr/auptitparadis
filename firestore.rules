@@ -56,6 +56,32 @@ service cloud.firestore {
           && inviteByToken(token).expiresAt > request.time;
     }
 
+    // Les deux façons de modifier une entrée d'admins, sorties en fonctions
+    // pour que l'autorisation elle-meme tienne sur une ligne : le parser des
+    // regles bute sur une condition a deux branches parenthesees.
+
+    // Un gestionnaire d'acces change les roles et les alertes. Rien d'autre
+    // n'est modifiable : reecrire l'e-mail d'une entree permettrait de se
+    // l'approprier.
+    // Deux verrous sur le role : on ne touche pas a un superadmin sans
+    // l'etre, et on n'en nomme pas un sans l'etre non plus. Sans le premier,
+    // un admin retrograde le compte qui pourrait le corriger ; sans le
+    // second, il s'y promeut lui-meme.
+    function majParGestionnaire() {
+      return isOwner()
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['role', 'notifications'])
+          && request.resource.data.get('role', 'admin') in ['superadmin', 'admin', 'editor']
+          && (resource.data.get('role', 'admin') != 'superadmin' || isSuper())
+          && (request.resource.data.get('role', 'admin') != 'superadmin' || isSuper());
+    }
+
+    // Chacun coupe ses propres alertes, sans toucher a son role.
+    function majDeSesAlertes(uid) {
+      return request.auth != null
+          && request.auth.uid == uid
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['notifications']);
+    }
+
     // Contenu du site : ouvert aux trois rôles, c'est le métier de base du
     // panel. Exception plus bas pour `settings/noel`.
     match /settings/{docId} {
@@ -94,7 +120,7 @@ service cloud.firestore {
       allow read, write: if isOwner();
     }
 
-    // Compteur des codes de commande (SITE0001, SITE0002…). Le Worker
+    // Compteur des codes de commande (SITE0001, SITE0002...). Le Worker
     // l'incrémente avec la clé de service, qui contourne ces règles ; ici on
     // ne traite que le panel.
     //
@@ -134,29 +160,8 @@ service cloud.firestore {
                     // administrateur qui ouvre le robinet, ou soi-même ensuite.
                     && request.resource.data.get('notifications', false) == false;
 
-      // Deux `allow update` plutôt qu'une condition à deux branches : le
-      // parser des règles refuse la forme `if (…) || (…)` sur plusieurs
-      // lignes, et deux autorisations pour la même opération se combinent
-      // de toute façon en « l'une ou l'autre ».
-
-      // Un gestionnaire d'accès change les rôles et les alertes. Rien
-      // d'autre n'est modifiable : réécrire l'e-mail d'une entrée
-      // permettrait de se l'approprier.
-      //
-      // Deux verrous sur le rôle : on ne touche pas à un superadmin sans
-      // l'être, et on n'en nomme pas un sans l'être non plus. Sans le
-      // premier, un admin rétrograde le compte qui pourrait le corriger ;
-      // sans le second, il s'y promeut lui-même.
-      allow update: if isOwner()
-                    && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['role', 'notifications'])
-                    && request.resource.data.get('role', 'admin') in ['superadmin', 'admin', 'editor']
-                    && (resource.data.get('role', 'admin') != 'superadmin' || isSuper())
-                    && (request.resource.data.get('role', 'admin') != 'superadmin' || isSuper());
-
-      // Chacun coupe ses propres alertes, sans toucher à son rôle.
-      allow update: if request.auth != null
-                    && request.auth.uid == uid
-                    && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['notifications']);
+      // Les deux cas sont definis plus haut, en fonctions.
+      allow update: if majParGestionnaire() || majDeSesAlertes(uid);
 
       allow delete: if isOwner()
                     && (resource.data.get('role', 'admin') != 'superadmin' || isSuper());
