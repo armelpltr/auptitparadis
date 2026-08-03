@@ -346,62 +346,10 @@ async function changerStatutViaSelect(id, nouveauStatut, selectEl) {
    - commande   : le comptoir cherche qui appeler et où en est le dossier ;
    - production : la cuisine cherche un jour, des quantités et une allergie. */
 const TICKETS = {
-  client:     { titre: 'CLIENT',     prix: true,  coordonnees: false, boutique: true,  barres: true  },
-  commande:   { titre: 'INTERNE',    prix: true,  coordonnees: true,  boutique: true,  barres: true  },
-  production: { titre: 'À PRODUIRE', prix: false, coordonnees: false, boutique: false, barres: false }
+  client:     { titre: 'CLIENT',     prix: true,  coordonnees: false, boutique: true  },
+  commande:   { titre: 'INTERNE',    prix: true,  coordonnees: true,  boutique: true  },
+  production: { titre: 'À PRODUIRE', prix: false, coordonnees: false, boutique: false }
 };
-
-/* ---------- Code-barres ---------- */
-/* Code 128 B, écrit ici plutôt qu'importé : une bibliothèque de plus pour
-   dessiner des rectangles noirs ne se justifie pas, et le ticket doit
-   pouvoir s'imprimer même si un CDN est injoignable.
-   Les 107 motifs de la norme : trois chiffres de barres et trois d'espaces,
-   onze modules chacun (treize pour le stop, qui porte une barre de plus). */
-const C128 = ('212222,222122,222221,121223,121322,131222,122213,122312,132212,221213,' +
-'221312,231212,112232,122132,122231,113222,123122,123221,223211,221132,' +
-'221231,213212,223112,312131,311222,321122,321221,312212,322112,322211,' +
-'212123,212321,232121,111323,131123,131321,112313,132113,132311,211313,' +
-'231113,231311,112133,112331,132131,113123,113321,133121,313121,211331,' +
-'231131,213113,213311,213131,311123,311321,331121,312113,312311,332111,' +
-'314111,221411,431111,111224,111422,121124,121421,141122,141221,112214,' +
-'112412,122114,122411,142112,142211,241211,221114,413111,241112,134111,' +
-'111242,121142,121241,114212,124112,124211,411212,421112,421211,212141,' +
-'214121,412121,111143,111341,131141,114113,114311,411113,411311,113141,' +
-'114131,311141,411131,211412,211214,211232,2331112').split(',');
-
-const C128_START_B = 104;
-const C128_STOP    = 106;
-
-/* Le SVG s'impose sur un canvas : l'imprimante thermique rastérise elle-même
-   à 203 dpi, une image bitmap redimensionnée sortirait baveuse et la
-   douchette refuserait de lire. */
-function codeBarresSVG(texte) {
-  const t = String(texte || '');
-  // Code 128 B ne couvre que l'ASCII imprimable : hors de là, pas de barres
-  // plutôt qu'un code-barres faux qu'une douchette lirait de travers.
-  if (!t || [...t].some(c => c.charCodeAt(0) < 32 || c.charCodeAt(0) > 126)) return '';
-
-  let somme = C128_START_B;
-  let motifs = C128[C128_START_B];
-  [...t].forEach((c, i) => {
-    const v = c.charCodeAt(0) - 32;
-    somme += (i + 1) * v;
-    motifs += C128[v];
-  });
-  motifs += C128[somme % 103] + C128[C128_STOP];
-
-  // Les chiffres donnent des largeurs qui alternent barre, espace, barre...
-  const rects = [];
-  let x = 0;
-  [...motifs].forEach((chiffre, i) => {
-    const l = Number(chiffre);
-    if (i % 2 === 0) rects.push(`<rect x="${x}" y="0" width="${l}" height="30"/>`);
-    x += l;
-  });
-
-  return `<svg class="t-barres" viewBox="0 0 ${x} 30" preserveAspectRatio="none"
-    xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">${rects.join('')}</svg>`;
-}
 
 /* Le ticket est un instantané : sur un rouleau qui traîne, savoir de quand
    il date évite de préparer une commande depuis modifiée ou annulée. */
@@ -513,16 +461,6 @@ function ticketHTML(o, type = 'commande') {
        <p class="t-centre">Merci et à bientôt !</p>`
     : '';
 
-  /* Le code-barres porte le code de commande : passé à la douchette, il
-     atterrit dans le champ de recherche de l'onglet Commandes, qui filtre
-     déjà sur ce code. Rien de plus à brancher. */
-  const barres = (conf.barres && o.code)
-    ? `<div class="t-barres-bloc">
-         ${codeBarresSVG(o.code)}
-         <p class="t-barres-txt">${escapeAttr(o.code)}</p>
-       </div>`
-    : '';
-
   return `<!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -583,12 +521,6 @@ function ticketHTML(o, type = 'commande') {
 
   .t-petit{ font-size:10px; }
   .t-pied{ text-align:center; font-size:9px; margin:8px 0 0; }
-
-  /* Une douchette a besoin de blanc autour des barres pour accrocher, et
-     d'une hauteur suffisante pour tolérer un passage de travers. */
-  .t-barres-bloc{ text-align:center; margin:10px 0 0; padding:2mm 0; }
-  .t-barres{ width:56mm; height:14mm; display:block; margin:0 auto; }
-  .t-barres-txt{ font-size:10px; letter-spacing:3px; margin:1px 0 0; }
 </style>
 </head>
 <body class="${type === 'production' ? 'prod' : ''}">
@@ -604,7 +536,6 @@ function ticketHTML(o, type = 'commande') {
 
   ${commentaire}
   ${pied}
-  ${barres}
 
   <p class="t-pied">imprimé le ${escapeAttr(fmtImpression())}</p>
 </body>
