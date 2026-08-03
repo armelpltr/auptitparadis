@@ -258,6 +258,11 @@ function renderOrders() {
               `<option value="${cle}" ${o.statut === cle ? 'selected' : ''}>${escapeAttr(s.label)}</option>`
             ).join('')}
           </select>
+          <select class="cmd-impression-type" data-action="typeTicket">
+            <option value="client">Ticket client</option>
+            <option value="commande">Ticket commande</option>
+            <option value="production">Ticket production</option>
+          </select>
           <button type="button" class="btn btn-ghost btn-small" data-action="imprimer">Imprimer</button>
           <button type="button" class="btn btn-ghost btn-small cmd-supprimer" data-action="supprimer">Supprimer</button>
         </div>
@@ -268,7 +273,10 @@ function renderOrders() {
     const id = carte.dataset.id;
     const select = carte.querySelector('[data-action="statut"]');
     select?.addEventListener('change', () => changerStatutViaSelect(id, select.value, select));
-    carte.querySelector('[data-action="imprimer"]')?.addEventListener('click', () => imprimerCommande(id));
+    carte.querySelector('[data-action="imprimer"]')?.addEventListener('click', () => {
+      const type = carte.querySelector('[data-action="typeTicket"]').value;
+      imprimerCommande(id, type);
+    });
     carte.querySelector('[data-action="supprimer"]')?.addEventListener('click', () => supprimerCommande(id));
   });
 }
@@ -309,19 +317,57 @@ async function changerStatutViaSelect(id, nouveauStatut, selectEl) {
    sur le dialogue d'impression du navigateur, pas sur un pilote ESC/POS —
    on choisit l'imprimante SAGA comme n'importe quelle autre, depuis le
    même poste que la caisse. */
-function ticketHTML(o) {
+const TITRES_TICKET = {
+  client:     'COMMANDE',
+  commande:   'COMMANDE — INTERNE',
+  production: 'À PRODUIRE'
+};
+
+function ticketHTML(o, type = 'commande') {
+  const avecPrix = type !== 'production';
+  const avecCoordonnees = type !== 'client';
+
   const lignes = (o.items || []).map(it => `
     <tr>
       <td>${it.quantite}×</td>
       <td>${escapeAttr(it.nom)}</td>
-      <td class="ticket-droite">${escapeAttr(euros.format((it.prixUnitaire || 0) * (it.quantite || 0)))}</td>
+      ${avecPrix ? `<td class="ticket-droite">${escapeAttr(euros.format((it.prixUnitaire || 0) * (it.quantite || 0)))}</td>` : ''}
     </tr>`).join('');
+
+  const entete = type === 'production'
+    ? '' // pas de nom/adresse de la boutique : ce ticket ne quitte jamais la cuisine
+    : `<h1>Au P'tit Paradis</h1>
+       <p class="ticket-adresse">1 Place du Petit Enfer<br>14530 Luc-sur-Mer</p>`;
+
+  const coordonnees = avecCoordonnees
+    ? `<p class="ticket-info"><strong>Client :</strong> ${escapeAttr(nomClient(o.client))}</p>
+       <p class="ticket-info"><strong>Téléphone :</strong> ${escapeAttr(fmtTelephone(o.client?.telephone))}</p>
+       ${o.client?.email ? `<p class="ticket-info"><strong>E-mail :</strong> ${escapeAttr(o.client.email)}</p>` : ''}`
+    : `<p class="ticket-info"><strong>Client :</strong> ${escapeAttr(nomClient(o.client))}</p>`;
+
+  const total = avecPrix
+    ? `<div class="ticket-ligne"></div>
+       <table>
+         <tr><td class="ticket-total">TOTAL</td><td></td><td class="ticket-droite ticket-total">${escapeAttr(euros.format(o.total || 0))}</td></tr>
+       </table>`
+    : '';
+
+  // Le commentaire compte double en production : c'est le seul endroit où
+  // une allergie ou une demande particulière peut encore être vue avant
+  // que le produit ne soit fait.
+  const commentaire = o.commentaire
+    ? `<p class="ticket-commentaire ${type === 'production' ? 'ticket-commentaire-fort' : ''}">« ${escapeAttr(o.commentaire)} »</p>`
+    : '';
+
+  const pied = type === 'client'
+    ? `<div class="ticket-ligne"></div><p class="ticket-info" style="text-align:center">Merci et à bientôt !</p>`
+    : '';
 
   return `<!DOCTYPE html>
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<title>Commande ${escapeAttr(o.code || '')}</title>
+<title>${escapeAttr(TITRES_TICKET[type] || 'Commande')} ${escapeAttr(o.code || '')}</title>
 <style>
   @page{ size:80mm auto; margin:0; }
   body{
@@ -339,36 +385,29 @@ function ticketHTML(o) {
   .ticket-total{ font-weight:bold; font-size:14px; }
   .ticket-info{ margin:2px 0; }
   .ticket-commentaire{ margin-top:6px; font-style:italic; }
+  .ticket-commentaire-fort{ font-size:15px; font-weight:bold; font-style:normal; border:1px solid #000; padding:3px 5px; }
 </style>
 </head>
 <body>
-  <h1>Au P'tit Paradis</h1>
-  <p class="ticket-adresse">1 Place du Petit Enfer<br>14530 Luc-sur-Mer</p>
-
-  <p class="ticket-titre">COMMANDE SITE</p>
+  ${entete}
+  <p class="ticket-titre">${escapeAttr(TITRES_TICKET[type] || '')}</p>
   <p class="ticket-code">${escapeAttr(o.code || '——')}</p>
 
   <div class="ticket-ligne"></div>
-  <p class="ticket-info"><strong>Client :</strong> ${escapeAttr(nomClient(o.client))}</p>
-  <p class="ticket-info"><strong>Téléphone :</strong> ${escapeAttr(fmtTelephone(o.client?.telephone))}</p>
-  ${o.client?.email ? `<p class="ticket-info"><strong>E-mail :</strong> ${escapeAttr(o.client.email)}</p>` : ''}
+  ${coordonnees}
   <p class="ticket-info"><strong>Retrait :</strong> ${escapeAttr(fmtDateRetrait(o.dateRetrait))}</p>
 
   <div class="ticket-ligne"></div>
   <table>${lignes}</table>
-  <div class="ticket-ligne"></div>
-  <table>
-    <tr><td class="ticket-total">TOTAL</td><td></td><td class="ticket-droite ticket-total">${escapeAttr(euros.format(o.total || 0))}</td></tr>
-  </table>
+  ${total}
 
-  ${o.commentaire ? `<p class="ticket-commentaire">« ${escapeAttr(o.commentaire)} »</p>` : ''}
-  <div class="ticket-ligne"></div>
-  <p class="ticket-info" style="text-align:center">Merci et à bientôt !</p>
+  ${commentaire}
+  ${pied}
 </body>
 </html>`;
 }
 
-function imprimerCommande(id) {
+function imprimerCommande(id, type = 'commande') {
   const o = ordersCache.find(x => x.id === id);
   if (!o) return;
 
@@ -377,7 +416,7 @@ function imprimerCommande(id) {
     showStatus("Le navigateur a bloqué l'ouverture de la fenêtre d'impression (pop-up).", true);
     return;
   }
-  fenetre.document.write(ticketHTML(o));
+  fenetre.document.write(ticketHTML(o, type));
   fenetre.document.close();
 
   // Laisse le temps au document de se poser avant d'appeler l'impression —

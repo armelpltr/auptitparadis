@@ -520,6 +520,12 @@ button.back-to-site{ background:none; border:none; cursor:pointer; font-family:i
   color:var(--ink); cursor:pointer;
 }
 
+.cmd-impression-type{
+  border:1px solid var(--sand); border-radius:999px; background:var(--white);
+  padding:.5em 1.4em .5em 1em; font-family:inherit; font-size:.85rem;
+  color:var(--ink-soft); cursor:pointer;
+}
+
 .cmd-header{
   display:flex; align-items:center; gap:.9rem; flex-wrap:wrap;
   margin-bottom:.8rem;
