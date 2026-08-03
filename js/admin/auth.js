@@ -78,6 +78,12 @@ const GOOGLE_ERRORS = {
      peut aussi être un simple incident réseau, d'où le « réessayez ». */
   'auth/internal-error':            `La connexion Google ne répond pas. Réessayez dans un instant ; si cela persiste, la configuration Google du projet est à vérifier. ${REPLI_MOT_DE_PASSE} (auth/internal-error).`,
   'auth/network-request-failed':    `Connexion Google impossible : le réseau n'a pas répondu. Vérifiez la connexion, puis réessayez (auth/network-request-failed).`,
+  /* L'inscription est fermée : Google ne peut plus créer de compte, il ne
+     peut que connecter un compte existant. Une adresse inconnue tombe donc
+     ici, et non sur la garde d'accès — c'est le refus voulu, pas une panne,
+     d'où un message qui parle d'accès et non de configuration. */
+  'auth/admin-restricted-operation':
+    "Ce compte Google n'a pas accès à l'administration. Les accès se créent sur invitation.",
   'auth/account-exists-with-different-credential':
     "Un compte existe déjà avec cette adresse et un mot de passe. Connectez-vous avec le mot de passe."
 };
@@ -131,17 +137,6 @@ async function creerAccesViaWorker(charge) {
   return corps.role || 'editor';
 }
 
-/* Le prénom et le nom restent demandés même par Google : `displayName` est
-   un champ libre, souvent un pseudonyme, parfois vide. On s'en sert comme
-   repli quand les champs n'ont pas été remplis, pas comme source. */
-function nomDepuis(user, prenom, nom) {
-  if (prenom && nom) return { prenom, nom };
-  const morceaux = String(user.displayName || '').trim().split(/\s+/);
-  return {
-    prenom: prenom || morceaux[0] || 'Prénom',
-    nom: nom || morceaux.slice(1).join(' ') || 'Nom'
-  };
-}
 
 function inviteErrorMessage(err) {
   if (err.code === 'auth/invalid-credential' || err.code === 'auth/wrong-password') {
@@ -397,51 +392,6 @@ export function initAuth(onReady) {
     loginScreen.hidden = true;
     inviteScreen.hidden = false;
   }
-
-  /* Créer son accès par Google. L'ordre est inverse de celui du mot de
-     passe : la fenêtre surgissante ouvre d'abord la session, et c'est le
-     jeton d'identité qui en résulte qu'on présente au Worker. On ne lui
-     envoie donc aucune adresse — il lit celle du jeton, qu'on ne peut pas
-     falsifier, là où un champ de formulaire se remplit comme on veut. */
-  document.getElementById('inviteGoogleBtn')?.addEventListener('click', async () => {
-    const errEl = document.getElementById('inviteError');
-    errEl.hidden = true;
-
-    acceptingInvite = true;
-    try {
-      const cred = await signInWithPopup(auth, google);
-      const { prenom, nom } = nomDepuis(
-        cred.user,
-        document.getElementById('inviteFormPrenom').value.trim(),
-        document.getElementById('inviteFormNom').value.trim()
-      );
-
-      const role = await creerAccesViaWorker({
-        prenom, nom, idToken: await cred.user.getIdToken()
-      });
-
-      /* Le jeton en main ne porte pas encore l'accès qui vient d'être écrit.
-         Le rafraîchir évite que la vérification suivante retombe sur une
-         version périmée et referme le panel aussitôt ouvert. */
-      await cred.user.getIdToken(true);
-
-      history.replaceState({}, '', location.pathname);
-
-      acceptingInvite = false;
-      inviteScreen.hidden = true;
-      loginScreen.hidden = true;
-      adminApp.hidden = false;
-      onReady(role);
-    } catch (err) {
-      acceptingInvite = false;
-      errEl.textContent = GOOGLE_ERRORS[err?.code] || inviteErrorMessage(err);
-      errEl.hidden = false;
-      /* L'accès n'a pas été accordé : la session Google ouverte au passage
-         n'a plus lieu d'être, et le compte tout juste créé sera nettoyé par
-         la garde d'accès au prochain passage. */
-      if (auth.currentUser) await signOut(auth);
-    }
-  });
 
   document.getElementById('inviteForm').addEventListener('submit', async (e) => {
     e.preventDefault();

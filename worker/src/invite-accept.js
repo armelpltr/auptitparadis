@@ -24,7 +24,7 @@
 import { json, httpError } from './http.js';
 import {
   firestoreGet, firestoreSet, firestoreDelete,
-  createAuthUser, findAuthUserByEmail, deleteAuthUser, verifyIdToken
+  createAuthUser, findAuthUserByEmail, deleteAuthUser
 } from './firebase.js';
 
 const ROLES = ['superadmin', 'admin', 'editor'];
@@ -45,37 +45,15 @@ export async function handleInviteAccept(request, env, cors) {
   const prenom = texte(body.prenom, { min: 2, max: 40, champ: 'Le prénom' });
   const nom    = texte(body.nom,    { min: 2, max: 40, champ: 'Le nom' });
 
-  /* Deux façons d'arriver ici. Par mot de passe, le compte n'existe pas
-     encore et c'est ce Worker qui le crée. Par Google, il vient d'être créé
-     par la fenêtre surgissante et la personne nous en apporte la preuve : un
-     jeton d'identité, dont on vérifie la signature auprès de Google. Dans ce
-     second cas l'adresse ne vient pas du formulaire mais du jeton — la
-     saisir n'aurait aucune valeur, alors que le jeton, lui, ne se falsifie
-     pas. */
-  const idToken = String(body.idToken ?? '').trim();
-  const parGoogle = idToken.length > 0;
-
-  let email, password = '';
-  if (parGoogle) {
-    let identite;
-    try {
-      identite = await verifyIdToken(idToken, env);
-    } catch (err) {
-      throw httpError('Connexion Google invalide. Réessayez.', 401);
-    }
-    email = String(identite.email ?? '').toLowerCase();
-    if (!email) throw httpError('Ce compte Google ne fournit pas d\'adresse e-mail.', 400);
-  } else {
-    email = texte(body.email, { min: 3, max: 120, champ: "L'adresse e-mail" }).toLowerCase();
-    password = String(body.password ?? '');
-    // Même minimum que le formulaire, revérifié ici : le navigateur peut mentir.
-    if (password.length < 8 || password.length > 200) {
-      throw httpError('Le mot de passe doit faire au moins 8 caractères.', 400);
-    }
-  }
+  const email = texte(body.email, { min: 3, max: 120, champ: "L'adresse e-mail" }).toLowerCase();
+  const password = String(body.password ?? '');
 
   if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
     throw httpError('Adresse e-mail invalide.', 400);
+  }
+  // Même minimum que le formulaire, revérifié ici : le navigateur peut mentir.
+  if (password.length < 8 || password.length > 200) {
+    throw httpError('Le mot de passe doit faire au moins 8 caractères.', 400);
   }
 
   /* L'invitation est relue côté serveur : jusqu'ici c'étaient les règles
@@ -98,7 +76,7 @@ export async function handleInviteAccept(request, env, cors) {
      quelqu'un peut avoir un compte sans figurer dans `admins`. On le
      réutilise plutôt que d'échouer, mais sans toucher à son mot de passe —
      le connaître ne doit pas permettre de le remplacer. */
-  let uid = parGoogle ? null : await createAuthUser({ email, password }, env);
+  let uid = await createAuthUser({ email, password }, env);
   let compteCree = uid !== null;
 
   if (!compteCree) {
@@ -133,9 +111,8 @@ export async function handleInviteAccept(request, env, cors) {
   // Le lien ne doit pas resservir : il vaut accès à lui seul.
   await firestoreDelete(`invites/${token}`, env).catch(() => {});
 
-  /* Pas de jeton renvoyé. Par mot de passe, le navigateur ouvre la session
-     avec celui qu'il vient de choisir ; par Google, elle est déjà ouverte
-     depuis la fenêtre surgissante. Se connecter reste permis même quand
-     l'inscription publique est fermée. */
-  return json({ ok: true, role, parGoogle }, 200, cors);
+  // Pas de jeton renvoyé : le navigateur ouvre la session avec le mot de
+  // passe qui vient d'être choisi. Se connecter reste permis même quand
+  // l'inscription publique est fermée.
+  return json({ ok: true, role }, 200, cors);
 }
