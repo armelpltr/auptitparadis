@@ -31,20 +31,26 @@ const pendingInvite = new URLSearchParams(location.search).get('token') || null;
    juste après. Ce drapeau met la vérification en pause le temps de l'écriture. */
 let acceptingInvite = false;
 
-/* Un message par cause réelle : "vérifie l'e-mail et le mot de passe" envoyait
-   sur une fausse piste quand le vrai problème était côté configuration. */
+/* Ces messages s'affichent sur une page publique, devant n'importe qui.
+   Les versions précédentes indiquaient quoi corriger dans la console
+   Firebase : utile au développeur, mais c'était renseigner un inconnu sur
+   l'infrastructure et sur l'existence ou non d'un compte. Le code d'erreur
+   reste affiché pour les pannes de configuration, il ne dit rien de
+   sensible et évite de chercher à l'aveugle. */
 const LOGIN_ERRORS = {
-  'auth/invalid-credential':    "E-mail ou mot de passe incorrect. Si le compte n'a jamais été créé, ajoute-le dans Firebase Console > Authentication > Users.",
-  'auth/user-not-found':        "Aucun compte avec cet e-mail. Crée-le dans Firebase Console > Authentication > Users.",
-  'auth/wrong-password':        'Mot de passe incorrect.',
-  'auth/invalid-email':         "Format d'e-mail invalide.",
-  'auth/user-disabled':         'Ce compte a été désactivé dans Firebase.',
-  'auth/too-many-requests':     'Trop de tentatives. Patiente quelques minutes avant de réessayer.',
-  'auth/operation-not-allowed': "La connexion par e-mail/mot de passe n'est pas activée. Firebase Console > Authentication > Sign-in method > Email/Password > Activer.",
-  'auth/configuration-not-found': "Authentication n'est pas configuré sur ce projet Firebase. Console > Authentication > Get started.",
-  'auth/unauthorized-domain':   "Domaine non autorisé. Ajoute armelpltr.github.io dans Firebase Console > Authentication > Settings > Domaines autorisés.",
-  'auth/network-request-failed': 'Pas de connexion au serveur Firebase. Vérifie ta connexion internet.',
-  'auth/api-key-not-valid':     'Clé API Firebase invalide dans firebase-config.js.'
+  'auth/invalid-credential':    "Connexion refusée : aucun compte ne correspond à ces identifiants. Si vous faites partie de l'équipe, demandez un accès à l'administrateur du site.",
+  'auth/user-not-found':        "Connexion refusée : aucun compte ne correspond à ces identifiants. Si vous faites partie de l'équipe, demandez un accès à l'administrateur du site.",
+  'auth/wrong-password':        "Connexion refusée : aucun compte ne correspond à ces identifiants. Si vous faites partie de l'équipe, demandez un accès à l'administrateur du site.",
+  'auth/invalid-email':         "Format d'adresse e-mail invalide.",
+  'auth/user-disabled':         "Cet accès a été désactivé. Contactez l'administrateur du site.",
+  'auth/too-many-requests':     'Trop de tentatives. Patientez quelques minutes avant de réessayer.',
+  'auth/network-request-failed': 'Pas de connexion au serveur. Vérifiez votre connexion internet.',
+  // Pannes de configuration : elles ne concernent pas l'utilisateur, mais
+  // le code permet de les identifier sans tâtonner.
+  'auth/operation-not-allowed':   'Connexion indisponible (auth/operation-not-allowed).',
+  'auth/configuration-not-found': 'Connexion indisponible (auth/configuration-not-found).',
+  'auth/unauthorized-domain':     'Connexion indisponible (auth/unauthorized-domain).',
+  'auth/api-key-not-valid':       'Connexion indisponible (auth/api-key-not-valid).'
 };
 
 /* La connexion Google échoue autrement que celle par mot de passe : la
@@ -54,8 +60,9 @@ const GOOGLE_ERRORS = {
   'auth/popup-closed-by-user':      'Fenêtre Google fermée avant la fin.',
   'auth/cancelled-popup-request':   'Connexion Google annulée.',
   'auth/popup-blocked':             "Votre navigateur a bloqué la fenêtre Google. Autorisez-la, ou connectez-vous avec votre mot de passe.",
-  'auth/operation-not-allowed':     "La connexion Google n'est pas activée sur le projet. Firebase Console > Authentication > Sign-in method > Google > Activer.",
-  'auth/unauthorized-domain':       "Domaine non autorisé. Ajoute armelpltr.github.io dans Firebase Console > Authentication > Settings > Domaines autorisés.",
+  'auth/operation-not-allowed':     'Connexion Google indisponible (auth/operation-not-allowed).',
+  'auth/unauthorized-domain':       'Connexion Google indisponible (auth/unauthorized-domain).',
+  'auth/internal-error':            'Connexion Google indisponible (auth/internal-error).',
   'auth/account-exists-with-different-credential':
     "Un compte existe déjà avec cette adresse et un mot de passe. Connectez-vous avec le mot de passe."
 };

@@ -710,10 +710,15 @@ p{ margin:0 0 1em; color:var(--ink-soft); }
   display:flex; flex-direction:column; gap:.7rem; flex:1;
   padding:1.5rem 1.6rem;
 }
+/* Hauteur réglée par article depuis le panel. Le rapport plutôt qu'une
+   hauteur en pixels : la photo suit la largeur de sa carte, qui change
+   avec la grille et l'écran. */
 .presse-photo{
   width:100%; aspect-ratio:16/9; object-fit:cover;
   transition:transform .4s var(--ease);
 }
+.presse-photo.photo-moyenne{ aspect-ratio:21/9; }
+.presse-photo.photo-petite{ aspect-ratio:32/9; }
 .presse-article:hover .presse-photo{ transform:scale(1.03); }
 .presse-article:hover{
   transform:translateY(-3px);

@@ -226,11 +226,15 @@ function etoiles(note) {
   return '★'.repeat(n) + '☆'.repeat(5 - n);
 }
 
+/* Les seules tailles de photo acceptées. Le nom vient de la base : on ne
+   le recopie pas tel quel dans une classe CSS sans le vérifier. */
+const TAILLES_PHOTO = ['grande', 'moyenne', 'petite'];
+
 function renderArticlePresse(a) {
   const url = safeUrl(a.url);
   const image = safeUrl(a.imageUrl);
   const dedans = `
-    ${image ? `<img class="presse-photo" src="${escapeHTML(image)}" alt="" loading="lazy">` : ''}
+    ${image ? `<img class="presse-photo photo-${TAILLES_PHOTO.includes(a.taillePhoto) ? a.taillePhoto : 'grande'}" src="${escapeHTML(image)}" alt="" loading="lazy">` : ''}
     <div class="presse-article-corps">
       ${a.media ? `<span class="presse-media">${escapeHTML(a.media)}</span>` : ''}
       <h3>${escapeHTML(a.titre || '')}</h3>

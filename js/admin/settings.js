@@ -70,7 +70,17 @@ function collectHourRows() {
 /* Deux listes indépendantes, éditées en ligne : la sélection est éditoriale,
    rien n'est récupéré automatiquement depuis Google ou la presse. */
 
-function addPresseArticleRow({ titre = '', media = '', date = '', url = '', extrait = '', imageUrl = '' } = {}) {
+/* Hauteur de la photo sur le site, réglable par article : une capture de
+   presse en pied de page et une belle photo de vitrine n'appellent pas le
+   même format. La valeur est un nom, pas des pixels — c'est le CSS qui
+   décide, et les cartes restent alignées entre elles. */
+const TAILLES_PHOTO = [
+  ['grande',  'Grande — bandeau 16/9'],
+  ['moyenne', 'Moyenne — bandeau allongé'],
+  ['petite',  'Petite — bande fine']
+];
+
+function addPresseArticleRow({ titre = '', media = '', date = '', url = '', extrait = '', imageUrl = '', taillePhoto = 'grande' } = {}) {
   const list = document.getElementById('presseArticlesList');
   const row = document.createElement('div');
   row.className = 'card-item-edit presse-article-edit';
@@ -83,6 +93,13 @@ function addPresseArticleRow({ titre = '', media = '', date = '', url = '', extr
     </div>
     <div class="form-row"><label>Lien vers l'article</label><input type="text" class="pa-url" placeholder="https://…" value="${escapeAttr(url)}"></div>
     <div class="form-row"><label>Photo de l'article</label><div class="pa-image-mount"></div></div>
+    <div class="form-row">
+      <label>Taille de la photo</label>
+      <select class="pa-taille">
+        ${TAILLES_PHOTO.map(([v, l]) =>
+          `<option value="${v}" ${taillePhoto === v ? 'selected' : ''}>${l}</option>`).join('')}
+      </select>
+    </div>
     <div class="form-row"><label>Extrait cité (optionnel)</label><textarea class="pa-extrait" rows="2">${escapeAttr(extrait)}</textarea></div>
   `;
   row.querySelector('.pa-image-mount').appendChild(
@@ -122,6 +139,7 @@ function collectPresse() {
     date:    r.querySelector('.pa-date').value.trim(),
     url:      r.querySelector('.pa-url').value.trim(),
     imageUrl: r.querySelector('.pa-image').value.trim(),
+    taillePhoto: r.querySelector('.pa-taille').value,
     extrait:  r.querySelector('.pa-extrait').value.trim()
   })).filter(a => a.titre);
 
