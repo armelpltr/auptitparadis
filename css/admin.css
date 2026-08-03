@@ -89,6 +89,16 @@ button.back-to-site{ background:none; border:none; cursor:pointer; font-family:i
   background:var(--gold); border-radius:2px; flex-shrink:0;
 }
 .admin-card-hint{ font-size:.86rem; color:var(--ink-soft); margin-bottom:1.4rem; margin-top:-.4rem; }
+.admin-card[hidden]{ display:none; }
+
+/* Carte d'action irrattrapable : le liseré rouge la distingue des réglages
+   ordinaires, qu'on peut toujours corriger en les ressaisissant. */
+.admin-card--danger{ border-left:3px solid #a13a25; }
+.admin-card--danger h2{ color:#a13a25; }
+.compteur-etat{
+  background:var(--cream); border-radius:8px; padding:.8rem 1rem;
+  font-size:.9rem; font-weight:600; color:var(--ink); margin-bottom:1.2rem;
+}
 
 .spec-edit{
   background:var(--cream); border-radius:10px;

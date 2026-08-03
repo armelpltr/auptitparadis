@@ -56,13 +56,24 @@ const LOGIN_ERRORS = {
 /* La connexion Google échoue autrement que celle par mot de passe : la
    plupart des cas viennent de la fenêtre surgissante ou d'un réglage du
    projet, pas d'une erreur de saisie. */
+/* Ces trois-là ne viennent jamais de la personne qui se connecte mais d'un
+   réglage du projet Firebase : lui répéter un code d'erreur ne l'avance à
+   rien, alors qu'elle a un mot de passe sous la main. On dit donc quoi
+   faire tout de suite, et le code reste en fin de phrase pour le jour où
+   quelqu'un doit corriger la console. */
+const REPLI_MOT_DE_PASSE = 'Connectez-vous avec votre mot de passe en attendant';
+
 const GOOGLE_ERRORS = {
   'auth/popup-closed-by-user':      'Fenêtre Google fermée avant la fin.',
   'auth/cancelled-popup-request':   'Connexion Google annulée.',
   'auth/popup-blocked':             "Votre navigateur a bloqué la fenêtre Google. Autorisez-la, ou connectez-vous avec votre mot de passe.",
-  'auth/operation-not-allowed':     'Connexion Google indisponible (auth/operation-not-allowed).',
-  'auth/unauthorized-domain':       'Connexion Google indisponible (auth/unauthorized-domain).',
-  'auth/internal-error':            'Connexion Google indisponible (auth/internal-error).',
+  'auth/operation-not-allowed':     `La connexion Google n'est pas activée sur ce site. ${REPLI_MOT_DE_PASSE} (auth/operation-not-allowed).`,
+  'auth/unauthorized-domain':       `Ce domaine n'est pas autorisé pour la connexion Google. ${REPLI_MOT_DE_PASSE} (auth/unauthorized-domain).`,
+  /* Erreur fourre-tout de Firebase : le plus souvent le fournisseur Google
+     est activé mais son identifiant OAuth est incomplet côté console. Ça
+     peut aussi être un simple incident réseau, d'où le « réessayez ». */
+  'auth/internal-error':            `La connexion Google ne répond pas. Réessayez dans un instant ; si cela persiste, la configuration Google du projet est à vérifier. ${REPLI_MOT_DE_PASSE} (auth/internal-error).`,
+  'auth/network-request-failed':    `Connexion Google impossible : le réseau n'a pas répondu. Vérifiez la connexion, puis réessayez (auth/network-request-failed).`,
   'auth/account-exists-with-different-credential':
     "Un compte existe déjà avec cette adresse et un mot de passe. Connectez-vous avec le mot de passe."
 };

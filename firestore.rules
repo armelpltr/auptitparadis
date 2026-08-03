@@ -94,6 +94,23 @@ service cloud.firestore {
       allow read, write: if isOwner();
     }
 
+    // Compteur des codes de commande (SITE0001, SITE0002…). Le Worker
+    // l'incrémente avec la clé de service, qui contourne ces règles ; ici on
+    // ne traite que le panel.
+    //
+    // La remise à zéro est réservée au superadmin, et volontairement plus
+    // fermée que les commandes elles-mêmes : rejouer le compteur fait
+    // réapparaître des codes déjà donnés à des clients, et deux commandes
+    // portant le même code ne se distinguent plus au comptoir. Un admin peut
+    // le lire pour savoir où il en est, pas le réécrire.
+    match /compteurs/{compteurId} {
+      allow read:  if isOwner();
+      allow write: if isSuper()
+                   && request.resource.data.keys().hasOnly(['dernier'])
+                   && request.resource.data.dernier is int
+                   && request.resource.data.dernier >= 0;
+    }
+
     // Personnes ayant accès au panel.
     match /admins/{uid} {
       // Chacun lit sa propre entrée — c'est ainsi que le panel connaît son

@@ -14,7 +14,7 @@ import { initSettings, loadSettings } from "./admin/settings.js";
 import { initBlocks, loadBlocks } from "./admin/blocks.js";
 import { initTeam, loadTeam } from "./admin/team.js";
 import { initNoel, loadNoel } from "./admin/noel.js";
-import { initOrders, loadOrders } from "./admin/orders.js";
+import { initOrders, loadOrders, appliquerRoleOrders } from "./admin/orders.js";
 
 initTabs();
 initSettings();
@@ -36,5 +36,7 @@ initAuth((role) => {
     loadTeam();
     loadNoel();
     loadOrders();
+    // La remise à zéro de la numérotation n'est ouverte qu'au superadmin.
+    appliquerRoleOrders(role);
   }
 });

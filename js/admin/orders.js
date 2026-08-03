@@ -8,7 +8,7 @@
 
 import { db } from "../firebase-config.js";
 import {
-  doc, collection, getDoc, getDocs, updateDoc, deleteDoc
+  doc, collection, getDoc, getDocs, setDoc, updateDoc, deleteDoc
 } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 import { confirmDialog, showStatus, escapeAttr } from "./ui.js";
 
@@ -741,6 +741,53 @@ async function supprimerCommande(id) {
 }
 
 /* ---------- Câblage ---------- */
+/* ---------- Numérotation des commandes ---------- */
+/* Le compteur vit dans `compteurs/commandes`, champ `dernier` : c'est le
+   Worker qui l'incrémente à chaque commande. Le remettre à zéro fait
+   réattribuer des codes déjà donnés à des clients, d'où le rôle exigé ici
+   et, surtout, la règle Firestore qui refuse l'écriture aux autres. */
+const COMPTEUR_COMMANDES = 'commandes';
+
+async function afficherCompteur() {
+  const etat = document.getElementById('compteurEtat');
+  if (!etat) return;
+  try {
+    const snap = await getDoc(doc(db, 'compteurs', COMPTEUR_COMMANDES));
+    const dernier = snap.exists() ? (snap.data().dernier || 0) : 0;
+    etat.textContent = dernier
+      ? `Dernier code attribué : SITE${String(dernier).padStart(4, '0')} — le prochain sera SITE${String(dernier + 1).padStart(4, '0')}.`
+      : 'Aucun code encore attribué : la prochaine commande sera SITE0001.';
+  } catch (err) {
+    etat.textContent = 'Compteur illisible : ' + err.message;
+  }
+}
+
+async function reinitialiserCompteur() {
+  const ok = await confirmDialog(
+    'Remettre la numérotation à SITE0001 ?',
+    'La prochaine commande reprendra le code SITE0001. Si des commandes existent déjà avec ce code, elles deviendront impossibles à distinguer.'
+  );
+  if (!ok) return;
+
+  try {
+    await setDoc(doc(db, 'compteurs', COMPTEUR_COMMANDES), { dernier: 0 });
+    showStatus('Numérotation remise à zéro : la prochaine commande sera SITE0001.');
+    await afficherCompteur();
+  } catch (err) {
+    showStatus('Remise à zéro refusée : ' + err.message, true);
+  }
+}
+
+/* Le panel n'est qu'un habillage : ce sont les règles Firestore qui
+   refusent réellement l'écriture. Masquer la carte évite d'offrir un bouton
+   qui échouerait. */
+export function appliquerRoleOrders(role) {
+  const carte = document.getElementById('compteurCarte');
+  if (!carte) return;
+  carte.hidden = role !== 'superadmin';
+  if (role === 'superadmin') afficherCompteur();
+}
+
 export function initOrders() {
   const prepaDate = document.getElementById('prepaDate');
   if (prepaDate && !prepaDate.value) prepaDate.value = dateDuJour();
@@ -749,4 +796,5 @@ export function initOrders() {
   document.getElementById('ordersFiltre').addEventListener('change', renderOrders);
   document.getElementById('ordersRecherche').addEventListener('input', renderOrders);
   document.getElementById('ordersRefresh').addEventListener('click', loadOrders);
+  document.getElementById('compteurReset')?.addEventListener('click', reinitialiserCompteur);
 }

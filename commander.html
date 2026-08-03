@@ -76,7 +76,9 @@
 <main id="main" class="commande-main">
 
   <!-- ===================== EN-TÊTE DE PAGE ===================== -->
-  <section class="commande-head">
+  <!-- Masqué une fois la réservation enregistrée : il invite à choisir des
+       produits, ce qui n'a plus de sens sur un écran de confirmation. -->
+  <section class="commande-head" id="commandeHead">
     <div class="section-inner">
       <p class="eyebrow">Réservation en ligne</p>
       <h1>Vos bûches et coffrets de Noël</h1>
@@ -89,7 +91,7 @@
     </div>
   </section>
 
-  <div class="divider" aria-hidden="true">
+  <div class="divider" id="commandeDivider" aria-hidden="true">
     <svg viewBox="0 0 1200 80" preserveAspectRatio="none"><path d="M0,40 C100,40 200,10 400,45 C600,80 700,15 900,40 C1050,62 1150,38 1200,40" /></svg>
   </div>
 

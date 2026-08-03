@@ -386,6 +386,11 @@ function afficherSucces(body) {
     email.textContent = `Une confirmation vient de vous être envoyée à ${body.email}.`;
   }
 
+  /* L'en-tête et son trait de séparation disparaissent avec le formulaire :
+     ils invitent à choisir des produits et à indiquer un jour, ce que la
+     personne vient précisément de faire. */
+  $('commandeHead').hidden = true;
+  $('commandeDivider').hidden = true;
   $('commandeBody').hidden = true;
   $('commandeSucces').hidden = false;
   window.scrollTo({ top: 0, behavior: 'smooth' });

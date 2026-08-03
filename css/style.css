@@ -506,7 +506,11 @@ p{ margin:0 0 1em; color:var(--ink-soft); }
 /* Vague de raccord avec la section précédente (fond crème) */
 .footer-wave{ line-height:0; }
 .footer-wave svg{ display:block; width:100%; height:72px; }
-.footer-wave path{ fill:var(--cream); }
+/* La vague prolonge la dernière section de la page : elle doit en reprendre
+   la couleur, sinon une bande d'une autre teinte s'intercale au-dessus du
+   footer. Les pages dont la dernière section n'est pas crème surchargent
+   cette variable. */
+.footer-wave path{ fill:var(--footer-wave-fill, var(--cream)); }
 
 .footer-top{ padding:2.4rem 1.5rem 3.2rem; }
 .footer-grid{
@@ -1325,8 +1329,16 @@ p{ margin:0 0 1em; color:var(--ink-soft); }
 .commande-legal{ margin-top:.9rem; text-align:center; }
 
 /* ---------- Confirmation ---------- */
+/* Toutes les sections qui peuvent terminer cette page — formulaire,
+   commandes fermées, confirmation — sont sur du sable : la vague du footer
+   suit, au lieu de laisser une bande crème entre les deux. */
+.page-commander{ --footer-wave-fill:var(--sand); }
+
 .commande-succes{ background:var(--sand); }
 .commande-succes .section-inner{ max-width:620px; text-align:center; }
+/* Une confirmation n'a plus rien à vendre : le bloc de tête invite encore à
+   choisir des produits et l'écran se termine trop tôt sous le bouton. */
+.commande-succes .section-inner{ padding-top:4rem; padding-bottom:4.5rem; }
 .succes-code-label{
   font-size:.78rem; font-weight:700; text-transform:uppercase; letter-spacing:.14em;
   color:var(--ink-soft); margin:2rem 0 .3rem;

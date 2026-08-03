@@ -286,6 +286,28 @@
         <p class="orders-compte" id="ordersCompte"></p>
         <div id="ordersList" class="orders-list"></div>
       </div>
+
+      <!-- Réservé au superadmin : affiché par orders.js selon le rôle, et
+           refusé de toute façon par les règles Firestore pour les autres. -->
+      <div class="admin-card admin-card--danger" id="compteurCarte" hidden>
+        <h2>Numérotation des commandes</h2>
+        <p class="admin-card-hint">
+          Les codes sont attribués à la suite : <strong>SITE0001</strong>, <strong>SITE0002</strong>…
+          La remise à zéro fait repartir la numérotation au premier code.
+        </p>
+
+        <p class="compteur-etat" id="compteurEtat">Lecture du compteur…</p>
+
+        <p class="admin-card-hint">
+          À n'utiliser qu'après avoir vidé les commandes de test. Sur une base contenant de
+          vraies commandes, les codes déjà remis aux clients seraient réattribués — deux
+          commandes porteraient le même code et ne se distingueraient plus au comptoir.
+        </p>
+
+        <button type="button" class="btn btn-ghost btn-small cmd-supprimer" id="compteurReset">
+          Remettre la numérotation à SITE0001
+        </button>
+      </div>
     </section>
 
     <!-- ===================== ONGLET CATALOGUE NOËL ===================== -->
