@@ -32,7 +32,10 @@ export function confirmDialog(title, sub) {
   });
 }
 
-export function showSuccess(title, sub = '') {
+/* Une modale à un seul bouton, pour ce qui s'annonce sans rien demander en
+   retour. Sert aussi bien à confirmer un enregistrement qu'à refuser un
+   accès : la promesse se résout à la fermeture. */
+export function showMessage(title, sub = '') {
   return new Promise(resolve => {
     const overlay = document.getElementById('confirmOverlay');
     document.getElementById('confirmTitle').textContent = title;
@@ -51,6 +54,8 @@ export function showSuccess(title, sub = '') {
     overlay.addEventListener('click', e => { if (e.target === overlay) close(); }, { once: true });
   });
 }
+
+export const showSuccess = showMessage;
 
 /* ---------- Message de statut ---------- */
 let statusTimer = null;

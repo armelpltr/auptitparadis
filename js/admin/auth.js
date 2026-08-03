@@ -12,6 +12,7 @@ import {
   doc, getDoc, setDoc, deleteDoc
 } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 import { WORKER_URL } from "./config.js";
+import { showMessage } from "./ui.js";
 
 const loginScreen  = document.getElementById('loginScreen');
 const adminApp     = document.getElementById('adminApp');
@@ -249,8 +250,16 @@ export function initAuth(onReady) {
       loginScreen.hidden = false;
       a2fScreen.hidden = true;
       adminApp.hidden = true;
-      loginError.textContent = "Ce compte n'a pas accès à l'administration. Demandez une invitation.";
-      loginError.hidden = false;
+      /* Une modale plutôt qu'une ligne rouge sous le champ : ce refus n'est
+         pas une faute de saisie qu'on corrige en réessayant, mais un compte
+         qui n'a rien à faire ici. Il mérite d'être lu et acquitté.
+         L'adresse est rappelée : sur un poste où plusieurs comptes Google
+         sont ouverts, c'est souvent le mauvais qui a été choisi. */
+      await showMessage(
+        "Ce compte n'a pas accès à l'administration",
+        `${user.email || 'Ce compte'} ne figure pas parmi les personnes autorisées. `
+        + `Demandez une invitation, ou reconnectez-vous avec le compte qui a reçu l'accès.`
+      );
       return;
     }
 
