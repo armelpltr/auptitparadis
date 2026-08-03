@@ -500,7 +500,7 @@ function documentTickets(o, types) {
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<title>Commande ${escapeAttr(o.code || '')}</title>
+<title>${escapeAttr(o.code || 'Commande')} — ${escapeAttr(types.map(t => TICKETS[t]?.titre || t).join(' + '))}</title>
 <style>
   @page{ size:80mm auto; margin:0; }
   body{ margin:0; font-family:'Courier New', monospace; color:#000; }
@@ -597,7 +597,7 @@ function choisirTypesTickets(o) {
     const cancel = document.getElementById('printCancel');
 
     document.getElementById('printSub').textContent =
-      `Commande ${o.code || ''} — cochez tout ce qu'il vous faut, les tickets sortiront à la suite.`;
+      `Commande ${o.code || ''} — cochez tout ce qu'il vous faut. Chaque ticket part dans sa propre impression, pour que le papier soit coupé entre chacun.`;
 
     // Rien de coché n'imprimerait rien : le bouton le dit avant le clic.
     const majBouton = () => { ok.disabled = !cases.some(c => c.checked); };
@@ -624,6 +624,49 @@ function choisirTypesTickets(o) {
   });
 }
 
+/* Un ticket, une impression, dans la même fenêtre réécrite entre chaque.
+   Tout envoyer en un seul document de plusieurs pages semblait plus simple,
+   mais une imprimante thermique coupe le papier à la fin d'un travail
+   d'impression, pas entre deux pages du même travail : les tickets
+   sortaient en une seule bande. En contrepartie, le navigateur ouvre un
+   dialogue par ticket — sauf s'il est lancé en impression directe
+   (Chrome --kiosk-printing), où la série s'enchaîne toute seule. */
+function imprimerUnTicket(fenetre, html) {
+  return new Promise(resolve => {
+    let fini = false;
+    let secours = null;
+
+    function suite() {
+      if (fini) return;
+      fini = true;
+      clearTimeout(secours);
+      fenetre.removeEventListener('afterprint', suite);
+      resolve();
+    }
+
+    fenetre.document.open();
+    fenetre.document.write(html);
+    fenetre.document.close();
+
+    fenetre.addEventListener('afterprint', suite);
+
+    /* `document.close()` peut avoir déjà déclenché le load : un `onload` posé
+       après ne partirait alors jamais. On imprime donc tout de suite si le
+       document est prêt, et on attend seulement s'il ne l'est pas. */
+    const lancer = () => {
+      fenetre.focus();
+      fenetre.print();
+      /* print() rend la main une fois le dialogue fermé, mais tous les
+         navigateurs n'émettent pas afterprint : sans ce filet, une série
+         s'arrêterait au premier ticket. */
+      secours = setTimeout(suite, 700);
+    };
+
+    if (fenetre.document.readyState === 'complete') lancer();
+    else fenetre.addEventListener('load', lancer, { once: true });
+  });
+}
+
 async function imprimerCommande(id) {
   const o = ordersCache.find(x => x.id === id);
   if (!o) return;
@@ -636,18 +679,21 @@ async function imprimerCommande(id) {
     showStatus("Le navigateur a bloqué l'ouverture de la fenêtre d'impression (pop-up).", true);
     return;
   }
-  fenetre.document.write(documentTickets(o, types));
-  fenetre.document.close();
 
-  /* `document.close()` peut avoir déjà déclenché le load : un `onload` posé
-     après ne partirait alors jamais. On imprime donc tout de suite si le
-     document est prêt, et on attend seulement s'il ne l'est pas. */
-  const lancer = () => {
-    fenetre.focus();
-    fenetre.print();
-  };
-  if (fenetre.document.readyState === 'complete') lancer();
-  else fenetre.addEventListener('load', lancer, { once: true });
+  for (const [i, type] of types.entries()) {
+    // La fenêtre a pu être fermée à la main au milieu de la série.
+    if (fenetre.closed) {
+      showStatus(`Impression interrompue : ${i} ticket${i > 1 ? 's' : ''} sur ${types.length}.`, true);
+      return;
+    }
+    if (types.length > 1) {
+      showStatus(`Impression ${i + 1} sur ${types.length} — ${TICKETS[type]?.titre || type}…`);
+    }
+    await imprimerUnTicket(fenetre, documentTickets(o, [type]));
+  }
+
+  if (!fenetre.closed) fenetre.close();
+  showStatus(`Commande ${o.code || ''} — ${types.length} ticket${types.length > 1 ? 's' : ''} envoyé${types.length > 1 ? 's' : ''} à l'imprimante.`);
 }
 
 /* Suppression définitive — utile en phase de test pour vider les commandes
