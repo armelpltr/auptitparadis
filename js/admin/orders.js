@@ -133,6 +133,52 @@ function fmtTelephone(tel) {
   return /^0\d{9}$/.test(s) ? s.replace(/(\d{2})(?=\d)/g, '$1 ').trim() : s;
 }
 
+/* ---------- À préparer ---------- */
+/* Uniquement les commandes qu'il faut vraiment produire ce jour-là : une
+   commande encore en attente n'est pas garantie, une récupérée ou une
+   annulée n'appelle plus rien. */
+function dateDuJour() {
+  const d = new Date();
+  return d.getFullYear() + '-' +
+         String(d.getMonth() + 1).padStart(2, '0') + '-' +
+         String(d.getDate()).padStart(2, '0');
+}
+
+function agregerParProduit(liste) {
+  const parNom = new Map();
+  for (const o of liste) {
+    for (const it of (o.items || [])) {
+      parNom.set(it.nom, (parNom.get(it.nom) || 0) + (it.quantite || 0));
+    }
+  }
+  return [...parNom.entries()].sort((a, b) => b[1] - a[1]);
+}
+
+function renderPrepa() {
+  const zone = document.getElementById('prepaResultats');
+  const dateChoisie = document.getElementById('prepaDate').value;
+  if (!zone || !dateChoisie) return;
+
+  const duJour = ordersCache.filter(o => o.dateRetrait === dateChoisie);
+  const confirmees = duJour.filter(o => ['confirmee', 'prete'].includes(o.statut));
+  const enAttente  = duJour.filter(o => o.statut === 'en_attente');
+
+  const listeHTML = (paires, vide) => paires.length
+    ? `<ul class="prepa-liste">${paires.map(([nom, qte]) =>
+        `<li><span class="prepa-qte">${qte}×</span> ${escapeAttr(nom)}</li>`).join('')}</ul>`
+    : `<p class="empty-hint">${vide}</p>`;
+
+  zone.innerHTML = `
+    <div class="prepa-groupe">
+      <h4>Confirmées (${confirmees.length})</h4>
+      ${listeHTML(agregerParProduit(confirmees), 'Rien de confirmé pour cette date.')}
+    </div>
+    <div class="prepa-groupe prepa-attente">
+      <h4>En attente de confirmation (${enAttente.length})</h4>
+      ${listeHTML(agregerParProduit(enAttente), 'Aucune commande en attente pour cette date.')}
+    </div>`;
+}
+
 /* ---------- Chargement ---------- */
 export async function loadOrders() {
   const list = document.getElementById('ordersList');
@@ -143,6 +189,7 @@ export async function loadOrders() {
     // réclamerait un index composite créé à la main dans la console.
     ordersCache.sort((a, b) => String(a.dateRetrait || '').localeCompare(String(b.dateRetrait || '')));
     renderStats();
+    renderPrepa();
     renderOrders();
   } catch (err) {
     list.innerHTML = `<p class="empty-hint">Commandes illisibles : ${escapeAttr(err.message)}</p>`;
@@ -274,6 +321,10 @@ async function supprimerCommande(id) {
 
 /* ---------- Câblage ---------- */
 export function initOrders() {
+  const prepaDate = document.getElementById('prepaDate');
+  if (prepaDate && !prepaDate.value) prepaDate.value = dateDuJour();
+  prepaDate?.addEventListener('change', renderPrepa);
+
   document.getElementById('ordersFiltre').addEventListener('change', renderOrders);
   document.getElementById('ordersRecherche').addEventListener('input', renderOrders);
   document.getElementById('ordersRefresh').addEventListener('click', loadOrders);

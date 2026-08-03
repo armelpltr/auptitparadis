@@ -453,6 +453,23 @@ button.back-to-site{ background:none; border:none; cursor:pointer; font-family:i
 .noel-item-save{ display:flex; justify-content:flex-end; }
 
 /* ---------- Commandes ---------- */
+.prepa-bloc{
+  border:1px solid var(--sand); border-radius:10px;
+  background:var(--cream, #fdf9f3); padding:1rem 1.2rem 1.1rem;
+  margin-bottom:1.4rem;
+}
+.prepa-entete{ display:flex; align-items:center; justify-content:space-between; gap:1rem; margin-bottom:.7rem; }
+.prepa-entete h3{ margin:0; font-size:1rem; }
+.prepa-entete input[type="date"]{
+  border:1px solid var(--sand); border-radius:6px; padding:.4em .6em; font-family:inherit; font-size:.88rem;
+}
+.prepa-resultats{ display:grid; grid-template-columns:1fr 1fr; gap:1.2rem; }
+.prepa-groupe h4{ margin:0 0 .5rem; font-size:.85rem; color:var(--ink-soft); font-weight:600; }
+.prepa-liste{ list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:.35rem; }
+.prepa-liste li{ font-size:.92rem; }
+.prepa-qte{ font-weight:700; color:var(--gold-deep); margin-right:.4em; }
+.prepa-attente .prepa-qte{ color:var(--ink-soft); }
+
 .orders-stats{
   display:grid; grid-template-columns:repeat(4, 1fr); gap:1rem;
   margin-bottom:1.4rem;
@@ -562,6 +579,8 @@ button.back-to-site{ background:none; border:none; cursor:pointer; font-family:i
   .orders-barre{ grid-template-columns:1fr; gap:.9rem; }
   .orders-barre .btn{ width:100%; }
   .orders-stats{ grid-template-columns:1fr 1fr; }
+  .prepa-resultats{ grid-template-columns:1fr; gap:.9rem; }
+  .prepa-entete{ flex-wrap:wrap; }
   .cmd-carte{ padding:1rem 1rem .9rem; }
   .cmd-header{ gap:.6rem; }
   .cmd-retrait{ margin-left:0; flex-basis:100%; }

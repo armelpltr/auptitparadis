@@ -25,6 +25,15 @@ export function fmtPrix(n) {
   return Number(n || 0).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
+/* Vide = illimité, stocké `null` plutôt que 0 pour ne pas confondre
+   « aucune limite » et « stock épuisé ». */
+export function parseCapacite(raw) {
+  const s = String(raw ?? '').trim();
+  if (!s) return null;
+  const n = Number(s.replace(/[^\d]/g, ''));
+  return Number.isInteger(n) && n > 0 ? n : null;
+}
+
 /* Date du jour en AAAA-MM-JJ, dans le fuseau de l'utilisateur : c'est le
    format des <input type="date">, et deux chaînes de cette forme se
    comparent dans l'ordre chronologique. */
@@ -100,6 +109,11 @@ function renderNoelList() {
         </div>
       </div>
       <div class="form-row">
+        <label>Limite de commandes par jour</label>
+        <input type="text" inputmode="numeric" class="noel-capacite" value="${escapeAttr(p.capaciteParJour ?? '')}" placeholder="Laisser vide = illimité">
+        <p class="field-hint">Tous les exemplaires commandés pour une même date de retrait comptent, quel que soit le client.</p>
+      </div>
+      <div class="form-row">
         <label>Description</label>
         <textarea class="noel-desc" rows="2" placeholder="Parts, parfums, allergènes…">${escapeAttr(p.description || '')}</textarea>
       </div>
@@ -141,7 +155,8 @@ async function saveProduit(id, el) {
       nom,
       prix,
       description: el.querySelector('.noel-desc').value.trim(),
-      imageUrl: el.querySelector('.noel-img').value.trim()
+      imageUrl: el.querySelector('.noel-img').value.trim(),
+      capaciteParJour: parseCapacite(el.querySelector('.noel-capacite').value)
     });
     await loadNoel();
     showStatus('Produit enregistré.');
@@ -205,7 +220,7 @@ export function initNoel() {
     try {
       await addDoc(collection(db, 'noel_produits'), {
         nom: '', description: '', prix: 0, imageUrl: '',
-        disponible: true, order: maxOrder + 1
+        disponible: true, order: maxOrder + 1, capaciteParJour: null
       });
       await loadNoel();
     } catch (err) {

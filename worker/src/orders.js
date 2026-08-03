@@ -172,7 +172,24 @@ function calculerLimiteAnnulation(delaiJours, dateRetrait, maintenant) {
 /* ---------- Lignes de commande ---------- */
 /* Les prix envoyés par le navigateur sont ignorés : on relit le catalogue.
    Sinon il suffirait de modifier la requête pour réserver une bûche à 1 €. */
-async function construireLignes(items, env) {
+/* Une limite ne vaut que si elle compte tout le monde : les commandes
+   d'autres clients pour la même date de retrait, tous statuts sauf
+   annulée — une commande encore « en attente » réserve la part qu'elle
+   demande, sinon la limite ne protégerait rien contre deux personnes qui
+   commandent au même instant. */
+async function quantitesReservees(dateRetrait, env) {
+  const commandes = await firestoreQueryByField('orders', 'dateRetrait', dateRetrait, env, 300);
+  const parProduit = new Map();
+  for (const o of commandes) {
+    if (o.statut === 'annulee') continue;
+    for (const it of (o.items || [])) {
+      parProduit.set(it.produitId, (parProduit.get(it.produitId) || 0) + (it.quantite || 0));
+    }
+  }
+  return parProduit;
+}
+
+async function construireLignes(items, dateRetrait, env) {
   if (!Array.isArray(items) || items.length === 0) {
     throw httpError('Votre panier est vide.', 400);
   }
@@ -183,6 +200,14 @@ async function construireLignes(items, env) {
   const catalogue = await firestoreList('noel_produits', env);
   const vus = new Set();
   let total = 0;
+
+  // Uniquement calculé si au moins un produit du panier porte une limite :
+  // pas la peine d'interroger les commandes du jour pour rien.
+  const aUneLimite = items.some(item => {
+    const p = catalogue.find(pp => pp.id === String(item?.id ?? ''));
+    return p && Number.isInteger(p.capaciteParJour) && p.capaciteParJour > 0;
+  });
+  const dejaReserve = aUneLimite ? await quantitesReservees(dateRetrait, env) : new Map();
 
   const lignes = items.map(item => {
     const id = String(item?.id ?? '');
@@ -198,6 +223,20 @@ async function construireLignes(items, env) {
     const quantite = Number(item?.quantite);
     if (!Number.isInteger(quantite) || quantite < 1 || quantite > MAX_QUANTITE) {
       throw httpError(`Quantité invalide pour « ${produit.nom} » (1 à ${MAX_QUANTITE}).`, 400);
+    }
+
+    const capacite = produit.capaciteParJour;
+    if (Number.isInteger(capacite) && capacite > 0) {
+      const dejaPris = dejaReserve.get(id) || 0;
+      const restant = capacite - dejaPris;
+      if (quantite > restant) {
+        throw httpError(
+          restant > 0
+            ? `Il ne reste que ${restant} « ${produit.nom} » disponible${restant > 1 ? 's' : ''} pour cette date de retrait.`
+            : `« ${produit.nom} » est complet pour cette date de retrait.`,
+          409
+        );
+      }
     }
 
     const prixUnitaire = Number(produit.prix) || 0;
@@ -268,7 +307,7 @@ export async function handleOrder(request, env, cors) {
     }, 409, cors);
   }
 
-  const { lignes, total } = await construireLignes(body.items, env);
+  const { lignes, total } = await construireLignes(body.items, dateRetrait, env);
   const code = await genererCode(env);
   const maintenant = new Date();
 
