@@ -29,13 +29,19 @@ const a2fScreen    = document.getElementById('a2fScreen');
 const a2fError     = document.getElementById('a2fError');
 
 /* Le lien ne porte plus que le jeton : l'invité saisit lui-même ses
-   coordonnées, on ne les connaît pas au moment de l'inviter. */
-const pendingInvite = new URLSearchParams(location.search).get('token') || null;
+   coordonnées, on ne les connaît pas au moment de l'inviter.
+   Remis à null dès l'accès créé : ce jeton commande l'affichage de l'écran
+   d'invitation, et le garder ferait revenir un formulaire déjà rempli — ou
+   pire, une page vide — à qui se déconnecterait depuis l'écran du code. */
+let pendingInvite = new URLSearchParams(location.search).get('token') || null;
 
-/* Créer le compte connecte aussitôt la personne, donc onAuthStateChanged part
-   vérifier son appartenance aux admins — alors que l'entrée n'est écrite que
-   juste après. Ce drapeau met la vérification en pause le temps de l'écriture. */
-let acceptingInvite = false;
+/* Un drapeau mettait ici la garde d'accès en pause pendant l'acceptation
+   d'une invitation : le navigateur créait le compte, se retrouvait connecté,
+   et la garde le rejetait faute d'entrée `admins` — écrite seulement juste
+   après. Le Worker écrit désormais cet accès avant que le navigateur
+   n'ouvre la session, si bien que la garde trouve tout en place et n'a plus
+   besoin d'être suspendue. Elle ne l'est donc plus, et c'est elle qui
+   réclame le code de vérification, y compris à cette première connexion. */
 
 /* Ces messages s'affichent sur une page publique, devant n'importe qui.
    Les versions précédentes indiquaient quoi corriger dans la console
@@ -208,7 +214,6 @@ export function initAuth(onReady) {
   logoutBtn.addEventListener('click', () => signOut(auth));
 
   onAuthStateChanged(auth, async (user) => {
-    if (acceptingInvite) return;   // l'accès est en cours de création
     if (!user) {
       loginScreen.hidden = pendingInvite ? true : false;
       a2fScreen.hidden = true;
@@ -465,28 +470,24 @@ export function initAuth(onReady) {
       return;
     }
 
-    acceptingInvite = true;
     try {
       /* Le Worker fait tout d'un bloc : il relit l'invitation, crée le
          compte, écrit l'entrée `admins` et consomme le jeton. Le rôle qu'il
          renvoie vient de l'invitation, jamais de ce formulaire. */
-      const role = await creerAccesViaWorker({ prenom, nom, email, password });
+      await creerAccesViaWorker({ prenom, nom, email, password });
 
-      // L'accès existe : il ne reste qu'à ouvrir la session, avec le mot de
-      // passe que la personne vient de choisir. Se connecter reste permis
-      // même lorsque l'inscription publique est fermée.
+      // Le jeton a servi : il quitte la barre d'adresse et la mémoire.
+      history.replaceState({}, '', location.pathname);
+      pendingInvite = null;
+
+      /* Ouvrir la session, et rien de plus. C'est onAuthStateChanged qui
+         décide de la suite : il relit l'accès, réclame le code envoyé par
+         e-mail, et n'ouvre le panel qu'une fois ce code validé.
+         Ce bloc ouvrait le panel lui-même, sautant la double
+         authentification pour la seule connexion où le compte est encore
+         inconnu de tous — précisément celle qu'il fallait vérifier. */
       await signInWithEmailAndPassword(auth, email, password);
-
-      history.replaceState({}, '', location.pathname);   // le jeton quitte la barre d'adresse
-
-      acceptingInvite = false;
-      inviteScreen.hidden = true;
-      loginScreen.hidden = true;
-      adminApp.hidden = false;
-      // Le rôle vient de l'invitation qu'on vient d'accepter.
-      onReady(role);
     } catch (err) {
-      acceptingInvite = false;
       errEl.textContent = inviteErrorMessage(err);
       errEl.hidden = false;
       // Compte créé mais accès refusé : on ne laisse pas de session orpheline
