@@ -489,6 +489,8 @@ button.back-to-site{ background:none; border:none; cursor:pointer; font-family:i
 /* Une commande oubliée doit sauter aux yeux dans une liste longue. */
 .cmd-carte.is-alerte{ background:#fdf6e9; border-left-color:#c0563f; }
 
+.cmd-supprimer:hover{ background:#a13a25; border-color:#a13a25; color:var(--white); }
+
 .cmd-header{
   display:flex; align-items:center; gap:.9rem; flex-wrap:wrap;
   margin-bottom:.8rem;

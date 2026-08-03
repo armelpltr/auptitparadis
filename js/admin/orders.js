@@ -8,7 +8,7 @@
 
 import { db } from "../firebase-config.js";
 import {
-  doc, collection, getDocs, updateDoc
+  doc, collection, getDocs, updateDoc, deleteDoc
 } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 import { confirmDialog, showStatus, escapeAttr } from "./ui.js";
 
@@ -212,6 +212,7 @@ function renderOrders() {
           ${['recuperee', 'annulee'].includes(o.statut)
             ? ''
             : '<button type="button" class="btn btn-ghost btn-small" data-action="annuler">Annuler</button>'}
+          <button type="button" class="btn btn-ghost btn-small cmd-supprimer" data-action="supprimer">Supprimer</button>
         </div>
       </article>`;
   }).join('');
@@ -220,6 +221,7 @@ function renderOrders() {
     const id = carte.dataset.id;
     carte.querySelector('[data-action="avancer"]')?.addEventListener('click', () => avancerStatut(id));
     carte.querySelector('[data-action="annuler"]')?.addEventListener('click', () => annulerCommande(id));
+    carte.querySelector('[data-action="supprimer"]')?.addEventListener('click', () => supprimerCommande(id));
   });
 }
 
@@ -249,6 +251,25 @@ async function annulerCommande(id) {
   );
   if (!ok) return;
   await changerStatut(id, 'annulee');
+}
+
+/* Suppression définitive — utile en phase de test pour vider les commandes
+   bidon, mais reste accessible ensuite : rien n'empêche de nettoyer un
+   vieux dossier annulé ou récupéré depuis longtemps. */
+async function supprimerCommande(id) {
+  const o = ordersCache.find(x => x.id === id);
+  const ok = await confirmDialog(
+    `Supprimer définitivement la commande ${o?.code || ''} ?`,
+    'Cette action efface la commande de la base — impossible à annuler. Le client ne sera pas prévenu.'
+  );
+  if (!ok) return;
+  try {
+    await deleteDoc(doc(db, 'orders', id));
+    showStatus(`Commande ${o?.code || ''} supprimée.`);
+    await loadOrders();
+  } catch (err) {
+    showStatus('Suppression refusée : ' + err.message, true);
+  }
 }
 
 /* ---------- Câblage ---------- */
