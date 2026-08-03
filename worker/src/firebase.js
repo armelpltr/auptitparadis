@@ -108,7 +108,7 @@ export async function verifyIdToken(idToken, env) {
   const valid = await crypto.subtle.verify('RSASSA-PKCS1-v1_5', key, b64urlDecode(parts[2]), sigInput);
   if (!valid) throw new Error('Signature invalide');
 
-  return { localId: payload.sub, email: payload.email };
+  return { localId: payload.sub, email: payload.email, authTime: payload.auth_time };
 }
 
 /* ---------- Conversion entre JSON et le format de Firestore ---------- */

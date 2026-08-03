@@ -140,12 +140,19 @@ async function appelerWorker(chemin, corps) {
 }
 
 /* Lu depuis le jeton fraîchement rafraîchi : un jeton en cache pourrait
-   dater d'avant la pose de l'attribut. */
+   dater d'avant la pose de l'attribut.
+
+   Deux conditions, pas une seule : `a2fUntil` ne suffit pas, puisqu'il vaut
+   pour le compte entier, sur n'importe quel poste. `a2fAuthTime` doit en
+   plus correspondre à l'`auth_time` de CETTE session — c'est-à-dire que ce
+   poste-ci a bien fourni le code, pas qu'un autre poste l'a fait dans les
+   8 dernières heures. */
 async function a2fDejaValidee(user) {
   try {
     const res = await user.getIdTokenResult(true);
     const jusqua = Number(res.claims.a2fUntil || 0);
-    return jusqua > Date.now();
+    const memeSession = res.claims.a2fAuthTime === res.claims.auth_time;
+    return memeSession && jusqua > Date.now();
   } catch {
     return false;
   }

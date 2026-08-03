@@ -84,7 +84,7 @@ async function membreOuRefus(idToken, env) {
   const email = user.email || membre.email;
   if (!email) throw httpError('Aucune adresse e-mail sur ce compte.', 400);
 
-  return { uid: user.localId, email, prenom: membre.prenom || '' };
+  return { uid: user.localId, email, prenom: membre.prenom || '', authTime: user.authTime };
 }
 
 /* ---------- Demande d'un code ---------- */
@@ -203,7 +203,7 @@ export async function handleA2fVerify(request, env, cors) {
   const code = String(body.code ?? '').trim();
   if (!/^\d{6}$/.test(code)) throw httpError('Le code doit comporter six chiffres.', 400);
 
-  const { uid } = await membreOuRefus(body.idToken, env);
+  const { uid, authTime } = await membreOuRefus(body.idToken, env);
   const chemin = `otpChallenges/${uid}`;
 
   let defi;
@@ -242,9 +242,18 @@ export async function handleA2fVerify(request, env, cors) {
   /* L'attribut posé sur le compte est ce qui permettra aux règles
      Firestore d'exiger la double authentification côté serveur. Tant
      qu'elles ne l'exigent pas, il ne sert qu'au panel — mais il est déjà
-     écrit, pour n'avoir qu'une ligne de règle à publier ensuite. */
+     écrit, pour n'avoir qu'une ligne de règle à publier ensuite.
+
+     `a2fAuthTime` est la pièce qui empêche la fuite entre appareils : un
+     custom claim vaut pour TOUT jeton émis pour ce compte, où qu'il se
+     connecte. Sans cette valeur, se connecter sur un second poste dans les
+     8h aurait hérité du même « validé » — sans jamais redemander de code.
+     `auth_time`, lui, ne bouge pas à un simple rafraîchissement de jeton,
+     mais change à chaque vraie reconnexion : comparer les deux, à la
+     vérification, dit si CE poste-ci a bien passé le code, pas seulement
+     ce compte n'importe où. */
   const jusqua = Date.now() + VALIDITE_ACCES_MS;
-  await setCustomClaims(uid, { a2fUntil: jusqua }, env);
+  await setCustomClaims(uid, { a2fUntil: jusqua, a2fAuthTime: authTime }, env);
 
   return json({ ok: true, a2fUntil: jusqua }, 200, cors);
 }
