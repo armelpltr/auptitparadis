@@ -29,14 +29,14 @@ import {
 
 const ROLES = ['superadmin', 'admin', 'editor'];
 
-/* Même exigence que la jauge du formulaire, redite ici parce qu'un contrôle
-   qui ne vit que dans le navigateur se contourne en appelant cette route
-   directement. Volontairement plus fruste que la version affichée : celle-ci
-   guide pendant la saisie, celle-là ne fait que barrer le passage aux mots
-   de passe qu'on ne veut voir sur aucun accès.
-   De la longueur plutôt qu'un assortiment obligatoire de majuscules et de
-   symboles, comme le recommandent aujourd'hui l'ANSSI et le NIST. */
-const LONGUEUR_MINIMALE = 12;
+/* Mêmes exigences que la jauge du formulaire, redites ici parce qu'un
+   contrôle qui ne vit que dans le navigateur se contourne en appelant cette
+   route directement. La jauge guide pendant la saisie, ceci décide.
+
+   Quatre exigences de composition, plus des refus de motifs : « Password1! »
+   satisfait les quatre et ne vaut rien, étant en tête de toutes les listes
+   qu'un attaquant essaie en premier. */
+const LONGUEUR_MINIMALE = 8;
 
 const MOTS_TROP_ATTENDUS = [
   'motdepasse', 'password', 'azerty', 'qwerty', 'iloveyou', 'admin',
@@ -48,6 +48,16 @@ function verifierMotDePasse(mdp, personnel) {
   if (mdp.length < LONGUEUR_MINIMALE || mdp.length > 200) {
     throw httpError(`Le mot de passe doit faire au moins ${LONGUEUR_MINIMALE} caractères.`, 400);
   }
+  if (!/[A-ZÀ-Þ]/.test(mdp)) {
+    throw httpError('Le mot de passe doit contenir au moins une majuscule.', 400);
+  }
+  if (!/[0-9]/.test(mdp)) {
+    throw httpError('Le mot de passe doit contenir au moins un chiffre.', 400);
+  }
+  if (!/[^a-zA-Z0-9À-ÿ]/.test(mdp)) {
+    throw httpError('Le mot de passe doit contenir au moins un caractère spécial.', 400);
+  }
+
   const bas = mdp.toLowerCase();
   if (MOTS_TROP_ATTENDUS.some(m => bas.includes(m))) {
     throw httpError('Mot de passe trop attendu. Choisissez-en un autre.', 400);

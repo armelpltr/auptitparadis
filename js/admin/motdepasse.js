@@ -6,14 +6,17 @@
 // compte. Un contrôle qui ne vit que dans le navigateur se contourne en
 // ouvrant les outils de développement.
 //
-// La règle suit ce que recommandent aujourd'hui l'ANSSI et le NIST : de la
-// longueur plutôt qu'un assortiment obligatoire de majuscules, chiffres et
-// symboles. « P@ssw0rd! » coche toutes les cases de composition et se casse
-// en quelques secondes ; « les buches de noel 2026 » n'en coche presque
-// aucune et tient bien mieux.
+// Quatre exigences : huit caractères, une majuscule, un chiffre, un
+// caractère spécial. S'y ajoutent des refus de motifs, qui écartent ce
+// qu'un attaquant essaie en premier même quand la composition est bonne —
+// « Password1! » satisfait les quatre règles et ne vaut rien.
+//
+// La jauge, elle, continue de récompenser la longueur : à composition
+// égale, c'est elle qui fait le travail contre une attaque par force brute.
+// Le minimum est un plancher, pas un objectif.
 // ============================================================
 
-export const LONGUEUR_MINIMALE = 12;
+export const LONGUEUR_MINIMALE = 8;
 
 /* Les motifs qu'un attaquant essaie en premier. La liste est courte à
    dessein : elle n'a pas vocation à remplacer une base de mots de passe
@@ -55,32 +58,43 @@ export function evaluerMotDePasse(mdp, personnel = []) {
   const s = String(mdp || '');
   const defauts = [];
 
+  // Les quatre exigences, dans l'ordre où on les corrige naturellement.
   if (s.length < LONGUEUR_MINIMALE) {
     defauts.push(`${LONGUEUR_MINIMALE} caractères minimum`);
   }
+  if (!/[A-ZÀ-Þ]/.test(s)) {
+    defauts.push('il manque une majuscule');
+  }
+  if (!/[0-9]/.test(s)) {
+    defauts.push('il manque un chiffre');
+  }
+  if (!/[^a-zA-Z0-9À-ÿ]/.test(s)) {
+    defauts.push('il manque un caractère spécial (!?*-…)');
+  }
+
+  /* Ces refus-ci ne portent pas sur la composition mais sur le contenu :
+     « Password1! » satisfait les quatre exigences et se casse pourtant en
+     quelques secondes, parce qu'il est en tête de toutes les listes. */
   if (COURANTS.some(m => s.toLowerCase().includes(m))) {
     defauts.push('évitez les mots trop attendus');
   }
   if (aUneSuite(s)) {
     defauts.push('évitez les suites de touches ou de chiffres');
   }
-  if (/^(.)\1+$/.test(s) || /(.)\1{3,}/.test(s)) {
+  if (/(.)\1{3,}/.test(s)) {
     defauts.push('évitez de répéter le même caractère');
   }
   if (personnel.length && reprendUnePersonnelle(s, personnel)) {
     defauts.push('évitez votre nom ou votre adresse');
   }
 
-  /* Le score mélange longueur et variété, la longueur pesant le plus : c'est
-     elle qui fait vraiment le travail contre une attaque par force brute. */
-  let points = 0;
-  if (s.length >= 12) points += 2;
-  if (s.length >= 16) points += 1;
-  if (s.length >= 20) points += 1;
-
-  const familles = [/[a-z]/, /[A-Z]/, /[0-9]/, /[^a-zA-Z0-9]/].filter(r => r.test(s)).length;
-  if (familles >= 2) points += 1;
-  if (familles >= 3) points += 1;
+  /* Le minimum est un plancher, pas un objectif : à composition égale, c'est
+     la longueur qui fait le travail contre une attaque par force brute. La
+     jauge continue donc de monter bien au-delà des huit caractères exigés. */
+  let points = 1;
+  if (s.length >= 10) points += 1;
+  if (s.length >= 14) points += 1;
+  if (s.length >= 18) points += 1;
 
   // Un défaut relevé plafonne le score : inutile d'afficher « solide » sur
   // un mot de passe qu'on refuse par ailleurs.
@@ -88,12 +102,12 @@ export function evaluerMotDePasse(mdp, personnel = []) {
   if (defauts.length) score = Math.min(score, 1);
   if (!s) score = 0;
 
-  const LIBELLES = ['Trop court', 'Faible', 'Correct', 'Bon', 'Excellent'];
+  const LIBELLES = ['Trop court', 'Insuffisant', 'Correct', 'Bon', 'Excellent'];
 
   return {
     score,
     libelle: s ? LIBELLES[score] : '',
     defauts,
-    accepte: s.length >= LONGUEUR_MINIMALE && defauts.length === 0
+    accepte: defauts.length === 0
   };
 }
