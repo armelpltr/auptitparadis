@@ -16,12 +16,15 @@ import { confirmDialog, showStatus, escapeAttr } from "./ui.js";
    patron décide au cas par cas, mais il faut d'abord qu'il la voie. */
 const JOURS_AVANT_ALERTE = 3;
 
+/* `label` reste du texte pur : il part aussi sur les tickets, où une
+   imprimante thermique ne sait pas rendre un emoji. L'icône vit à côté et
+   ne sert qu'à l'écran. */
 const STATUTS = {
-  en_attente: { label: 'En attente',  suivant: 'confirmee', actionSuivante: 'Confirmer' },
-  confirmee:  { label: 'Confirmée',   suivant: 'prete',     actionSuivante: 'Marquer prête' },
-  prete:      { label: 'Prête',       suivant: 'recuperee', actionSuivante: 'Marquer récupérée' },
-  recuperee:  { label: 'Récupérée',   suivant: null,        actionSuivante: null },
-  annulee:    { label: 'Annulée',     suivant: null,        actionSuivante: null }
+  en_attente: { label: 'En attente de validation', emoji: '⏳', suivant: 'confirmee', actionSuivante: 'Confirmer' },
+  confirmee:  { label: 'Confirmée',                emoji: '✅', suivant: 'prete',     actionSuivante: 'Marquer prête' },
+  prete:      { label: 'Prête',                    emoji: '🎁', suivant: 'recuperee', actionSuivante: 'Marquer récupérée' },
+  recuperee:  { label: 'Récupérée',                emoji: '🤝', suivant: null,        actionSuivante: null },
+  annulee:    { label: 'Annulée',                  emoji: '❌', suivant: null,        actionSuivante: null }
 };
 
 /* Regroupements du filtre. « En cours » est le défaut : les commandes
@@ -259,7 +262,7 @@ function renderOrders() {
       <article class="cmd-carte statut-${escapeAttr(o.statut || 'inconnu')} ${alerte ? 'is-alerte' : ''}" data-id="${escapeAttr(o.id)}">
         <header class="cmd-header">
           <span class="cmd-code">${escapeAttr(o.code || '——')}</span>
-          <span class="cmd-statut">${escapeAttr(statut.label)}</span>
+          <span class="cmd-statut statut-${escapeAttr(o.statut || 'inconnu')}">${statut.emoji || ''} ${escapeAttr(statut.label)}</span>
           <span class="cmd-retrait">Retrait ${escapeAttr(fmtDateRetrait(o.dateRetrait))}</span>
         </header>
 
@@ -280,11 +283,15 @@ function renderOrders() {
         ${o.commentaire ? `<p class="cmd-commentaire">« ${escapeAttr(o.commentaire)} »</p>` : ''}
 
         <div class="cmd-actions">
-          <select class="cmd-statut-select" data-action="statut" ${verrouillee ? 'disabled' : ''}>
-            ${Object.entries(STATUTS).map(([cle, s]) =>
-              `<option value="${cle}" ${o.statut === cle ? 'selected' : ''}>${escapeAttr(s.label)}</option>`
-            ).join('')}
-          </select>
+          <label class="cmd-statut-champ">
+            <span class="cmd-statut-libelle">Statut commande</span>
+            <select class="cmd-statut-select statut-${escapeAttr(o.statut || 'inconnu')}"
+                    data-action="statut" ${verrouillee ? 'disabled' : ''}>
+              ${Object.entries(STATUTS).map(([cle, s]) =>
+                `<option value="${cle}" ${o.statut === cle ? 'selected' : ''}>${s.emoji} ${escapeAttr(s.label)}</option>`
+              ).join('')}
+            </select>
+          </label>
           <button type="button" class="btn btn-ghost btn-small" data-action="imprimer">Imprimer…</button>
           <button type="button" class="btn btn-ghost btn-small cmd-supprimer" data-action="supprimer">Supprimer</button>
         </div>
@@ -343,6 +350,10 @@ async function changerStatutViaSelect(id, nouveauStatut, selectEl) {
    - client     : il cherche son code et ce qu'il a payé ;
    - commande   : le comptoir cherche qui appeler et où en est le dossier ;
    - production : la cuisine cherche un jour, des quantités et une allergie. */
+/* Sur le seul ticket qui part avec le client : c'est par là qu'il repasse
+   commande, et l'adresse ne figure nulle part ailleurs sur le papier. */
+const SITE_WEB = 'auptitparadis.fr';
+
 const TICKETS = {
   client:     { titre: 'CLIENT',     prix: true,  coordonnees: false, boutique: true  },
   commande:   { titre: 'INTERNE',    prix: true,  coordonnees: true,  boutique: true  },
@@ -459,7 +470,8 @@ function corpsTicket(o, type = 'commande') {
     ? `<div class="t-sep"></div>
        <p class="t-centre t-fort">À présenter au retrait</p>
        ${annulation}
-       <p class="t-centre">Merci et à bientôt !</p>`
+       <p class="t-centre">Merci et à bientôt !</p>
+       <p class="t-centre t-petit">${escapeAttr(SITE_WEB)}</p>`
     : '';
 
   return `<section class="ticket ${type === 'production' ? 'prod' : ''}">
@@ -499,8 +511,25 @@ function documentTickets(o, types) {
     padding:3mm 0 14mm;
     font-size:12px; line-height:1.35;
   }
-  /* Chaque ticket sur son propre bout de rouleau. */
+  /* Chaque ticket sur son propre bout de rouleau : une page par ticket, tous
+     envoyés dans la même commande d'impression. Le break-inside évite qu'un
+     ticket long soit coupé en deux au lieu de démarrer une page. */
   .ticket + .ticket{ break-before:page; page-break-before:always; }
+  .ticket{ break-inside:avoid; page-break-inside:avoid; }
+
+  /* Repère de découpe visible seulement à l'écran, dans la fenêtre qui
+     s'ouvre avant le dialogue : sinon rien ne montre où les tickets se
+     séparent, et on croit qu'ils sortiront collés. */
+  @media screen{
+    body{ background:#e9e6e1; padding:8px 0; }
+    .ticket{ background:#fff; box-shadow:0 2px 8px rgba(0,0,0,.15); }
+    .ticket + .ticket{ margin-top:14px; position:relative; }
+    .ticket + .ticket::before{
+      content:'✂ - - - - - - - - - - - - - - - - - -';
+      position:absolute; top:-13px; left:0; right:0;
+      text-align:center; font-size:10px; color:#8a8279;
+    }
+  }
 
   h1{ font-size:15px; text-align:center; margin:0 0 2px; letter-spacing:1px; }
   .t-adresse{ text-align:center; font-size:10px; margin:0 0 6px; }

@@ -526,6 +526,26 @@ button.back-to-site{ background:none; border:none; cursor:pointer; font-family:i
   opacity:.55; cursor:not-allowed; background:var(--cream, #f7f3ec);
 }
 
+.cmd-statut-champ{ display:flex; align-items:center; gap:.5rem; margin-right:auto; }
+.cmd-statut-libelle{
+  font-size:.75rem; font-weight:700; text-transform:uppercase; letter-spacing:.06em;
+  color:var(--ink-soft); white-space:nowrap;
+}
+
+/* Le statut se lit d'abord à la couleur : sur une liste longue, l'œil trie
+   avant de lire. Les teintes reprennent celles du liseré des cartes, pour
+   qu'un même état ait partout la même couleur. */
+.cmd-statut-select.statut-en_attente{ color:#8a6a12; border-color:var(--gold); background:rgba(198,160,74,.1); }
+.cmd-statut-select.statut-confirmee { color:#2c6b2f; border-color:#3f9142; background:rgba(63,145,66,.1); }
+.cmd-statut-select.statut-prete     { color:#1f5f6b; border-color:var(--sea); background:rgba(58,124,138,.1); }
+.cmd-statut-select.statut-recuperee { color:var(--ink-soft); border-color:var(--sand); background:var(--white); }
+.cmd-statut-select.statut-annulee   { color:#a13a25; border-color:#a13a25; background:rgba(161,58,37,.08); }
+
+.cmd-statut.statut-en_attente{ color:#8a6a12; border-color:var(--gold); }
+.cmd-statut.statut-confirmee { color:#2c6b2f; border-color:#3f9142; }
+.cmd-statut.statut-prete     { color:#1f5f6b; border-color:var(--sea); }
+.cmd-statut.statut-annulee   { color:#a13a25; border-color:#a13a25; }
+
 /* ---------- Choix des tickets à imprimer ---------- */
 .print-choix{ display:flex; flex-direction:column; gap:.55rem; margin-bottom:1.6rem; }
 
@@ -619,6 +639,11 @@ button.back-to-site{ background:none; border:none; cursor:pointer; font-family:i
   .cmd-retrait{ margin-left:0; flex-basis:100%; }
   .cmd-client{ flex-direction:column; gap:.25rem; }
   .cmd-actions .btn{ flex:1; }
+
+  /* Le libellé passe au-dessus du menu : côte à côte, il ne resterait pas
+     assez de place pour lire le statut lui-même. */
+  .cmd-statut-champ{ flex-direction:column; align-items:stretch; gap:.3rem; width:100%; margin-right:0; }
+  .cmd-statut-select{ width:100%; }
 
   /* Sur mobile la modale d'impression prend la largeur : les libellés des
      trois tickets ne tiennent pas sur une ligne autrement. */
