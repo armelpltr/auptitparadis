@@ -16,7 +16,8 @@
 
 import { json, httpError } from './http.js';
 import {
-  firestoreGet, firestoreList, firestoreCreate, firestoreQueryByField, fromFirestoreFields
+  firestoreGet, firestoreList, firestoreCreate, firestoreQueryByField, fromFirestoreFields,
+  firestoreIncrement, firestoreSet
 } from './firebase.js';
 import { envoyerConfirmation } from './mailer.js';
 
@@ -28,13 +29,36 @@ const FENETRE_DOUBLON_H = 24;   // au-delà, un même numéro peut recommander
 // valeur relève de la faute de frappe plus que du choix.
 const DELAI_ANNULATION_MAX_JOURS = 60;
 
-/* Alphabet sans O/0, I/1, S/5, B/8, Z/2 : le code est lu à voix haute au
-   comptoir et recopié à la main. */
-const ALPHABET_CODE = 'ACDEFGHJKLMNPQRTUVWXY34679';
+/* Le code n'est plus un tirage aléatoire : c'est un numéro de commande,
+   lisible et attendu comme tel (« SITE0001 », « SITE0002 »...). Le compteur
+   vit dans un document dédié, incrémenté côté serveur en une seule
+   opération — deux commandes arrivées en même temps ne peuvent pas
+   recevoir le même numéro. */
+const PREFIXE_CODE = 'SITE';
+const COMPTEUR_PATH = 'compteurs/commandes';
+const COMPTEUR_CHAMP = 'dernier';
 
-function genererCode(longueur = 6) {
-  const octets = crypto.getRandomValues(new Uint8Array(longueur));
-  return Array.from(octets, o => ALPHABET_CODE[o % ALPHABET_CODE.length]).join('');
+async function prochainNumero(env) {
+  try {
+    return await firestoreIncrement(COMPTEUR_PATH, COMPTEUR_CHAMP, env);
+  } catch {
+    // Le transform seul exige un document déjà existant : la toute
+    // première commande le crée, les suivantes retombent sur l'incrément.
+    await firestoreSet(COMPTEUR_PATH, { [COMPTEUR_CHAMP]: 1 }, env);
+    return 1;
+  }
+}
+
+async function genererCode(env) {
+  const numero = await prochainNumero(env);
+  return `${PREFIXE_CODE}${String(numero).padStart(4, '0')}`;
+}
+
+/* Réponse du piège à bots : un code plausible, sans toucher au compteur
+   réel — aucune commande n'est créée, ce numéro ne doit exister nulle
+   part. */
+function codeFactice() {
+  return `${PREFIXE_CODE}${String(Math.floor(1000 + Math.random() * 9000))}`;
 }
 
 /* ---------- Validation des champs libres ---------- */
@@ -211,7 +235,7 @@ export async function handleOrder(request, env, cors) {
   // Piège à bots : un humain ne voit pas ce champ, donc ne le remplit pas.
   // Réponse d'apparence normale — signaler le piège apprendrait à l'éviter.
   if (String(body.website ?? '').trim() !== '') {
-    return json({ ok: true, code: genererCode() }, 200, cors);
+    return json({ ok: true, code: codeFactice() }, 200, cors);
   }
 
   await verifierTurnstile(body.turnstileToken, request, env);
@@ -245,7 +269,7 @@ export async function handleOrder(request, env, cors) {
   }
 
   const { lignes, total } = await construireLignes(body.items, env);
-  const code = genererCode();
+  const code = await genererCode(env);
   const maintenant = new Date();
 
   /* Jeton de gestion : c'est lui, et lui seul, qui donne accès à la
