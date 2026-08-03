@@ -94,12 +94,21 @@ function loginErrorMessage(err) {
    qu'un confort d'affichage.
    Défaut à 'admin' quand le champ manque : le tout premier compte a été
    créé à la main avant que les rôles n'existent. */
+/* Renvoie `{ role }` si le compte a accès, sinon `{ refus: true }` quand la
+   réponse est nette, ou `{ panne: true }` quand on n'a pas pu savoir.
+   Les deux cas se ressemblaient jusqu'ici — un `catch` renvoyait `null` sans
+   distinguer « cette personne n'est pas membre » de « Firestore n'a pas
+   répondu ». La différence compte maintenant qu'un refus efface le compte :
+   une coupure réseau ne doit pas supprimer celui d'un administrateur.
+   `permission-denied` est la réponse normale pour un non-membre : la règle
+   de lecture exige d'exister dans `admins`, donc l'absence s'y traduit par
+   un refus et non par un document vide. */
 async function roleOfCurrentUser(user) {
   try {
     const snap = await getDoc(doc(db, 'admins', user.uid));
-    return snap.exists() ? (snap.data().role || 'admin') : null;
-  } catch {
-    return null;   // règles refusant la lecture = pas membre
+    return snap.exists() ? { role: snap.data().role || 'admin' } : { refus: true };
+  } catch (err) {
+    return err?.code === 'permission-denied' ? { refus: true } : { panne: true, err };
   }
 }
 
@@ -244,24 +253,50 @@ export function initAuth(onReady) {
       return;
     }
 
-    const role = await roleOfCurrentUser(user);
-    if (!role) {
-      await signOut(auth);
+    const acces = await roleOfCurrentUser(user);
+    if (!acces.role) {
+      const adresse = user.email || 'Ce compte';
+      /* Se connecter avec Google crée le compte Firebase avant même qu'on
+         ait pu vérifier quoi que ce soit. Refusé dans la foulée, il n'a
+         aucune raison de rester : sans cela, la liste des comptes se remplit
+         de gens qui n'ont jamais eu accès à rien.
+         On n'efface que ce que cette connexion vient de créer — deux dates
+         identiques — et jamais sur une panne : un compte plus ancien peut
+         être celui d'un administrateur retiré de l'équipe, dont l'e-mail et
+         le mot de passe servent peut-être ailleurs. */
+      const creeALInstant = user.metadata?.creationTime
+        && user.metadata.creationTime === user.metadata.lastSignInTime;
+
+      let efface = false;
+      if (acces.refus && creeALInstant) {
+        try { await user.delete(); efface = true; } catch { /* on se rabat sur la déconnexion */ }
+      }
+      if (!efface) await signOut(auth);
+
       loginScreen.hidden = false;
       a2fScreen.hidden = true;
       adminApp.hidden = true;
+
       /* Une modale plutôt qu'une ligne rouge sous le champ : ce refus n'est
          pas une faute de saisie qu'on corrige en réessayant, mais un compte
          qui n'a rien à faire ici. Il mérite d'être lu et acquitté.
          L'adresse est rappelée : sur un poste où plusieurs comptes Google
          sont ouverts, c'est souvent le mauvais qui a été choisi. */
-      await showMessage(
-        "Ce compte n'a pas accès à l'administration",
-        `${user.email || 'Ce compte'} ne figure pas parmi les personnes autorisées. `
-        + `Demandez une invitation, ou reconnectez-vous avec le compte qui a reçu l'accès.`
-      );
+      if (acces.panne) {
+        await showMessage(
+          "Impossible de vérifier vos accès",
+          "La base n'a pas répondu. Réessayez dans un instant — votre compte n'est pas en cause."
+        );
+      } else {
+        await showMessage(
+          "Ce compte n'a pas accès à l'administration",
+          `${adresse} ne figure pas parmi les personnes autorisées. `
+          + `Demandez une invitation, ou reconnectez-vous avec le compte qui a reçu l'accès.`
+        );
+      }
       return;
     }
+    const role = acces.role;
 
     // Membre reconnu, mais le panel n'est pas encore ouvert : il reste le code.
     if (!(await a2fDejaValidee(user))) {
@@ -315,7 +350,7 @@ export function initAuth(onReady) {
       loginScreen.hidden = true;
       inviteScreen.hidden = true;
       adminApp.hidden = false;
-      onReady(await roleOfCurrentUser(auth.currentUser));
+      onReady((await roleOfCurrentUser(auth.currentUser)).role);
     } catch (err) {
       a2fError.textContent = err.message;
       a2fError.hidden = false;
