@@ -827,6 +827,18 @@ p{ margin:0 0 1em; color:var(--ink-soft); }
   .footer-hours .fh-time{ text-align:left; }
   .footer-bottom-inner{ flex-direction:column; gap:.7rem; text-align:center; justify-content:center; }
   .footer-wave svg{ height:40px; }
+
+  /* Cibles tactiles : ces liens n'ont normalement que la hauteur de leur
+     texte — confortable au clic à la souris, trop juste au doigt. Le padding
+     agrandit la zone sans changer l'espacement visuel (compensé par un gap
+     réduit d'autant). */
+  .footer-nav ul{ gap:0; }
+  .footer-nav a{ padding:.6rem 0; }
+  .footer-contact address{ gap:0; }
+  .footer-contact-line{ padding:.5rem 0; }
+  .footer-social-link{ width:44px; height:44px; }
+  .footer-bottom-right{ gap:.4rem; flex-direction:column; }
+  .footer-admin-link, .footer-top-link{ padding:.5rem .3rem; }
 }
 
 @media (max-width: 460px){
