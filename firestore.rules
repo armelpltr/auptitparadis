@@ -84,13 +84,20 @@ service cloud.firestore {
       return request.resource.data.get('role', 'editor') != 'superadmin' || isSuper();
     }
 
+    // Le role vise doit exister. Sorti en fonction pour que `in` y soit le
+    // dernier operande : au milieu d'une chaine de &&, le parser des regles
+    // le refuse et rejette la ligne suivante.
+    function roleConnu() {
+      return request.resource.data.get('role', 'admin') in ['superadmin', 'admin', 'editor', 'comptoir'];
+    }
+
     // Un gestionnaire d'acces change les roles et les alertes. Rien d'autre
     // n'est modifiable : reecrire l'e-mail d'une entree permettrait de se
     // l'approprier.
     function majParGestionnaire() {
       return isOwner()
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['role', 'notifications'])
-          && request.resource.data.get('role', 'admin') in ['superadmin', 'admin', 'editor', 'comptoir']
+          && roleConnu()
           && cibleModifiable()
           && roleViseAutorise();
     }
