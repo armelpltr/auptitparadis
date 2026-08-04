@@ -227,6 +227,11 @@ function ouvrirModeJourJ() {
   const recherche = document.getElementById('jourjRecherche');
   overlay.hidden = false;
   recherche.value = '';
+  // Défensif : si la popup de code était restée ouverte d'une façon ou
+  // d'une autre, elle ne doit jamais réapparaître pré-remplie à une
+  // nouvelle entrée dans le mode jour J.
+  document.getElementById('jourjPinOverlay').hidden = true;
+  reinitialiserPin();
   renderJourJ();
   // Le clavier virtuel s'ouvre tout de suite : au comptoir, la première
   // chose qu'on fait est taper un nom ou un code, jamais regarder l'écran.
@@ -242,28 +247,31 @@ function ouvrirModeJourJ() {
    toute la journée. */
 const CODE_SORTIE_JOURJ = '8822';
 
-function demanderCodeSortie() {
-  document.getElementById('jourjSousTitre').hidden = true;
-  document.getElementById('jourjResultats').hidden = true;
-  const ecran = document.getElementById('jourjPinEcran');
-  const input = document.getElementById('jourjPinInput');
-  ecran.hidden = false;
+/* Toujours vide à l'ouverture, jamais un reste de saisie précédente —
+   que ce soit un code faux qui traînait, ou même le bon : le champ ne
+   doit jamais donner l'impression qu'il est pré-rempli ou mémorisé. */
+function reinitialiserPin() {
+  document.getElementById('jourjPinInput').value = '';
   document.getElementById('jourjPinErreur').hidden = true;
-  input.value = '';
-  input.focus();
+}
+
+function demanderCodeSortie() {
+  reinitialiserPin();
+  document.getElementById('jourjPinOverlay').hidden = false;
+  document.getElementById('jourjPinInput').focus();
 }
 
 function annulerCodeSortie() {
-  document.getElementById('jourjPinEcran').hidden = true;
-  document.getElementById('jourjSousTitre').hidden = false;
-  document.getElementById('jourjResultats').hidden = false;
-  document.getElementById('jourjRecherche').focus();
+  document.getElementById('jourjPinOverlay').hidden = true;
+  reinitialiserPin();
 }
 
 function validerCodeSortie() {
   const input = document.getElementById('jourjPinInput');
   if (input.value === CODE_SORTIE_JOURJ) {
+    document.getElementById('jourjPinOverlay').hidden = true;
     fermerModeJourJ();
+    reinitialiserPin();
     return;
   }
   document.getElementById('jourjPinErreur').hidden = false;
@@ -273,11 +281,6 @@ function validerCodeSortie() {
 
 function fermerModeJourJ() {
   document.getElementById('jourjOverlay').hidden = true;
-  // Remis en l'état pour la prochaine ouverture : sinon le mode jour J
-  // rouvrirait un jour sur l'écran de code au lieu de la recherche.
-  document.getElementById('jourjPinEcran').hidden = true;
-  document.getElementById('jourjSousTitre').hidden = false;
-  document.getElementById('jourjResultats').hidden = false;
 }
 
 function jourjCarteHTML(o) {

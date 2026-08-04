@@ -334,17 +334,22 @@
       <div class="jourj-entete">
         <input type="search" id="jourjRecherche" class="jourj-recherche"
                placeholder="Code, nom ou téléphone…" autocomplete="off" autocapitalize="off">
-        <button type="button" class="jourj-quitter" id="jourjQuitter" title="Quitter le mode jour J">✕</button>
-        <button type="button" class="jourj-quitter" id="jourjDeconnexion" title="Se déconnecter" hidden>⏻</button>
       </div>
       <p class="jourj-sous-titre" id="jourjSousTitre"></p>
       <div class="jourj-resultats" id="jourjResultats"></div>
 
-      <!-- Remplace la recherche et les résultats le temps de la saisie,
-           dans le même écran plutôt qu'une modale par-dessus : au
-           comptoir, un tap en trop ne doit pas rouvrir accidentellement
-           ce qu'on essaie justement de garder fermé. -->
-      <div class="jourj-pin" id="jourjPinEcran" hidden>
+      <!-- En bas et discret à dessein : ce n'est pas une action qu'on
+           déclenche par réflexe, contrairement à la recherche. -->
+      <div class="jourj-pied">
+        <button type="button" class="jourj-sortie" id="jourjQuitter">Quitter le mode jour J</button>
+        <button type="button" class="jourj-sortie" id="jourjDeconnexion" hidden>Se déconnecter</button>
+      </div>
+    </div>
+
+    <!-- Popup de code, au-dessus du mode jour J lui-même : un tap sur
+         « Quitter » ne doit jamais suffire seul à en sortir. -->
+    <div class="jourj-pin-overlay" id="jourjPinOverlay" hidden>
+      <div class="jourj-pin-carte">
         <p class="jourj-pin-titre">Code pour sortir du mode jour J</p>
         <input type="password" id="jourjPinInput" class="jourj-pin-input"
                inputmode="numeric" pattern="[0-9]*" maxlength="4" autocomplete="off">

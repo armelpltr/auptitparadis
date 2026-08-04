@@ -751,12 +751,13 @@ button.back-to-site{ background:none; border:none; cursor:pointer; font-family:i
 }
 .jourj-recherche:focus{ outline:none; border-color:var(--gold-deep); }
 
-.jourj-quitter{
-  flex:none; width:52px; height:52px; border-radius:12px;
-  border:2px solid var(--sand); background:var(--white);
-  font-size:1.3rem; color:var(--ink-soft); cursor:pointer;
+.jourj-pied{ flex:none; display:flex; justify-content:center; padding-top:1rem; }
+
+.jourj-sortie{
+  border:none; background:none; color:var(--ink-soft); font-size:.85rem;
+  padding:.6em 1em; cursor:pointer; text-decoration:underline; text-underline-offset:3px;
 }
-.jourj-quitter:hover{ background:#a13a25; border-color:#a13a25; color:var(--white); }
+.jourj-sortie:hover{ color:var(--ink); }
 
 .jourj-sous-titre{
   margin:.9rem 0 0; font-size:.9rem; color:var(--ink-soft); text-align:center;
@@ -797,11 +798,22 @@ button.back-to-site{ background:none; border:none; cursor:pointer; font-family:i
   .jourj-recherche{ font-size:1.2rem; padding:.8rem 1rem; }
 }
 
-.jourj-pin{
-  flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center;
-  gap:1rem; text-align:center;
+/* Popup de code, au-dessus du mode jour J lui-même (z-index supérieur) :
+   « Quitter » ouvre ceci, ça ne ferme jamais rien tout seul. */
+.jourj-pin-overlay{
+  position:fixed; inset:0; z-index:1100;
+  background:rgba(33,28,23,.6);
+  display:flex; align-items:center; justify-content:center;
+  padding:1.5rem;
 }
-.jourj-pin-titre{ font-size:1.1rem; font-weight:600; margin:0; }
+.jourj-pin-overlay[hidden]{ display:none; }
+
+.jourj-pin-carte{
+  background:var(--white); border-radius:16px; padding:2rem 1.8rem;
+  max-width:320px; width:100%; text-align:center;
+  display:flex; flex-direction:column; align-items:center; gap:1rem;
+}
+.jourj-pin-titre{ font-size:1.05rem; font-weight:600; margin:0; }
 .jourj-pin-input{
   width:180px; font-size:2rem; letter-spacing:.6em; text-align:center;
   padding:.6em .4em .6em .8em; border:2px solid var(--sand); border-radius:12px;
@@ -809,5 +821,5 @@ button.back-to-site{ background:none; border:none; cursor:pointer; font-family:i
 }
 .jourj-pin-input:focus{ outline:none; border-color:var(--gold-deep); }
 .jourj-pin-erreur{ color:#a13a25; font-weight:600; margin:0; }
-.jourj-pin-actions{ display:flex; gap:.8rem; margin-top:.5rem; }
+.jourj-pin-actions{ display:flex; gap:.8rem; margin-top:.2rem; }
 .jourj-pin-actions .btn{ min-width:120px; }
