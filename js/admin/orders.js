@@ -8,10 +8,11 @@
 
 import { db, auth } from "../firebase-config.js";
 import {
-  doc, collection, getDoc, getDocs, setDoc, updateDoc, deleteDoc
+  doc, collection, getDoc, getDocs, setDoc, updateDoc, deleteDoc, deleteField
 } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 import { signOut } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
 import { confirmDialog, showStatus, escapeAttr } from "./ui.js";
+import { WORKER_URL } from "./config.js";
 
 /* Une commande non confirmée depuis plus de ce délai est signalée : le
    patron décide au cas par cas, mais il faut d'abord qu'il la voie. */
@@ -283,26 +284,30 @@ export function ouvrirModeJourJ() {
   recherche.focus();
 }
 
-/* Pas une vraie barrière de sécurité — n'importe qui avec les outils de
-   développement la contournerait en une ligne, et ce champ est de toute
-   façon lisible par tous dans Firestore (settings est public en lecture).
-   Elle ne protège aucune donnée : les règles Firestore s'en chargent déjà,
-   quel que soit ce qui se passe à l'écran. Son seul rôle est physique —
-   empêcher qu'un geste du quotidien au comptoir ("tiens, c'est quoi ce
-   bouton ?") sorte du mode jour J pendant le service, sur le compte du
-   patron resté ouvert toute la journée.
+/* Le code de sortie ne protège aucune donnée : les règles Firestore s'en
+   chargent, quel que soit ce qui se passe à l'écran. Son rôle est physique —
+   empêcher qu'un geste du quotidien au comptoir (« tiens, c'est quoi ce
+   bouton ? ») sorte du mode jour J pendant le service, sur le compte du
+   patron resté ouvert toute la journée. Quiconque atteint les outils de
+   développement de la tablette contournera l'affichage de toute façon.
 
-   Stocké dans settings/noel plutôt qu'en dur dans ce fichier : modifiable
-   depuis l'admin, sans dépendre de moi ni d'un redéploiement. La valeur
-   par défaut ne sert qu'avant le tout premier réglage. */
-let codeSortieJourJ = '8822';
+   Il ne vit plus dans `settings/noel` : ce document porte
+   `allow read: if true` pour que le site public lise les dates de retrait,
+   et le code y était donc lisible par n'importe qui, sans même un compte.
+   Il est maintenant rangé côté Worker, salé et haché, dans une collection
+   qu'aucune règle n'ouvre — et c'est le Worker qui le compare. */
+async function appelerJourJ(charge) {
+  const user = auth.currentUser;
+  if (!user) throw new Error('Session expirée.');
 
-async function chargerCodeSortie() {
-  try {
-    const snap = await getDoc(doc(db, 'settings', 'noel'));
-    const valeur = snap.exists() ? snap.data().codeSortieJourJ : null;
-    if (/^\d{4}$/.test(valeur || '')) codeSortieJourJ = valeur;
-  } catch { /* la valeur par défaut reste en place */ }
+  const res = await fetch(`${WORKER_URL}/jourj/code`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ idToken: await user.getIdToken(), ...charge })
+  });
+  const corps = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(corps.error || `Erreur ${res.status}`);
+  return corps;
 }
 
 /* Toujours vide à l'ouverture, jamais un reste de saisie précédente —
@@ -324,15 +329,33 @@ function annulerCodeSortie() {
   reinitialiserPin();
 }
 
-function validerCodeSortie() {
+async function validerCodeSortie() {
   const input = document.getElementById('jourjPinInput');
-  if (input.value === codeSortieJourJ) {
-    document.getElementById('jourjPinOverlay').hidden = true;
-    fermerModeJourJ();
-    reinitialiserPin();
-    return;
+  const erreur = document.getElementById('jourjPinErreur');
+  const bouton = document.getElementById('jourjPinValider');
+
+  /* Le bouton se ferme le temps de l'aller-retour : sans ça, taper plusieurs
+     fois sur « Valider » lance autant d'essais, et le plafond du serveur se
+     consomme sur un seul code. */
+  bouton.disabled = true;
+  try {
+    const rep = await appelerJourJ({ action: 'verifier', code: input.value });
+    if (rep.ok) {
+      document.getElementById('jourjPinOverlay').hidden = true;
+      fermerModeJourJ();
+      reinitialiserPin();
+      return;
+    }
+    erreur.textContent = 'Code incorrect.';
+  } catch (err) {
+    // Plafond de tentatives atteint, session expirée, réseau coupé : le
+    // message du serveur en dit plus qu'un « code incorrect » trompeur.
+    erreur.textContent = err.message;
+  } finally {
+    bouton.disabled = false;
   }
-  document.getElementById('jourjPinErreur').hidden = false;
+
+  erreur.hidden = false;
   input.value = '';
   input.focus();
 }
@@ -991,7 +1014,8 @@ export function entrerModeComptoir() {
 }
 
 export function initOrders() {
-  chargerCodeSortie();
+  chargerEtatCodeSortie();
+  effacerAncienCodeSortie();
 
   const prepaDate = document.getElementById('prepaDate');
   if (prepaDate && !prepaDate.value) prepaDate.value = dateDuJour();
@@ -1035,12 +1059,45 @@ async function enregistrerCodeSortie() {
     return;
   }
   try {
-    await setDoc(doc(db, 'settings', 'noel'), { codeSortieJourJ: valeur }, { merge: true });
-    codeSortieJourJ = valeur;
+    // Le Worker le sale et le hache : il ne repasse jamais en clair par
+    // Firestore, où les règles de `settings` l'ouvraient à tout le monde.
+    await appelerJourJ({ action: 'definir', code: valeur });
     input.value = '';
     input.placeholder = '••••';
+    afficherEtatCodeSortie(true);
     showStatus('Code de sortie mis à jour ✓');
   } catch (err) {
     showStatus("Erreur lors de l'enregistrement : " + err.message, true);
   }
+}
+
+/* Tant qu'aucun code n'est posé, le mode jour J se quitte sans rien saisir.
+   Un verrou dont personne ne connaît la combinaison enfermerait la personne
+   au comptoir sans rien protéger de plus — et l'ancienne valeur par défaut,
+   publiée dans le JavaScript du site, ne fermait rien non plus. Le dire
+   ouvertement vaut mieux que le laisser croire. */
+function afficherEtatCodeSortie(configure) {
+  const el = document.getElementById('codeSortieEtat');
+  if (!el) return;
+  el.textContent = configure
+    ? 'Un code est défini. Le saisir est nécessaire pour quitter le mode jour J.'
+    : "Aucun code défini : le mode jour J se quitte sans code tant que vous n'en posez pas un.";
+  el.classList.toggle('field-hint--alerte', !configure);
+}
+
+async function chargerEtatCodeSortie() {
+  try {
+    const rep = await appelerJourJ({ action: 'etat' });
+    afficherEtatCodeSortie(rep.configure);
+  } catch { /* l'état reste muet, le champ fonctionne quand même */ }
+}
+
+/* L'ancien emplacement du code, dans un document que tout le monde peut
+   lire. Déplacer la valeur ne suffit pas : celle d'avant y reste tant qu'on
+   ne l'efface pas. Silencieux à dessein — seuls les rôles qui écrivent dans
+   `settings/noel` y parviennent, les autres n'ont rien à corriger. */
+async function effacerAncienCodeSortie() {
+  try {
+    await updateDoc(doc(db, 'settings', 'noel'), { codeSortieJourJ: deleteField() });
+  } catch { /* champ déjà parti, ou rôle sans droit d'écriture ici */ }
 }

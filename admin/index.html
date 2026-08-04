@@ -336,6 +336,9 @@
           <div class="form-row">
             <label for="codeSortieInput">Nouveau code (4 chiffres)</label>
             <input type="text" inputmode="numeric" id="codeSortieInput" placeholder="••••" maxlength="4">
+            <!-- Rempli par orders.js : le code est chez le Worker, la page ne
+                 peut donc plus le relire, seulement savoir s'il existe. -->
+            <p class="field-hint" id="codeSortieEtat"></p>
           </div>
         </div>
         <button type="button" class="btn btn-primary btn-small" id="codeSortieBtn">Enregistrer le code</button>
