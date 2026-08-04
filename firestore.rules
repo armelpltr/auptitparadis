@@ -80,8 +80,9 @@ service cloud.firestore {
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['notifications']);
     }
 
-    // Contenu du site : ouvert aux trois rôles, c'est le métier de base du
-    // panel. Exception plus bas pour `settings/noel`.
+    // Contenu du site : le métier de base du panel, ouvert à tous les rôles
+    // sauf le comptoir (voir juste en dessous). Exception plus bas pour
+    // `settings/noel`.
     match /settings/{docId} {
       allow read:  if true;
       // Le comptoir est membre du panel (isMember()) pour lire sa propre
