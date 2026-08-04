@@ -233,8 +233,51 @@ function ouvrirModeJourJ() {
   recherche.focus();
 }
 
+/* Pas une vraie barrière de sécurité — n'importe qui avec les outils de
+   développement la contournerait en une ligne. Elle ne protège aucune
+   donnée : les règles Firestore s'en chargent déjà, quel que soit ce qui
+   se passe à l'écran. Son seul rôle est physique — empêcher qu'un geste
+   du quotidien au comptoir ("tiens, c'est quoi ce bouton ?") sorte du
+   mode jour J pendant le service, sur le compte du patron resté ouvert
+   toute la journée. */
+const CODE_SORTIE_JOURJ = '8822';
+
+function demanderCodeSortie() {
+  document.getElementById('jourjSousTitre').hidden = true;
+  document.getElementById('jourjResultats').hidden = true;
+  const ecran = document.getElementById('jourjPinEcran');
+  const input = document.getElementById('jourjPinInput');
+  ecran.hidden = false;
+  document.getElementById('jourjPinErreur').hidden = true;
+  input.value = '';
+  input.focus();
+}
+
+function annulerCodeSortie() {
+  document.getElementById('jourjPinEcran').hidden = true;
+  document.getElementById('jourjSousTitre').hidden = false;
+  document.getElementById('jourjResultats').hidden = false;
+  document.getElementById('jourjRecherche').focus();
+}
+
+function validerCodeSortie() {
+  const input = document.getElementById('jourjPinInput');
+  if (input.value === CODE_SORTIE_JOURJ) {
+    fermerModeJourJ();
+    return;
+  }
+  document.getElementById('jourjPinErreur').hidden = false;
+  input.value = '';
+  input.focus();
+}
+
 function fermerModeJourJ() {
   document.getElementById('jourjOverlay').hidden = true;
+  // Remis en l'état pour la prochaine ouverture : sinon le mode jour J
+  // rouvrirait un jour sur l'écran de code au lieu de la recherche.
+  document.getElementById('jourjPinEcran').hidden = true;
+  document.getElementById('jourjSousTitre').hidden = false;
+  document.getElementById('jourjResultats').hidden = false;
 }
 
 function jourjCarteHTML(o) {
@@ -907,6 +950,12 @@ export function initOrders() {
   document.getElementById('compteurReset')?.addEventListener('click', reinitialiserCompteur);
 
   document.getElementById('modeJourJBtn')?.addEventListener('click', ouvrirModeJourJ);
-  document.getElementById('jourjQuitter')?.addEventListener('click', fermerModeJourJ);
+  document.getElementById('jourjQuitter')?.addEventListener('click', demanderCodeSortie);
   document.getElementById('jourjRecherche')?.addEventListener('input', renderJourJ);
+
+  document.getElementById('jourjPinValider')?.addEventListener('click', validerCodeSortie);
+  document.getElementById('jourjPinAnnuler')?.addEventListener('click', annulerCodeSortie);
+  document.getElementById('jourjPinInput')?.addEventListener('keydown', e => {
+    if (e.key === 'Enter') validerCodeSortie();
+  });
 }

@@ -339,6 +339,21 @@
       </div>
       <p class="jourj-sous-titre" id="jourjSousTitre"></p>
       <div class="jourj-resultats" id="jourjResultats"></div>
+
+      <!-- Remplace la recherche et les résultats le temps de la saisie,
+           dans le même écran plutôt qu'une modale par-dessus : au
+           comptoir, un tap en trop ne doit pas rouvrir accidentellement
+           ce qu'on essaie justement de garder fermé. -->
+      <div class="jourj-pin" id="jourjPinEcran" hidden>
+        <p class="jourj-pin-titre">Code pour sortir du mode jour J</p>
+        <input type="password" id="jourjPinInput" class="jourj-pin-input"
+               inputmode="numeric" pattern="[0-9]*" maxlength="4" autocomplete="off">
+        <p class="jourj-pin-erreur" id="jourjPinErreur" hidden>Code incorrect.</p>
+        <div class="jourj-pin-actions">
+          <button type="button" class="btn btn-ghost" id="jourjPinAnnuler">Annuler</button>
+          <button type="button" class="btn btn-primary" id="jourjPinValider">Valider</button>
+        </div>
+      </div>
     </div>
 
     <!-- ===================== ONGLET CATALOGUE NOËL ===================== -->
