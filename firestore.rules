@@ -53,24 +53,46 @@ service cloud.firestore {
       return isMember() && myRole() == 'comptoir';
     }
 
+    // La seule ecriture qu'un comptoir obtient sur une commande.
+    function majStatutParComptoir() {
+      return isComptoir()
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['statut']);
+    }
 
-    // Les deux façons de modifier une entrée d'admins, sorties en fonctions
-    // pour que l'autorisation elle-meme tienne sur une ligne : le parser des
-    // regles bute sur une condition a deux branches parenthesees.
+
+    // Le parser des regles bute sur une condition a deux branches entre
+    // parentheses. Chaque groupe de ce genre est donc sorti en fonction, ici
+    // comme plus bas : les autorisations n'enchainent plus que des && a plat.
+
+    // On ne retrograde pas un superadmin sans l'etre : sinon un admin retire
+    // les acces du compte qui pourrait le corriger.
+    function cibleModifiable() {
+      return resource.data.get('role', 'admin') != 'superadmin' || isSuper();
+    }
+
+    // Et on n'en nomme pas un sans l'etre non plus, sinon un admin s'y
+    // promeut lui-meme.
+    function roleViseAutorise() {
+      return request.resource.data.get('role', 'admin') != 'superadmin' || isSuper();
+    }
+
+    // Meme verrou pour les invitations, ou le role par defaut est 'editor' :
+    // sans lui, un admin se fabrique une invitation superadmin, l'accepte
+    // avec une seconde adresse, et les deux verrous du dessus ne valent plus
+    // rien.
+    function inviteNonSuperadmin() {
+      return request.resource.data.get('role', 'editor') != 'superadmin' || isSuper();
+    }
 
     // Un gestionnaire d'acces change les roles et les alertes. Rien d'autre
     // n'est modifiable : reecrire l'e-mail d'une entree permettrait de se
     // l'approprier.
-    // Deux verrous sur le role : on ne touche pas a un superadmin sans
-    // l'etre, et on n'en nomme pas un sans l'etre non plus. Sans le premier,
-    // un admin retrograde le compte qui pourrait le corriger ; sans le
-    // second, il s'y promeut lui-meme.
     function majParGestionnaire() {
       return isOwner()
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['role', 'notifications'])
           && request.resource.data.get('role', 'admin') in ['superadmin', 'admin', 'editor', 'comptoir']
-          && (resource.data.get('role', 'admin') != 'superadmin' || isSuper())
-          && (request.resource.data.get('role', 'admin') != 'superadmin' || isSuper());
+          && cibleModifiable()
+          && roleViseAutorise();
     }
 
     // Chacun coupe ses propres alertes, sans toucher a son role.
@@ -128,9 +150,7 @@ service cloud.firestore {
     match /orders/{orderId} {
       allow read: if isOwner() || isComptoir();
       allow create, delete: if isOwner();
-      allow update: if isOwner()
-                    || (isComptoir()
-                        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['statut']));
+      allow update: if isOwner() || majStatutParComptoir();
     }
 
     // Compteur des codes de commande (SITE0001, SITE0002...). Le Worker
@@ -168,8 +188,7 @@ service cloud.firestore {
       // Les deux cas sont definis plus haut, en fonctions.
       allow update: if majParGestionnaire() || majDeSesAlertes(uid);
 
-      allow delete: if isOwner()
-                    && (resource.data.get('role', 'admin') != 'superadmin' || isSuper());
+      allow delete: if isOwner() && cibleModifiable();
     }
 
     // Invitations en attente, une par jeton.
@@ -187,8 +206,7 @@ service cloud.firestore {
       // Inviter un superadmin est réservé aux superadmins : sans ce contrôle,
       // un administrateur se fabrique une invitation superadmin, l'accepte
       // avec une seconde adresse, et le verrou du dessus ne vaut plus rien.
-      allow create: if isOwner()
-                    && (request.resource.data.get('role', 'editor') != 'superadmin' || isSuper());
+      allow create: if isOwner() && inviteNonSuperadmin();
       // Annulation d'une invitation depuis l'onglet Équipe.
       allow delete: if isOwner();
     }
