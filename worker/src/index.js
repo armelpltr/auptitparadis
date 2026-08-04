@@ -10,6 +10,8 @@
 //                        permet de fermer l'inscription publique
 //   POST /jourj/code     poser et vérifier le code de sortie du mode jour J,
 //                        rangé hors de portée des règles Firestore
+//   POST /image          recevoir une photo du panel et la ranger dans R2
+//   GET  /image/<clé>    la servir, avec un cache long
 //
 // Les deux passent par la clé de service, qui ne peut pas vivre dans du
 // JavaScript servi aux visiteurs. Ce Worker est le seul endroit où elle
@@ -23,6 +25,7 @@ import { handleOrderManage, handleOrderCancel } from './order-manage.js';
 import { handleA2fRequest, handleA2fVerify } from './a2f.js';
 import { handleInviteAccept } from './invite-accept.js';
 import { handleJourJCode } from './jourj.js';
+import { handleImageUpload, handleImageGet } from './images.js';
 
 const ROUTES = {
   '/delete-user': handleDeleteUser,
@@ -33,15 +36,33 @@ const ROUTES = {
   '/a2f/verify': handleA2fVerify,
   '/invite/accept': handleInviteAccept,
   '/jourj/code': handleJourJCode,
+  '/image': handleImageUpload,
 };
 
 export default {
   async fetch(request, env) {
     const cors = corsHeaders(env);
+    const chemin = new URL(request.url).pathname;
 
     if (request.method === 'OPTIONS') return new Response(null, { headers: cors });
 
-    const handler = ROUTES[new URL(request.url).pathname];
+    /* Seule route en lecture, et la seule dont le chemin porte une valeur
+       variable : elle est traitée à part, avant la table des routes qui
+       n'accepte que des chemins exacts et la méthode POST. Une balise
+       <img> ne demande pas de CORS, d'où l'absence d'en-têtes ici. */
+    if (chemin.startsWith('/image/')) {
+      if (request.method !== 'GET' && request.method !== 'HEAD') {
+        return json({ error: 'Méthode non autorisée' }, 405, cors);
+      }
+      try {
+        return await handleImageGet(request, env);
+      } catch (err) {
+        console.error('Image illisible :', err);
+        return new Response('Not found', { status: 404 });
+      }
+    }
+
+    const handler = ROUTES[chemin];
     if (!handler) return json({ error: 'Not found' }, 404, cors);
     if (request.method !== 'POST') return json({ error: 'Méthode non autorisée' }, 405, cors);
 

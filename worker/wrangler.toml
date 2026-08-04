@@ -8,6 +8,22 @@ compatibility_date = "2024-09-23"
 # anti-bot auprès de Cloudflare. Les deux exigent la clé de service, d'où ce
 # Worker — seul endroit où elle peut vivre sans être publique.
 
+# Photos du site. Elles passaient par Cloudinary en envoi non signé, donc par
+# un endpoint que n'importe qui sur Internet pouvait appeler — le nom du cloud
+# et le preset vivent forcément dans le JavaScript du panel. Ici l'envoi exige
+# un membre authentifié, et le Worker sert les fichiers lui-même : pas de
+# bucket public à border.
+#
+# `jurisdiction = "eu"` garde les fichiers dans l'Union européenne. Ce n'est
+# pas un simple indice de région : c'est une contrainte, et c'est ce qui
+# permet à la page de confidentialité de l'annoncer. Le bucket doit être créé
+# avec la même option, sinon la liaison ne le retrouve pas :
+#   wrangler r2 bucket create auptitparadis-images --jurisdiction eu
+[[r2_buckets]]
+binding = "IMAGES"
+bucket_name = "auptitparadis-images"
+jurisdiction = "eu"
+
 [vars]
 ALLOWED_ORIGIN = "https://armelpltr.github.io"
 FIREBASE_PROJECT_ID = "au-ptit-paradis"

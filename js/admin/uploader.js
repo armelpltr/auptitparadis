@@ -1,19 +1,19 @@
 // ============================================================
-// UPLOADER — import de photos vers Cloudinary + popup de progression
+// UPLOADER — import de photos vers le Worker + popup de progression
 // ============================================================
 
 import { SVG_X } from "./icons.js";
+import { WORKER_URL } from "./config.js";
+import { auth } from "../firebase-config.js";
 
-/* Cloudinary — hébergement des photos.
-   Ces deux valeurs sont publiques par nature : le cloud name apparaît dans
-   chaque URL d'image, et le preset est "unsigned" (envoi sans signature).
-   Aucun secret ici — l'API Secret du compte ne doit jamais arriver dans ce
-   fichier, qui est téléchargé par tous les visiteurs du site. */
-const CLOUDINARY_CLOUD_NAME = 'erbyexpc';
-const CLOUDINARY_PRESET     = 'auptitparadis';
-const CLOUDINARY_ENDPOINT   = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`;
-
-const MAX_UPLOAD_BYTES = 8 * 1024 * 1024; // doit rester aligné sur le preset Cloudinary
+/* Les photos partaient chez Cloudinary en envoi non signé. Les deux valeurs
+   que cela demandait — nom du cloud et preset — vivent forcément dans ce
+   fichier, téléchargé par tous les visiteurs : l'endroit où l'on déposait
+   les photos du site était donc ouvert à tout Internet, sans compte.
+   Elles passent maintenant par le Worker, qui exige un membre authentifié
+   et les range dans R2. Aucune valeur à cacher ici, et plus rien à border
+   dans une console tierce. */
+const MAX_UPLOAD_BYTES = 8 * 1024 * 1024; // doit rester aligné sur worker/src/images.js
 const RING_LENGTH = 339.292;              // 2πr avec r=54, cf. .upload-ring-fill
 
 /* ---------- Popup de progression ---------- */
@@ -89,21 +89,34 @@ function closeUploadModal() {
 
 uploadUI.closeBtn.addEventListener('click', closeUploadModal);
 
-/* ---------- Envoi vers Cloudinary ---------- */
-/* XMLHttpRequest plutôt que fetch : c'est le seul moyen d'avoir la
-   progression d'un envoi, fetch ne l'expose pas. */
-function uploadImageFile(file, folder) {
-  if (!file.type.startsWith('image/')) return Promise.reject(new Error("Ce fichier n'est pas une image."));
-  if (file.size > MAX_UPLOAD_BYTES) return Promise.reject(new Error('Photo trop lourde — 8 Mo maximum.'));
+/* ---------- Envoi vers le Worker ---------- */
 
-  const form = new FormData();
-  form.append('file', file);
-  form.append('upload_preset', CLOUDINARY_PRESET);
-  form.append('folder', `auptitparadis/${folder}`);
+/* Même liste que `worker/src/images.js`. Le SVG en est absent des deux
+   côtés : c'est du XML, il porte du script, et un navigateur l'exécute
+   quand il l'affiche en pleine page. */
+const FORMATS_ACCEPTES = ['image/jpeg', 'image/png', 'image/webp', 'image/avif'];
+
+/* XMLHttpRequest plutôt que fetch : c'est le seul moyen d'avoir la
+   progression d'un envoi, fetch ne l'expose pas.
+   Le fichier part tel quel dans le corps, sans FormData — le serveur n'a
+   besoin que des octets, et le type comme le dossier tiennent dans des
+   en-têtes. */
+async function uploadImageFile(file, folder) {
+  if (!FORMATS_ACCEPTES.includes(file.type)) {
+    throw new Error('Format non accepté. Utilise un JPG, PNG, WebP ou AVIF.');
+  }
+  if (file.size > MAX_UPLOAD_BYTES) throw new Error('Photo trop lourde — 8 Mo maximum.');
+
+  const user = auth.currentUser;
+  if (!user) throw new Error('Session expirée. Reconnecte-toi.');
+  const idToken = await user.getIdToken();
 
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
-    xhr.open('POST', CLOUDINARY_ENDPOINT);
+    xhr.open('POST', `${WORKER_URL}/image`);
+    xhr.setRequestHeader('Authorization', `Bearer ${idToken}`);
+    xhr.setRequestHeader('Content-Type', file.type);
+    xhr.setRequestHeader('X-Dossier', folder);
 
     xhr.upload.addEventListener('progress', e => {
       if (e.lengthComputable) setUploadProgress((e.loaded / e.total) * 100);
@@ -112,28 +125,15 @@ function uploadImageFile(file, folder) {
     xhr.addEventListener('load', () => {
       let body = {};
       try { body = JSON.parse(xhr.responseText); } catch { /* réponse illisible */ }
-      if (xhr.status >= 200 && xhr.status < 300 && body.secure_url) resolve(body.secure_url);
-      else reject(new Error(cloudinaryError(xhr.status, body)));
+      if (xhr.status >= 200 && xhr.status < 300 && body.url) resolve(body.url);
+      else reject(new Error(body.error || `L'import a échoué (code ${xhr.status}).`));
     });
 
-    xhr.addEventListener('error', () => reject(new Error('Connexion impossible à Cloudinary. Vérifie ta connexion internet.')));
+    xhr.addEventListener('error', () => reject(new Error("Connexion impossible au serveur d'images. Vérifie ta connexion internet.")));
     xhr.addEventListener('abort', () => reject(new Error("L'import a été annulé.")));
 
-    xhr.send(form);
+    xhr.send(file);
   });
-}
-
-function cloudinaryError(statusCode, body) {
-  const raw = body && body.error && body.error.message ? body.error.message : '';
-  if (/upload preset not found/i.test(raw)) {
-    return `Le preset « ${CLOUDINARY_PRESET} » est introuvable. Vérifie son nom exact dans Cloudinary (Settings > Upload).`;
-  }
-  if (/unsigned|whitelist/i.test(raw)) {
-    return `Le preset « ${CLOUDINARY_PRESET} » n'est pas en mode Unsigned, ou les envois non signés sont bloqués (Settings > Security).`;
-  }
-  if (/file size|too large/i.test(raw)) return 'Photo refusée par Cloudinary : fichier trop lourd.';
-  if (/format/i.test(raw)) return 'Format refusé par Cloudinary. Utilise un JPG, PNG ou WebP.';
-  return raw || `Cloudinary a renvoyé une erreur (code ${statusCode}).`;
 }
 
 function uploadErrorMessage(err) {
@@ -161,7 +161,9 @@ export function createImageUploader({ id = '', className = '', value = '', folde
 
   const fileInput = document.createElement('input');
   fileInput.type = 'file';
-  fileInput.accept = 'image/*';
+  // Meme liste que la verification, pour que le selecteur de fichiers ne
+  // propose pas ce qui sera refuse ensuite.
+  fileInput.accept = FORMATS_ACCEPTES.join(',');
   fileInput.hidden = true;
 
   const pickBtn = document.createElement('button');
