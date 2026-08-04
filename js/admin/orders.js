@@ -389,7 +389,6 @@ function renderJourJ() {
     ? liste.map(jourjCarteHTML).join('')
     : '<p class="jourj-vide">Aucune commande ne correspond.</p>';
 }
-}
 
 /* ---------- Chargement ---------- */
 export async function loadOrders() {
