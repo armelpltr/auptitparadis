@@ -384,7 +384,11 @@ function renderOrders() {
   const statutsVoulus = FILTRES[filtre] || FILTRES.toutes;
 
   const visibles = ordersCache.filter(o => {
-    if (!statutsVoulus.includes(o.statut)) return false;
+    // « Toutes » veut dire toutes — y compris une commande dont le statut
+    // est vide, mal orthographié ou absent de la liste connue (donnée de
+    // test, import manuel, bug ailleurs). Un filtre par statut, lui,
+    // reste strict : il n'a de sens que sur les valeurs qu'il connaît.
+    if (filtre !== 'toutes' && !statutsVoulus.includes(o.statut)) return false;
     if (!recherche) return true;
     return [o.code, o.client?.prenom, o.client?.nom, o.client?.nomComplet, o.client?.telephone, o.client?.email]
       .some(v => String(v || '').toLowerCase().includes(recherche));
