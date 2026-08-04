@@ -7,6 +7,11 @@ rules_version = '2';
 // des invitations existent, n'importe qui peut se créer un compte Firebase, et
 // un simple `request.auth != null` lui aurait ouvert l'écriture.
 //
+// Être membre ne suffit pas non plus : presque tout exige en plus d'avoir
+// franchi la double authentification, attestée par un attribut posé sur le
+// compte par le Worker. Sans cette exigence ici, elle ne vivait que dans le
+// navigateur et le mot de passe seul ouvrait les données.
+//
 // Quatre rôles :
 //   superadmin — tout, et seul à pouvoir nommer ou retirer un superadmin
 //   admin      — le site, les commandes et les accès de l'équipe
@@ -27,6 +32,37 @@ service cloud.firestore {
           && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
     }
 
+    /* La double authentification, exigée ici et plus seulement par le panel.
+       Elle était entièrement dans le navigateur : le Worker tirait le code,
+       le vérifiait et posait l'attribut, mais aucune règle ne le lisait. Le
+       mot de passe seul suffisait donc à tout — une session ouverte par
+       l'API publique de Firebase lisait les commandes en direct, sans que
+       l'écran de code soit jamais affiché. La 2FA gardait la porte pendant
+       que les fenêtres étaient ouvertes.
+
+       Deux conditions, pas une. `a2fUntil` vaut pour le compte entier, sur
+       n'importe quel poste : sans la seconde, se connecter ailleurs dans les
+       8 heures héritait du « validé » sans jamais recevoir de code.
+       `auth_time` ne bouge pas quand un jeton se rafraîchit, mais change à
+       chaque vraie connexion — les comparer dit que CE poste a bien saisi
+       le code.
+
+       Les défauts de `get()` sont indispensables : un attribut absent fait
+       échouer la règle entière, ce qui refuserait aussi ce qui est légitime. */
+    function a2fFranchie() {
+      return request.auth.token.get('a2fUntil', 0) > request.time.toMillis()
+          && request.auth.token.get('a2fAuthTime', 0) == request.auth.token.get('auth_time', -1);
+    }
+
+    /* Membre du panel ET passé par le code. C'est cette fonction, et non
+       `isMember()`, qui ouvre quoi que ce soit — à une exception près, plus
+       bas : la lecture de sa propre entrée `admins`, qui doit rester
+       possible avant la double authentification puisque c'est elle qui
+       apprend au panel qui il a en face. */
+    function membreVerifie() {
+      return isMember() && a2fFranchie();
+    }
+
     // Le défaut à 'admin' couvre le tout premier compte, créé à la main dans
     // la console avant que les rôles n'existent : sans lui, il perdrait la
     // main sur les accès.
@@ -36,21 +72,21 @@ service cloud.firestore {
 
     // Gère les accès, les commandes et le catalogue de Noël.
     function isOwner() {
-      return isMember() && myRole() in ['superadmin', 'admin'];
+      return membreVerifie() && myRole() in ['superadmin', 'admin'];
     }
 
     // Au-dessus : seul un superadmin touche à un autre superadmin. C'est ce
     // qui laisse un recours si un administrateur fait n'importe quoi avec les
     // accès — il ne peut pas retirer celui qui pourrait le corriger.
     function isSuper() {
-      return isMember() && myRole() == 'superadmin';
+      return membreVerifie() && myRole() == 'superadmin';
     }
 
     // Comptoir : le mode jour J, rien d'autre. Ni le contenu du site, ni le
     // catalogue, ni les accès de l'équipe — seulement chercher une commande
     // et faire avancer son statut au comptoir.
     function isComptoir() {
-      return isMember() && myRole() == 'comptoir';
+      return membreVerifie() && myRole() == 'comptoir';
     }
 
     // La seule ecriture qu'un comptoir obtient sur une commande.
@@ -103,7 +139,7 @@ service cloud.firestore {
 
     // Chacun coupe ses propres alertes, sans toucher a son role.
     function majDeSesAlertes(uid) {
-      return request.auth != null
+      return membreVerifie()
           && request.auth.uid == uid
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['notifications']);
     }
@@ -113,11 +149,10 @@ service cloud.firestore {
     // `settings/noel`.
     match /settings/{docId} {
       allow read:  if true;
-      // Le comptoir est membre du panel (isMember()) pour lire sa propre
-      // entrée `admins` et passer le contrôle d'accès, mais ce n'est pas
-      // un droit sur le contenu du site : il ne doit pouvoir écrire nulle
-      // part ici.
-      allow write: if isMember() && myRole() != 'comptoir' && docId != 'noel';
+      // Le comptoir est membre du panel pour lire sa propre entrée `admins`
+      // et passer le contrôle d'accès, mais ce n'est pas un droit sur le
+      // contenu du site : il ne doit pouvoir écrire nulle part ici.
+      allow write: if membreVerifie() && myRole() != 'comptoir' && docId != 'noel';
     }
 
     // Ouverture des commandes, dates de retrait, délai d'annulation : cela
@@ -129,7 +164,7 @@ service cloud.firestore {
 
     match /blocks/{blockId} {
       allow read:  if true;
-      allow write: if isMember() && myRole() != 'comptoir';
+      allow write: if membreVerifie() && myRole() != 'comptoir';
     }
 
     // Catalogue des commandes de Noël (bûches, coffrets). Le site public le
@@ -178,9 +213,16 @@ service cloud.firestore {
 
     // Personnes ayant accès au panel.
     match /admins/{uid} {
-      // Chacun lit sa propre entrée — c'est ainsi que le panel connaît son
-      // rôle. La liste complète, elle, porte les adresses de toute l'équipe
-      // et reste réservée à ceux qui gèrent les accès.
+      /* Chacun lit sa propre entrée — c'est ainsi que le panel connaît son
+         rôle. La liste complète, elle, porte les adresses de toute l'équipe
+         et reste réservée à ceux qui gèrent les accès.
+
+         Seule autorisation qui n'exige pas la double authentification, et
+         il le faut : le panel lit cette entrée AVANT d'afficher l'écran du
+         code, pour savoir s'il a affaire à un membre. L'exiger ici
+         refuserait la lecture, le panel conclurait « pas d'accès » et
+         personne n'entrerait plus. Ce qu'elle expose se limite au rôle et à
+         l'adresse de qui la demande — rien qu'il ne sache déjà. */
       allow get:  if isMember();
       allow list: if isOwner();
 
