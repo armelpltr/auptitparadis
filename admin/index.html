@@ -306,6 +306,21 @@
 
       <!-- Réservé au superadmin : affiché par orders.js selon le rôle, et
            refusé de toute façon par les règles Firestore pour les autres. -->
+      <div class="admin-card">
+        <h2>Code de sortie du mode jour J</h2>
+        <p class="admin-card-hint">
+          Demandé pour quitter le mode jour J une fois entré. Ce n'est pas une protection de vos
+          données — seulement un frein contre une sortie accidentelle pendant le service.
+        </p>
+        <div class="form-row-grid">
+          <div class="form-row">
+            <label for="codeSortieInput">Nouveau code (4 chiffres)</label>
+            <input type="text" inputmode="numeric" id="codeSortieInput" placeholder="••••" maxlength="4">
+          </div>
+        </div>
+        <button type="button" class="btn btn-primary btn-small" id="codeSortieBtn">Enregistrer le code</button>
+      </div>
+
       <div class="admin-card admin-card--danger" id="compteurCarte" hidden>
         <h2>Numérotation des commandes</h2>
         <p class="admin-card-hint">

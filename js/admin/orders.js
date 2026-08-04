@@ -244,6 +244,14 @@ export function modeJourJVerrouille() {
   try { return localStorage.getItem(CLE_VERROU_JOURJ) === '1'; } catch { return false; }
 }
 
+/* Rien ne rafraîchissait les données une fois le mode jour J ouvert — pas
+   de bouton, pas de minuteur. Sur un poste verrouillé toute la journée,
+   une commande passée pendant le service restait invisible jusqu'au
+   prochain rechargement de page. Un intervalle discret comble ça sans
+   qu'il y ait quoi que ce soit à cliquer. */
+const INTERVALLE_RAFRAICHISSEMENT_MS = 20 * 1000;
+let intervalleJourJ = null;
+
 export function ouvrirModeJourJ() {
   verrouillerJourJ();
   const overlay = document.getElementById('jourjOverlay');
@@ -259,16 +267,32 @@ export function ouvrirModeJourJ() {
   // Le clavier virtuel s'ouvre tout de suite : au comptoir, la première
   // chose qu'on fait est taper un nom ou un code, jamais regarder l'écran.
   recherche.focus();
+
+  clearInterval(intervalleJourJ);
+  intervalleJourJ = setInterval(loadOrders, INTERVALLE_RAFRAICHISSEMENT_MS);
 }
 
 /* Pas une vraie barrière de sécurité — n'importe qui avec les outils de
-   développement la contournerait en une ligne. Elle ne protège aucune
-   donnée : les règles Firestore s'en chargent déjà, quel que soit ce qui
-   se passe à l'écran. Son seul rôle est physique — empêcher qu'un geste
-   du quotidien au comptoir ("tiens, c'est quoi ce bouton ?") sorte du
-   mode jour J pendant le service, sur le compte du patron resté ouvert
-   toute la journée. */
-const CODE_SORTIE_JOURJ = '8822';
+   développement la contournerait en une ligne, et ce champ est de toute
+   façon lisible par tous dans Firestore (settings est public en lecture).
+   Elle ne protège aucune donnée : les règles Firestore s'en chargent déjà,
+   quel que soit ce qui se passe à l'écran. Son seul rôle est physique —
+   empêcher qu'un geste du quotidien au comptoir ("tiens, c'est quoi ce
+   bouton ?") sorte du mode jour J pendant le service, sur le compte du
+   patron resté ouvert toute la journée.
+
+   Stocké dans settings/noel plutôt qu'en dur dans ce fichier : modifiable
+   depuis l'admin, sans dépendre de moi ni d'un redéploiement. La valeur
+   par défaut ne sert qu'avant le tout premier réglage. */
+let codeSortieJourJ = '8822';
+
+async function chargerCodeSortie() {
+  try {
+    const snap = await getDoc(doc(db, 'settings', 'noel'));
+    const valeur = snap.exists() ? snap.data().codeSortieJourJ : null;
+    if (/^\d{4}$/.test(valeur || '')) codeSortieJourJ = valeur;
+  } catch { /* la valeur par défaut reste en place */ }
+}
 
 /* Toujours vide à l'ouverture, jamais un reste de saisie précédente —
    que ce soit un code faux qui traînait, ou même le bon : le champ ne
@@ -291,7 +315,7 @@ function annulerCodeSortie() {
 
 function validerCodeSortie() {
   const input = document.getElementById('jourjPinInput');
-  if (input.value === CODE_SORTIE_JOURJ) {
+  if (input.value === codeSortieJourJ) {
     document.getElementById('jourjPinOverlay').hidden = true;
     fermerModeJourJ();
     reinitialiserPin();
@@ -305,6 +329,7 @@ function validerCodeSortie() {
 function fermerModeJourJ() {
   deverrouillerJourJ();
   document.getElementById('jourjOverlay').hidden = true;
+  clearInterval(intervalleJourJ);
 }
 
 function jourjCarteHTML(o) {
@@ -971,6 +996,8 @@ export function entrerModeComptoir() {
 }
 
 export function initOrders() {
+  chargerCodeSortie();
+
   const prepaDate = document.getElementById('prepaDate');
   if (prepaDate && !prepaDate.value) prepaDate.value = dateDuJour();
   prepaDate?.addEventListener('change', renderPrepa);
@@ -989,4 +1016,27 @@ export function initOrders() {
   document.getElementById('jourjPinInput')?.addEventListener('keydown', e => {
     if (e.key === 'Enter') validerCodeSortie();
   });
+
+  document.getElementById('codeSortieInput')?.addEventListener('input', e => {
+    e.target.value = e.target.value.replace(/\D/g, '').slice(0, 4);
+  });
+  document.getElementById('codeSortieBtn')?.addEventListener('click', enregistrerCodeSortie);
+}
+
+async function enregistrerCodeSortie() {
+  const input = document.getElementById('codeSortieInput');
+  const valeur = input.value.trim();
+  if (!/^\d{4}$/.test(valeur)) {
+    showStatus('Le code doit comporter exactement 4 chiffres.', true);
+    return;
+  }
+  try {
+    await setDoc(doc(db, 'settings', 'noel'), { codeSortieJourJ: valeur }, { merge: true });
+    codeSortieJourJ = valeur;
+    input.value = '';
+    input.placeholder = '••••';
+    showStatus('Code de sortie mis à jour ✓');
+  } catch (err) {
+    showStatus("Erreur lors de l'enregistrement : " + err.message, true);
+  }
 }
