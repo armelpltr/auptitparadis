@@ -151,9 +151,20 @@
   <header class="admin-topbar">
     <div class="admin-topbar-inner">
       <img src="../assets/logo.png" alt="" class="admin-logo">
-      <h1>Administration — Au P'tit Paradis</h1>
-      <a href="../index.html" class="admin-view-site" target="_blank">Voir le site ↗</a>
-      <button class="btn btn-ghost admin-logout" id="logoutBtn">Déconnexion</button>
+      <div class="admin-topbar-titre">
+        <h1>Administration</h1>
+        <p class="admin-topbar-sous">Au P'tit Paradis</p>
+      </div>
+
+      <div class="admin-topbar-compte">
+        <span class="admin-topbar-nom" id="topbarNom"></span>
+        <span class="admin-topbar-role" id="topbarRole"></span>
+      </div>
+
+      <div class="admin-topbar-actions">
+        <a href="../index.html" class="admin-view-site" target="_blank">Voir le site ↗</a>
+        <button class="btn btn-ghost admin-logout" id="logoutBtn">Déconnexion</button>
+      </div>
     </div>
   </header>
 

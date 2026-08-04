@@ -45,15 +45,47 @@ button.back-to-site{ background:none; border:none; cursor:pointer; font-family:i
 .field-hint{ font-size:.8rem; color:var(--ink-soft); margin:.3rem 0 0; }
 
 /* ---------- Topbar & tabs ---------- */
-.admin-topbar{ background:var(--ink); color:var(--cream); }
-.admin-topbar-inner{
-  max-width:1100px; margin:0 auto; padding:.9rem 1.5rem; display:flex; align-items:center; gap:1rem;
+.admin-topbar{
+  background:var(--ink); color:var(--cream);
+  position:sticky; top:0; z-index:80;
+  box-shadow:0 2px 10px rgba(0,0,0,.18);
 }
-.admin-logo{ width:38px; height:38px; border-radius:50%; background:var(--white); object-fit:contain; padding:2px; }
-.admin-topbar h1{ font-size:1.05rem; color:var(--cream); margin:0; flex:1; }
-.admin-view-site{ font-size:.88rem; color:var(--gold-pale); }
+.admin-topbar-inner{
+  max-width:1100px; margin:0 auto; padding:.7rem 1.5rem;
+  display:flex; align-items:center; gap:1rem;
+}
+.admin-logo{
+  width:42px; height:42px; border-radius:50%; background:var(--white);
+  object-fit:contain; padding:2px; flex:none;
+  box-shadow:0 0 0 2px rgba(255,255,255,.12);
+}
+
+.admin-topbar-titre{ display:flex; flex-direction:column; line-height:1.15; }
+.admin-topbar h1{ font-size:1rem; font-weight:700; color:var(--cream); margin:0; }
+.admin-topbar-sous{ font-size:.78rem; color:var(--gold-pale); margin:0; }
+
+.admin-topbar-compte{
+  flex:1; display:flex; flex-direction:column; align-items:flex-end; line-height:1.3;
+  padding-right:.4rem;
+}
+.admin-topbar-nom{ font-size:.9rem; font-weight:600; color:var(--cream); }
+.admin-topbar-role{
+  font-size:.72rem; font-weight:700; letter-spacing:.03em; text-transform:uppercase;
+  color:var(--ink); background:var(--gold-pale); border-radius:999px; padding:.15em .7em;
+}
+
+.admin-topbar-actions{ display:flex; align-items:center; gap:.8rem; flex:none; }
+.admin-view-site{ font-size:.85rem; color:var(--gold-pale); white-space:nowrap; }
 .admin-logout{ border-color:var(--sand); color:var(--sand); padding:.5em 1.1em; font-size:.85rem; }
 .admin-logout:hover{ background:var(--sand); color:var(--ink); }
+
+@media (max-width: 720px){
+  .admin-topbar-inner{ flex-wrap:wrap; padding:.7rem 1rem; }
+  .admin-topbar-sous{ display:none; }
+  .admin-topbar-compte{ order:3; flex:1 1 100%; align-items:flex-start; padding-right:0; }
+  .admin-topbar-actions{ order:2; margin-left:auto; }
+  .admin-view-site{ display:none; }
+}
 
 .admin-tabs{
   max-width:1100px; margin:0 auto; padding:0 1.5rem; display:flex; gap:.5rem; border-bottom:1px solid rgba(33,28,23,.1);

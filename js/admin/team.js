@@ -18,7 +18,7 @@ import { WORKER_URL } from "./config.js";
    Un admin gère l'équipe, mais ne peut ni promouvoir quelqu'un
    superadmin ni retirer un superadmin : c'est ce qui garde une main
    au-dessus de la sienne si le panel est mal manipulé. */
-const ROLE_LABELS = {
+export const ROLE_LABELS = {
   superadmin: 'Super-administrateur',
   admin:      'Administrateur',
   editor:     'Réglages du site',
