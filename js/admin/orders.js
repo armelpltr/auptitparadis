@@ -6,10 +6,11 @@
 // l'ordre dans lequel le travail arrive en boutique.
 // ============================================================
 
-import { db } from "../firebase-config.js";
+import { db, auth } from "../firebase-config.js";
 import {
   doc, collection, getDoc, getDocs, setDoc, updateDoc, deleteDoc
 } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+import { signOut } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
 import { confirmDialog, showStatus, escapeAttr } from "./ui.js";
 
 /* Une commande non confirmée depuis plus de ce délai est signalée : le
@@ -321,6 +322,10 @@ export async function loadOrders() {
     renderStats();
     renderPrepa();
     renderOrders();
+    // Toujours appelé, même hors mode jour J : lire une valeur d'input
+    // sur un écran caché ne coûte rien, et ça évite qu'un compte comptoir
+    // atterrisse sur une liste vide le temps que ce chargement termine.
+    renderJourJ();
   } catch (err) {
     list.innerHTML = `<p class="empty-hint">Commandes illisibles : ${escapeAttr(err.message)}</p>`;
   }
@@ -874,6 +879,21 @@ export function appliquerRoleOrders(role) {
   if (!carte) return;
   carte.hidden = role !== 'superadmin';
   if (role === 'superadmin') afficherCompteur();
+}
+
+/* Un compte comptoir n'a rien d'autre à voir : pas de croix pour revenir
+   à un panel sur lequel il n'a de toute façon aucun droit (les règles
+   Firestore le refuseraient), et une vraie déconnexion à la place — sans
+   ça, ce poste resterait ouvert tant que personne n'y pense. Les données
+   restent protégées même si cet appel n'était jamais fait : c'est
+   `firestore.rules` qui fait le travail, ceci n'est que l'habillage qui
+   évite d'afficher des pages qui échoueraient. */
+export function entrerModeComptoir() {
+  document.getElementById('jourjQuitter').hidden = true;
+  const deco = document.getElementById('jourjDeconnexion');
+  deco.hidden = false;
+  deco.addEventListener('click', () => signOut(auth));
+  ouvrirModeJourJ();
 }
 
 export function initOrders() {

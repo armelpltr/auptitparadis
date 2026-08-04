@@ -5,6 +5,10 @@
 /* Onglets ouverts à chaque rôle. Le rôle « réglages du site » ne voit ni
    les commandes — qui portent les coordonnées de clients — ni le catalogue
    de Noël, ni les accès.
+   Le comptoir n'apparaît pas ici : il ne passe jamais par ce système
+   d'onglets, admin.js l'aiguille directement vers le mode jour J plein
+   écran (cf. entrerModeComptoir dans orders.js) sans jamais afficher la
+   barre d'onglets ni les panneaux qu'elle ouvre.
    Ce n'est qu'un habillage : ce sont les règles Firestore qui refusent
    réellement les lectures et les écritures. Masquer les onglets évite
    surtout d'afficher des pages qui échoueraient. */

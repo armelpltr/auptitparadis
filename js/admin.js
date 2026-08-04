@@ -14,7 +14,7 @@ import { initSettings, loadSettings } from "./admin/settings.js";
 import { initBlocks, loadBlocks } from "./admin/blocks.js";
 import { initTeam, loadTeam } from "./admin/team.js";
 import { initNoel, loadNoel } from "./admin/noel.js";
-import { initOrders, loadOrders, appliquerRoleOrders } from "./admin/orders.js";
+import { initOrders, loadOrders, appliquerRoleOrders, entrerModeComptoir } from "./admin/orders.js";
 
 initTabs();
 initSettings();
@@ -27,6 +27,14 @@ initOrders();
    sinon les règles Firestore refusent la lecture et l'onglet, masqué,
    afficherait quand même son message d'erreur au premier plan. */
 initAuth((role) => {
+  // Le comptoir ne voit jamais la barre d'onglets ni les panneaux qu'elle
+  // ouvre : il n'a besoin que des commandes, pour le mode jour J.
+  if (role === 'comptoir') {
+    loadOrders();
+    entrerModeComptoir();
+    return;
+  }
+
   appliquerRole(role);
 
   loadSettings();

@@ -7,10 +7,12 @@ rules_version = '2';
 // des invitations existent, n'importe qui peut se créer un compte Firebase, et
 // un simple `request.auth != null` lui aurait ouvert l'écriture.
 //
-// Trois rôles :
+// Quatre rôles :
 //   superadmin — tout, et seul à pouvoir nommer ou retirer un superadmin
 //   admin      — le site, les commandes et les accès de l'équipe
 //   editor     — le contenu du site uniquement : ni commandes, ni accès
+//   comptoir   — le mode jour J uniquement : lit les commandes, avance
+//                leur statut, rien d'autre
 
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -44,6 +46,13 @@ service cloud.firestore {
       return isMember() && myRole() == 'superadmin';
     }
 
+    // Comptoir : le mode jour J, rien d'autre. Ni le contenu du site, ni le
+    // catalogue, ni les accès de l'équipe — seulement chercher une commande
+    // et faire avancer son statut au comptoir.
+    function isComptoir() {
+      return isMember() && myRole() == 'comptoir';
+    }
+
 
     // Les deux façons de modifier une entrée d'admins, sorties en fonctions
     // pour que l'autorisation elle-meme tienne sur une ligne : le parser des
@@ -59,7 +68,7 @@ service cloud.firestore {
     function majParGestionnaire() {
       return isOwner()
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['role', 'notifications'])
-          && request.resource.data.get('role', 'admin') in ['superadmin', 'admin', 'editor']
+          && request.resource.data.get('role', 'admin') in ['superadmin', 'admin', 'editor', 'comptoir']
           && (resource.data.get('role', 'admin') != 'superadmin' || isSuper())
           && (request.resource.data.get('role', 'admin') != 'superadmin' || isSuper());
     }
@@ -75,7 +84,11 @@ service cloud.firestore {
     // panel. Exception plus bas pour `settings/noel`.
     match /settings/{docId} {
       allow read:  if true;
-      allow write: if isMember() && docId != 'noel';
+      // Le comptoir est membre du panel (isMember()) pour lire sa propre
+      // entrée `admins` et passer le contrôle d'accès, mais ce n'est pas
+      // un droit sur le contenu du site : il ne doit pouvoir écrire nulle
+      // part ici.
+      allow write: if isMember() && myRole() != 'comptoir' && docId != 'noel';
     }
 
     // Ouverture des commandes, dates de retrait, délai d'annulation : cela
@@ -87,7 +100,7 @@ service cloud.firestore {
 
     match /blocks/{blockId} {
       allow read:  if true;
-      allow write: if isMember();
+      allow write: if isMember() && myRole() != 'comptoir';
     }
 
     // Catalogue des commandes de Noël (bûches, coffrets). Le site public le
@@ -105,8 +118,18 @@ service cloud.firestore {
     // remplir la boîte de commandes en ignorant la vérification anti-bot.
     // En lecture, elles portent nom, téléphone et e-mail de clients : le
     // rôle « réglages du site » n'y a pas accès.
+    //
+    // Le comptoir lit comme un admin — il doit pouvoir chercher n'importe
+    // quelle commande — mais n'écrit que son statut. Il ne crée rien,
+    // n'efface rien, ne touche ni au commentaire ni aux coordonnées : la
+    // seule chose qu'on fait à ce poste, c'est avancer une commande dans
+    // son parcours (confirmer, marquer prête, marquer récupérée).
     match /orders/{orderId} {
-      allow read, write: if isOwner();
+      allow read: if isOwner() || isComptoir();
+      allow create, delete: if isOwner();
+      allow update: if isOwner()
+                    || (isComptoir()
+                        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['statut']));
     }
 
     // Compteur des codes de commande (SITE0001, SITE0002...). Le Worker

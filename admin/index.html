@@ -335,6 +335,7 @@
         <input type="search" id="jourjRecherche" class="jourj-recherche"
                placeholder="Code, nom ou téléphone…" autocomplete="off" autocapitalize="off">
         <button type="button" class="jourj-quitter" id="jourjQuitter" title="Quitter le mode jour J">✕</button>
+        <button type="button" class="jourj-quitter" id="jourjDeconnexion" title="Se déconnecter" hidden>⏻</button>
       </div>
       <p class="jourj-sous-titre" id="jourjSousTitre"></p>
       <div class="jourj-resultats" id="jourjResultats"></div>
@@ -461,6 +462,7 @@
           <label for="inviteRole">Rôle</label>
           <select id="inviteRole">
             <option value="editor" selected>Réglages du site — contenu seulement</option>
+            <option value="comptoir">Comptoir — mode jour J seulement</option>
             <option value="admin">Administrateur — site, commandes et accès</option>
             <!-- Masqué à qui n'est pas déjà super-administrateur, cf. team.js -->
             <option value="superadmin" hidden>Super-administrateur — tout</option>

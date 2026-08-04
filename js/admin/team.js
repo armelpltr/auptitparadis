@@ -9,17 +9,20 @@ import {
 import { confirmDialog, showStatus, escapeAttr, val, fmtDate } from "./ui.js";
 import { WORKER_URL } from "./config.js";
 
-/* Trois rôles :
+/* Quatre rôles :
      superadmin — tout, et seul à pouvoir toucher aux autres superadmins
      admin      — tout le site, les commandes et les accès
      editor     — le contenu du site seulement, ni commandes ni accès
+     comptoir   — le mode jour J seulement : chercher une commande et
+                  avancer son statut au comptoir, rien d'autre
    Un admin gère l'équipe, mais ne peut ni promouvoir quelqu'un
    superadmin ni retirer un superadmin : c'est ce qui garde une main
    au-dessus de la sienne si le panel est mal manipulé. */
 const ROLE_LABELS = {
   superadmin: 'Super-administrateur',
   admin:      'Administrateur',
-  editor:     'Réglages du site'
+  editor:     'Réglages du site',
+  comptoir:   'Comptoir (jour J)'
 };
 
 const GERE_EQUIPE = ['superadmin', 'admin'];
@@ -149,7 +152,8 @@ function applyRoleToUI(isOwner, isSuper) {
 const CONSEQUENCES = {
   superadmin: 'Cette personne pourra tout faire, y compris gérer les autres super-administrateurs.',
   admin:      'Cette personne pourra gérer le site, les commandes et les accès de l\'équipe.',
-  editor:     'Cette personne pourra modifier le contenu du site, mais ni voir les commandes ni gérer les accès.'
+  editor:     'Cette personne pourra modifier le contenu du site, mais ni voir les commandes ni gérer les accès.',
+  comptoir:   'Cette personne n\'aura accès qu\'au mode jour J : chercher une commande et faire avancer son statut au comptoir. Rien d\'autre ne lui sera visible.'
 };
 
 async function changeRole(select, email) {

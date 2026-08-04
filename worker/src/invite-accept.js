@@ -27,7 +27,7 @@ import {
   createAuthUser, findAuthUserByEmail, deleteAuthUser
 } from './firebase.js';
 
-const ROLES = ['superadmin', 'admin', 'editor'];
+const ROLES = ['superadmin', 'admin', 'editor', 'comptoir'];
 
 /* Mêmes exigences que la jauge du formulaire, redites ici parce qu'un
    contrôle qui ne vit que dans le navigateur se contourne en appelant cette
