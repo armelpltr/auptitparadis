@@ -150,28 +150,31 @@
         <div class="form-duo">
           <div class="form-field">
             <label for="ordPrenom">Prénom</label>
-            <input type="text" id="ordPrenom" maxlength="40" autocomplete="given-name" required placeholder="Marie">
+            <input type="text" id="ordPrenom" maxlength="40" autocomplete="given-name" required>
           </div>
           <div class="form-field">
             <label for="ordNom">Nom</label>
-            <input type="text" id="ordNom" maxlength="40" autocomplete="family-name" required placeholder="Lemoine">
+            <input type="text" id="ordNom" maxlength="40" autocomplete="family-name" required>
           </div>
         </div>
 
         <div class="form-field">
           <label for="ordTel">Téléphone</label>
-          <input type="tel" id="ordTel" maxlength="20" autocomplete="tel" required placeholder="06 12 34 56 78">
+          <input type="tel" id="ordTel" maxlength="20" autocomplete="tel" required>
           <p class="form-hint">Pour vous joindre si besoin. Aucun démarchage.</p>
         </div>
 
         <div class="form-field">
           <label for="ordEmail">E-mail</label>
-          <input type="email" id="ordEmail" maxlength="120" autocomplete="email" required placeholder="prenom@exemple.fr">
+          <input type="email" id="ordEmail" maxlength="120" autocomplete="email" required>
         </div>
 
         <div class="form-field">
           <label for="ordCommentaire">Précisions <span class="form-optional">(facultatif)</span></label>
-          <textarea id="ordCommentaire" rows="2" maxlength="300" placeholder="Allergies, heure de passage approximative…"></textarea>
+          <!-- Le seul indice conservé : il guide sans imiter une valeur déjà
+               saisie, et l'heure de passage n'y figure plus, un champ la
+               demandant désormais. -->
+          <textarea id="ordCommentaire" rows="2" maxlength="300" placeholder="Allergies, demande particulière…"></textarea>
         </div>
 
         <!-- Piège à robots : masqué en CSS, sans intérêt pour un visiteur.

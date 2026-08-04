@@ -1262,6 +1262,10 @@ p{ margin:0 0 1em; color:var(--ink-soft); }
 
 /* ---------- Champs ---------- */
 .form-field{ display:flex; flex-direction:column; gap:.35rem; margin-bottom:1.1rem; }
+/* Un display posé par la feuille du site l'emporte sur celui que le
+   navigateur applique à [hidden] : sans cette ligne, masquer un champ par
+   son attribut reste sans effet et laisse une liste vide à l'écran. */
+.form-field[hidden]{ display:none; }
 .form-field label{
   font-size:.78rem; font-weight:700; text-transform:uppercase; letter-spacing:.08em;
   color:var(--ink-soft);
