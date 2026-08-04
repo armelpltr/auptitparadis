@@ -215,6 +215,94 @@ function renderPrepa() {
     </div>`;
 }
 
+/* ---------- Mode jour J ---------- */
+/* Une interface à part, pas un simple filtre dans la liste habituelle :
+   au comptoir le jour du retrait, la vitesse et la lisibilité priment sur
+   tout — pas d'onglets, pas de statistiques, pas de menu déroulant à
+   plusieurs choix. Une recherche, une carte, un bouton. */
+
+function ouvrirModeJourJ() {
+  const overlay = document.getElementById('jourjOverlay');
+  const recherche = document.getElementById('jourjRecherche');
+  overlay.hidden = false;
+  recherche.value = '';
+  renderJourJ();
+  // Le clavier virtuel s'ouvre tout de suite : au comptoir, la première
+  // chose qu'on fait est taper un nom ou un code, jamais regarder l'écran.
+  recherche.focus();
+}
+
+function fermerModeJourJ() {
+  document.getElementById('jourjOverlay').hidden = true;
+}
+
+function jourjCarteHTML(o) {
+  const statut = STATUTS[o.statut] || { label: o.statut, suivant: null, actionSuivante: null };
+  const figee = !statut.suivant;
+
+  return `
+    <div class="jourj-carte ${figee ? 'is-figee' : ''}" data-id="${escapeAttr(o.id)}">
+      <div class="jourj-carte-entete">
+        <span class="jourj-code">${escapeAttr(o.code || '——')}</span>
+        <span class="jourj-nom">${escapeAttr(nomClient(o.client))}</span>
+        <span class="jourj-statut-badge">${statut.emoji || ''} ${escapeAttr(statut.label)}</span>
+      </div>
+      <p class="jourj-detail"><strong>Retrait :</strong> ${escapeAttr(fmtDateRetrait(o.dateRetrait))}</p>
+      <p class="jourj-detail">${(o.items || []).map(it => `${it.quantite}× ${escapeAttr(it.nom)}`).join(' · ')}</p>
+      ${o.commentaire ? `<p class="jourj-detail">💬 « ${escapeAttr(o.commentaire)} »</p>` : ''}
+      ${statut.suivant
+        ? `<button type="button" class="jourj-action" data-action="avancer">${escapeAttr(statut.actionSuivante)}</button>`
+        : ''}
+    </div>`;
+}
+
+function renderJourJ() {
+  const zone = document.getElementById('jourjResultats');
+  const sousTitre = document.getElementById('jourjSousTitre');
+  const recherche = document.getElementById('jourjRecherche').value.trim().toLowerCase();
+
+  let liste;
+  if (!recherche) {
+    // Rien tapé : la liste du jour, telle qu'elle arrivera au comptoir.
+    const aujourdhui = dateDuJour();
+    liste = ordersCache.filter(o => o.dateRetrait === aujourdhui && o.statut !== 'annulee');
+    sousTitre.textContent = liste.length
+      ? `Retraits d'aujourd'hui (${liste.length})`
+      : "Aucun retrait prévu aujourd'hui — tapez un code, un nom ou un téléphone pour chercher ailleurs.";
+  } else {
+    // Une recherche l'emporte sur la date : un client peut se présenter en
+    // avance sur sa commande, autant le retrouver quand même.
+    liste = ordersCache.filter(o =>
+      [o.code, o.client?.prenom, o.client?.nom, o.client?.nomComplet, o.client?.telephone, o.client?.email]
+        .some(v => String(v || '').toLowerCase().includes(recherche))
+    );
+    sousTitre.textContent = `${liste.length} résultat${liste.length > 1 ? 's' : ''}`;
+  }
+
+  zone.innerHTML = liste.length
+    ? liste.map(jourjCarteHTML).join('')
+    : '<p class="jourj-vide">Aucune commande ne correspond.</p>';
+
+  zone.querySelectorAll('.jourj-carte [data-action="avancer"]').forEach(btn => {
+    const id = btn.closest('.jourj-carte').dataset.id;
+    btn.addEventListener('click', () => avancerJourJ(id));
+  });
+}
+
+async function avancerJourJ(id) {
+  const o = ordersCache.find(x => x.id === id);
+  const suivant = STATUTS[o?.statut]?.suivant;
+  if (!suivant) return;
+
+  try {
+    await updateDoc(doc(db, 'orders', id), { statut: suivant });
+    o.statut = suivant;   // évite d'attendre un rechargement complet pour réafficher
+    renderJourJ();
+  } catch (err) {
+    showStatus('Changement de statut refusé : ' + err.message, true);
+  }
+}
+
 /* ---------- Chargement ---------- */
 export async function loadOrders() {
   const list = document.getElementById('ordersList');
@@ -797,4 +885,8 @@ export function initOrders() {
   document.getElementById('ordersRecherche').addEventListener('input', renderOrders);
   document.getElementById('ordersRefresh').addEventListener('click', loadOrders);
   document.getElementById('compteurReset')?.addEventListener('click', reinitialiserCompteur);
+
+  document.getElementById('modeJourJBtn')?.addEventListener('click', ouvrirModeJourJ);
+  document.getElementById('jourjQuitter')?.addEventListener('click', fermerModeJourJ);
+  document.getElementById('jourjRecherche')?.addEventListener('input', renderJourJ);
 }

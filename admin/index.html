@@ -265,7 +265,10 @@
     <section class="admin-panel" id="panel-orders">
 
       <div class="admin-card">
-        <h2>Commandes reçues</h2>
+        <div class="admin-card-entete">
+          <h2>Commandes reçues</h2>
+          <button type="button" class="btn btn-primary btn-small" id="modeJourJBtn">📋 Mode jour J</button>
+        </div>
         <p class="admin-card-hint">Triées par jour de retrait. Le client présente son code en boutique : cherchez-le ci-dessous pour confirmer sa commande.</p>
 
         <div class="prepa-bloc">
@@ -323,6 +326,19 @@
         </button>
       </div>
     </section>
+
+    <!-- ===================== MODE JOUR J ===================== -->
+    <!-- Plein écran, en dehors des onglets : au comptoir le 24 décembre,
+         personne ne doit voir autre chose que la recherche et le bouton. -->
+    <div class="jourj-overlay" id="jourjOverlay" hidden>
+      <div class="jourj-entete">
+        <input type="search" id="jourjRecherche" class="jourj-recherche"
+               placeholder="Code, nom ou téléphone…" autocomplete="off" autocapitalize="off">
+        <button type="button" class="jourj-quitter" id="jourjQuitter" title="Quitter le mode jour J">✕</button>
+      </div>
+      <p class="jourj-sous-titre" id="jourjSousTitre"></p>
+      <div class="jourj-resultats" id="jourjResultats"></div>
+    </div>
 
     <!-- ===================== ONGLET CATALOGUE NOËL ===================== -->
     <section class="admin-panel" id="panel-noel">

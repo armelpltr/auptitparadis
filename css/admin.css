@@ -519,6 +519,9 @@ button.back-to-site{ background:none; border:none; cursor:pointer; font-family:i
 .prepa-qte{ font-weight:700; color:var(--gold-deep); margin-right:.4em; }
 .prepa-attente .prepa-qte{ color:var(--ink-soft); }
 
+.admin-card-entete{ display:flex; align-items:center; justify-content:space-between; gap:1rem; flex-wrap:wrap; }
+.admin-card-entete h2{ margin:0; }
+
 .orders-stats{
   display:grid; grid-template-columns:repeat(4, 1fr); gap:1rem;
   margin-bottom:1.4rem;
@@ -724,4 +727,71 @@ button.back-to-site{ background:none; border:none; cursor:pointer; font-family:i
   .team-actions{ flex-direction:column; align-items:stretch; gap:.5rem; }
   .team-role{ width:100%; }
   .invite-link-row{ grid-template-columns:1fr; }
+}
+
+/* ---------- Mode jour J ---------- */
+/* Plein écran, au-dessus de tout : au comptoir le jour du retrait, rien
+   d'autre ne doit être visible ni accessible par erreur. Contraste fort et
+   cibles larges — c'est pensé pour un doigt sur une tablette, pas une
+   souris, et pour être lu vite dans le rush. */
+.jourj-overlay{
+  position:fixed; inset:0; z-index:1000;
+  background:var(--cream, #fbf6ee);
+  display:flex; flex-direction:column;
+  padding:1.2rem 1rem;
+}
+
+.jourj-entete{ display:flex; align-items:center; gap:.8rem; }
+
+.jourj-recherche{
+  flex:1; font-size:1.4rem; padding:.9rem 1.1rem;
+  border:2px solid var(--sand); border-radius:12px;
+  font-family:inherit; background:var(--white);
+}
+.jourj-recherche:focus{ outline:none; border-color:var(--gold-deep); }
+
+.jourj-quitter{
+  flex:none; width:52px; height:52px; border-radius:12px;
+  border:2px solid var(--sand); background:var(--white);
+  font-size:1.3rem; color:var(--ink-soft); cursor:pointer;
+}
+.jourj-quitter:hover{ background:#a13a25; border-color:#a13a25; color:var(--white); }
+
+.jourj-sous-titre{
+  margin:.9rem 0 0; font-size:.9rem; color:var(--ink-soft); text-align:center;
+}
+
+.jourj-resultats{
+  flex:1; overflow-y:auto; margin-top:1rem;
+  display:flex; flex-direction:column; gap:.8rem;
+}
+
+.jourj-carte{
+  border:2px solid var(--sand); border-radius:14px; background:var(--white);
+  padding:1.1rem 1.3rem;
+}
+.jourj-carte.is-figee{ opacity:.55; }
+
+.jourj-carte-entete{ display:flex; align-items:baseline; justify-content:space-between; gap:1rem; flex-wrap:wrap; }
+.jourj-code{ font-size:1.3rem; font-weight:800; letter-spacing:.04em; color:var(--gold-deep); }
+.jourj-nom{ font-size:1.1rem; font-weight:600; }
+.jourj-statut-badge{
+  font-size:.8rem; font-weight:600; padding:.25em .8em; border-radius:999px;
+  background:var(--sand); white-space:nowrap;
+}
+
+.jourj-detail{ margin:.6rem 0 0; font-size:.95rem; color:var(--ink-soft); }
+.jourj-detail strong{ color:var(--ink); }
+
+.jourj-action{
+  width:100%; margin-top:1rem; padding:1rem; font-size:1.15rem; font-weight:700;
+  border:none; border-radius:12px; background:var(--gold-deep); color:var(--white); cursor:pointer;
+}
+.jourj-action:active{ transform:scale(.98); }
+
+.jourj-vide{ text-align:center; color:var(--ink-soft); margin-top:3rem; font-size:1.05rem; }
+
+@media (max-width: 720px){
+  .jourj-overlay{ padding:.9rem .7rem; }
+  .jourj-recherche{ font-size:1.2rem; padding:.8rem 1rem; }
 }
