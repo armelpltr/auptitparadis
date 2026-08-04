@@ -60,9 +60,9 @@ service cloud.firestore {
     }
 
 
-    // Le parser des regles bute sur une condition a deux branches entre
-    // parentheses. Chaque groupe de ce genre est donc sorti en fonction, ici
-    // comme plus bas : les autorisations n'enchainent plus que des && a plat.
+    // Les verrous sur les roles sont sortis en fonctions nommees : les
+    // autorisations n'enchainent plus que des && a plat, et chaque condition
+    // porte son intention dans son nom.
 
     // On ne retrograde pas un superadmin sans l'etre : sinon un admin retire
     // les acces du compte qui pourrait le corriger.
@@ -84,9 +84,8 @@ service cloud.firestore {
       return request.resource.data.get('role', 'editor') != 'superadmin' || isSuper();
     }
 
-    // Le role vise doit exister. Sorti en fonction pour que `in` y soit le
-    // dernier operande : au milieu d'une chaine de &&, le parser des regles
-    // le refuse et rejette la ligne suivante.
+    // Le role vise doit faire partie des quatre existants : sans ce controle,
+    // un admin ecrit n'importe quelle chaine et sort l'entree des cas prevus.
     function roleConnu() {
       return request.resource.data.get('role', 'admin') in ['superadmin', 'admin', 'editor', 'comptoir'];
     }
