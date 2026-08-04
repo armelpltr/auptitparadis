@@ -744,6 +744,20 @@ button.back-to-site{ background:none; border:none; cursor:pointer; font-family:i
 
 .jourj-entete{ display:flex; align-items:center; gap:.8rem; }
 
+.jourj-filtre-date{
+  display:flex; align-items:center; gap:.6rem; flex-wrap:wrap;
+  margin-top:.7rem;
+}
+.jourj-filtre-date input[type="date"]{
+  border:1px solid var(--sand); border-radius:8px; padding:.5em .7em;
+  font-family:inherit; font-size:.9rem; background:var(--white);
+}
+.jourj-lien{
+  border:none; background:none; color:var(--ink-soft); font-size:.85rem;
+  padding:.4em .3em; cursor:pointer; text-decoration:underline; text-underline-offset:3px;
+}
+.jourj-lien:hover{ color:var(--ink); }
+
 .jourj-recherche{
   flex:1; font-size:1.4rem; padding:.9rem 1.1rem;
   border:2px solid var(--sand); border-radius:12px;

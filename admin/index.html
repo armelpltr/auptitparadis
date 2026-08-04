@@ -311,6 +311,8 @@
         <p class="admin-card-hint">
           Demandé pour quitter le mode jour J une fois entré. Ce n'est pas une protection de vos
           données — seulement un frein contre une sortie accidentelle pendant le service.
+          <strong>Seul·e vous (l'administrateur·rice du site) devez connaître ce code — ne le
+          communiquez pas aux employés qui utilisent le mode jour J au comptoir.</strong>
         </p>
         <div class="form-row-grid">
           <div class="form-row">
@@ -349,6 +351,11 @@
       <div class="jourj-entete">
         <input type="search" id="jourjRecherche" class="jourj-recherche"
                placeholder="Code, nom ou téléphone…" autocomplete="off" autocapitalize="off">
+      </div>
+      <div class="jourj-filtre-date">
+        <input type="date" id="jourjDate">
+        <button type="button" class="jourj-lien" id="jourjAujourdhui">Aujourd'hui</button>
+        <button type="button" class="jourj-lien" id="jourjToutesDates">Toutes les dates</button>
       </div>
       <p class="jourj-sous-titre" id="jourjSousTitre"></p>
       <div class="jourj-resultats" id="jourjResultats"></div>

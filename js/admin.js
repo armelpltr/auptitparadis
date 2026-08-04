@@ -14,7 +14,7 @@ import { initSettings, loadSettings } from "./admin/settings.js";
 import { initBlocks, loadBlocks } from "./admin/blocks.js";
 import { initTeam, loadTeam } from "./admin/team.js";
 import { initNoel, loadNoel } from "./admin/noel.js";
-import { initOrders, loadOrders, appliquerRoleOrders, entrerModeComptoir, modeJourJVerrouille, ouvrirModeJourJ } from "./admin/orders.js";
+import { initOrders, loadOrders, appliquerRoleOrders, entrerModeComptoir, modeJourJVerrouille, ouvrirModeJourJ, demarrerAutoRefresh } from "./admin/orders.js";
 
 initTabs();
 initSettings();
@@ -32,6 +32,7 @@ initAuth((role) => {
   if (role === 'comptoir') {
     loadOrders();
     entrerModeComptoir();
+    demarrerAutoRefresh();
     return;
   }
 
@@ -43,6 +44,7 @@ initAuth((role) => {
   if (modeJourJVerrouille()) {
     loadOrders();
     ouvrirModeJourJ();
+    demarrerAutoRefresh();
     return;
   }
 
@@ -55,6 +57,7 @@ initAuth((role) => {
     loadTeam();
     loadNoel();
     loadOrders();
+    demarrerAutoRefresh();
     // La remise à zéro de la numérotation n'est ouverte qu'au superadmin.
     appliquerRoleOrders(role);
   }

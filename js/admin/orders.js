@@ -244,13 +244,20 @@ export function modeJourJVerrouille() {
   try { return localStorage.getItem(CLE_VERROU_JOURJ) === '1'; } catch { return false; }
 }
 
-/* Rien ne rafraîchissait les données une fois le mode jour J ouvert — pas
-   de bouton, pas de minuteur. Sur un poste verrouillé toute la journée,
-   une commande passée pendant le service restait invisible jusqu'au
-   prochain rechargement de page. Un intervalle discret comble ça sans
-   qu'il y ait quoi que ce soit à cliquer. */
+/* Rien ne rafraîchissait les données une fois le panel ouvert — ni dans
+   l'onglet Commandes classique, ni en mode jour J : il fallait cliquer
+   « Actualiser » pour voir une commande qui vient d'arriver. Un intervalle
+   global comble ça pour les deux vues à la fois, puisque loadOrders()
+   redessine déjà tout (liste classique, stats, à préparer, mode jour J). */
 const INTERVALLE_RAFRAICHISSEMENT_MS = 20 * 1000;
-let intervalleJourJ = null;
+let intervalleRafraichissement = null;
+
+/** Démarre le rafraîchissement automatique. Idempotent : un second appel
+ *  ne double pas l'intervalle, il le remplace proprement. */
+export function demarrerAutoRefresh() {
+  clearInterval(intervalleRafraichissement);
+  intervalleRafraichissement = setInterval(loadOrders, INTERVALLE_RAFRAICHISSEMENT_MS);
+}
 
 export function ouvrirModeJourJ() {
   verrouillerJourJ();
@@ -258,6 +265,7 @@ export function ouvrirModeJourJ() {
   const recherche = document.getElementById('jourjRecherche');
   overlay.hidden = false;
   recherche.value = '';
+  document.getElementById('jourjDate').value = '';
   // Défensif : si la popup de code était restée ouverte d'une façon ou
   // d'une autre, elle ne doit jamais réapparaître pré-remplie à une
   // nouvelle entrée dans le mode jour J.
@@ -267,9 +275,6 @@ export function ouvrirModeJourJ() {
   // Le clavier virtuel s'ouvre tout de suite : au comptoir, la première
   // chose qu'on fait est taper un nom ou un code, jamais regarder l'écran.
   recherche.focus();
-
-  clearInterval(intervalleJourJ);
-  intervalleJourJ = setInterval(loadOrders, INTERVALLE_RAFRAICHISSEMENT_MS);
 }
 
 /* Pas une vraie barrière de sécurité — n'importe qui avec les outils de
@@ -329,7 +334,6 @@ function validerCodeSortie() {
 function fermerModeJourJ() {
   deverrouillerJourJ();
   document.getElementById('jourjOverlay').hidden = true;
-  clearInterval(intervalleJourJ);
 }
 
 function jourjCarteHTML(o) {
@@ -356,24 +360,26 @@ function renderJourJ() {
   const zone = document.getElementById('jourjResultats');
   const sousTitre = document.getElementById('jourjSousTitre');
   const recherche = document.getElementById('jourjRecherche').value.trim().toLowerCase();
+  const dateFiltre = document.getElementById('jourjDate').value;
 
-  let liste;
-  if (!recherche) {
-    // Rien tapé : la liste du jour, telle qu'elle arrivera au comptoir.
-    const aujourdhui = dateDuJour();
-    liste = ordersCache.filter(o => o.dateRetrait === aujourdhui && o.statut !== 'annulee');
-    sousTitre.textContent = liste.length
-      ? `Retraits d'aujourd'hui (${liste.length})`
-      : "Aucun retrait prévu aujourd'hui — tapez un code, un nom ou un téléphone pour chercher ailleurs.";
-  } else {
-    // Une recherche l'emporte sur la date : un client peut se présenter en
-    // avance sur sa commande, autant le retrouver quand même.
-    liste = ordersCache.filter(o =>
+  // Toutes les commandes par défaut — pas seulement celles du jour : c'est
+  // la vue qu'un employé doit pouvoir consulter, sans avoir en plus accès
+  // au panel complet. Les annulées restent de côté, elles n'apportent rien
+  // au comptoir. La date et la recherche se combinent : les deux réduisent
+  // la liste, aucune ne prend le pas sur l'autre.
+  let liste = ordersCache.filter(o => o.statut !== 'annulee');
+  if (dateFiltre) liste = liste.filter(o => o.dateRetrait === dateFiltre);
+  if (recherche) {
+    liste = liste.filter(o =>
       [o.code, o.client?.prenom, o.client?.nom, o.client?.nomComplet, o.client?.telephone, o.client?.email]
         .some(v => String(v || '').toLowerCase().includes(recherche))
     );
-    sousTitre.textContent = `${liste.length} résultat${liste.length > 1 ? 's' : ''}`;
   }
+
+  const morceaux = [];
+  morceaux.push(dateFiltre ? `Retraits du ${fmtDateRetrait(dateFiltre)}` : 'Toutes les dates');
+  if (recherche) morceaux.push(`recherche « ${recherche} »`);
+  sousTitre.textContent = `${morceaux.join(' · ')} — ${liste.length} commande${liste.length > 1 ? 's' : ''}`;
 
   zone.innerHTML = liste.length
     ? liste.map(jourjCarteHTML).join('')
@@ -1010,6 +1016,15 @@ export function initOrders() {
   document.getElementById('modeJourJBtn')?.addEventListener('click', ouvrirModeJourJ);
   document.getElementById('jourjQuitter')?.addEventListener('click', demanderCodeSortie);
   document.getElementById('jourjRecherche')?.addEventListener('input', renderJourJ);
+  document.getElementById('jourjDate')?.addEventListener('change', renderJourJ);
+  document.getElementById('jourjAujourdhui')?.addEventListener('click', () => {
+    document.getElementById('jourjDate').value = dateDuJour();
+    renderJourJ();
+  });
+  document.getElementById('jourjToutesDates')?.addEventListener('click', () => {
+    document.getElementById('jourjDate').value = '';
+    renderJourJ();
+  });
 
   document.getElementById('jourjPinValider')?.addEventListener('click', validerCodeSortie);
   document.getElementById('jourjPinAnnuler')?.addEventListener('click', annulerCodeSortie);
