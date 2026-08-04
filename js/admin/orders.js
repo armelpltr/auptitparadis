@@ -354,6 +354,7 @@ function jourjCarteHTML(o) {
         <span class="jourj-statut-badge">${statut.emoji || ''} ${escapeAttr(statut.label)}</span>
       </div>
       <p class="jourj-detail"><strong>Retrait :</strong> ${escapeAttr(fmtDateRetrait(o.dateRetrait))}</p>
+      <p class="jourj-detail"><strong>Tél :</strong> ${escapeAttr(fmtTelephone(o.client?.telephone))}</p>
       <p class="jourj-detail">${(o.items || []).map(it => `${it.quantite}× ${escapeAttr(it.nom)}`).join(' · ')}</p>
       ${o.commentaire ? `<p class="jourj-detail">💬 « ${escapeAttr(o.commentaire)} »</p>` : ''}
     </div>`;
