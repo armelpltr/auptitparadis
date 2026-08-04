@@ -765,107 +765,277 @@ button.back-to-site{ background:none; border:none; cursor:pointer; font-family:i
 /* Plein écran, au-dessus de tout : au comptoir le jour du retrait, rien
    d'autre ne doit être visible ni accessible par erreur. Contraste fort et
    cibles larges — c'est pensé pour un doigt sur une tablette, pas une
-   souris, et pour être lu vite dans le rush. */
+   souris, et pour être lu vite dans le rush.
+   Tout se joue sur le repérage : au comptoir on cherche une carte des yeux
+   pendant qu'on parle au client, donc chaque statut porte sa couleur et son
+   liseré, et le code de commande est ce qui se lit de plus loin. */
 .jourj-overlay[hidden]{ display:none; }
 .jourj-overlay{
   position:fixed; inset:0; z-index:1000;
-  background:var(--cream, #fbf6ee);
+  /* Dégradé très léger : donne un haut et un bas à un écran qui n'a ni
+     en-tête ni bordure, sans ajouter de trait à lire. */
+  background:
+    radial-gradient(120% 70% at 50% 0%, #fffdf9 0%, var(--cream, #fbf6ee) 55%, #f5ece0 100%);
   display:flex; flex-direction:column;
-  padding:1.2rem 1rem;
+  padding:1.1rem 1.1rem .8rem;
+  /* iPad en plein écran : l'encoche et la barre d'accueil mangent les bords. */
+  padding-top:max(1.1rem, env(safe-area-inset-top));
+  padding-bottom:max(.8rem, env(safe-area-inset-bottom));
+  color:var(--ink);
 }
 
-.jourj-entete{ display:flex; align-items:center; gap:.8rem; }
+/* Couleurs par statut, posées ici et reprises par les cartes plus bas.
+   « Prête » est la plus saturée à dessein : c'est la seule qui appelle un
+   geste immédiat au comptoir, elle doit sauter aux yeux avant les autres. */
+.jourj-overlay{
+  --jj-attente:      #b4762f;  --jj-attente-bg:   #fbf0e0;
+  --jj-confirmee:    #5c7a78;  --jj-confirmee-bg: #e7eeec;
+  --jj-prete:        #2f7d4f;  --jj-prete-bg:     #e4f2e8;
+  --jj-recuperee:    #8a7f72;  --jj-recuperee-bg: #f1ece5;
+  --jj-annulee:      #a13a25;  --jj-annulee-bg:   #f8e9e5;
+  --jj-neutre:       #8a7f72;  --jj-neutre-bg:    var(--sand);
+}
+
+/* ---- Barre de recherche et filtres ---- */
+.jourj-entete{ display:flex; align-items:center; gap:.8rem; flex:none; }
+
+.jourj-recherche{
+  flex:1; min-width:0;
+  font-size:1.45rem; font-weight:600; padding:.85rem 1.1rem;
+  border:2px solid var(--sand); border-radius:14px;
+  font-family:inherit; color:var(--ink); background:var(--white);
+  box-shadow:0 10px 24px -18px rgba(33,28,23,.5);
+  transition:border-color .18s var(--ease), box-shadow .18s var(--ease);
+}
+.jourj-recherche::placeholder{ color:#a99c8c; font-weight:400; }
+.jourj-recherche:focus{
+  outline:none; border-color:var(--gold);
+  box-shadow:0 0 0 4px rgba(200,133,58,.16), 0 10px 24px -18px rgba(33,28,23,.5);
+}
+/* La croix native de <input type="search"> est minuscule au doigt. */
+.jourj-recherche::-webkit-search-cancel-button{
+  -webkit-appearance:none; appearance:none;
+  width:22px; height:22px; cursor:pointer; border-radius:50%;
+  background:var(--sand);
+  -webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='3' stroke-linecap='round'%3E%3Cpath d='M6 6l12 12M18 6L6 18'/%3E%3C/svg%3E") center/12px no-repeat;
+          mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='3' stroke-linecap='round'%3E%3Cpath d='M6 6l12 12M18 6L6 18'/%3E%3C/svg%3E") center/12px no-repeat;
+}
 
 .jourj-filtre-date{
-  display:flex; align-items:center; gap:.6rem; flex-wrap:wrap;
-  margin-top:.7rem;
+  display:flex; align-items:center; gap:.5rem; flex-wrap:wrap;
+  margin-top:.65rem; flex:none;
 }
 .jourj-filtre-date input[type="date"]{
-  border:2px solid var(--sand); border-radius:10px; padding:.55em .8em;
+  border:2px solid var(--sand); border-radius:999px; padding:.5em 1em;
+  min-height:44px;
   font-family:inherit; font-size:.95rem; font-weight:600; color:var(--ink);
   background:var(--white); cursor:pointer;
+  transition:border-color .18s var(--ease);
 }
-.jourj-filtre-date input[type="date"]:focus{ outline:none; border-color:var(--gold-deep); }
+.jourj-filtre-date input[type="date"]:focus{
+  outline:none; border-color:var(--gold);
+  box-shadow:0 0 0 3px rgba(200,133,58,.14);
+}
 .jourj-filtre-date input[type="date"]::-webkit-calendar-picker-indicator{
   cursor:pointer; opacity:.65;
 }
+
+/* Les raccourcis de date étaient des liens soulignés de 18px de haut : au
+   doigt on les manquait une fois sur deux. Pastilles de 44px minimum. */
 .jourj-lien{
-  border:none; background:none; color:var(--ink-soft); font-size:.85rem;
-  padding:.4em .3em; cursor:pointer; text-decoration:underline; text-underline-offset:3px;
+  border:2px solid transparent; background:var(--white);
+  color:var(--ink-soft); font-family:inherit; font-size:.9rem; font-weight:600;
+  padding:.5em 1.1em; min-height:44px; border-radius:999px; cursor:pointer;
+  transition:color .18s var(--ease), background .18s var(--ease), border-color .18s var(--ease);
 }
-.jourj-lien:hover{ color:var(--ink); }
-
-.jourj-recherche{
-  flex:1; font-size:1.4rem; padding:.9rem 1.1rem;
-  border:2px solid var(--sand); border-radius:12px;
-  font-family:inherit; background:var(--white);
+.jourj-lien:hover{ color:var(--ink); border-color:var(--gold-pale); }
+.jourj-lien:active{ background:var(--sand); }
+.jourj-lien:focus-visible{
+  outline:none; border-color:var(--gold); box-shadow:0 0 0 3px rgba(200,133,58,.14);
 }
-.jourj-recherche:focus{ outline:none; border-color:var(--gold-deep); }
-
-.jourj-pied{ flex:none; display:flex; justify-content:center; padding-top:1rem; }
-
-.jourj-sortie{
-  border:none; background:none; color:var(--ink-soft); font-size:.85rem;
-  padding:.6em 1em; cursor:pointer; text-decoration:underline; text-underline-offset:3px;
-}
-.jourj-sortie:hover{ color:var(--ink); }
 
 .jourj-sous-titre{
-  margin:.9rem 0 0; font-size:.9rem; color:var(--ink-soft); text-align:center;
+  margin:.8rem 0 0; flex:none;
+  font-size:.78rem; font-weight:700; letter-spacing:.09em; text-transform:uppercase;
+  color:#8a7f72; text-align:center;
 }
 
+/* ---- Liste des commandes ---- */
+/* En grille dès qu'il y a la place : sur une tablette posée en paysage, une
+   colonne unique n'affiche que trois commandes et oblige à faire défiler
+   pendant que le client attend. */
 .jourj-resultats{
-  flex:1; overflow-y:auto; margin-top:1rem;
-  display:flex; flex-direction:column; gap:.8rem;
+  flex:1; overflow-y:auto; overscroll-behavior:contain;
+  margin-top:.9rem; padding:.2rem .2rem 1rem;
+  display:grid; align-content:start; gap:.85rem;
+  grid-template-columns:repeat(auto-fill, minmax(310px, 1fr));
+  scrollbar-width:thin; scrollbar-color:var(--gold-pale) transparent;
+}
+.jourj-resultats::-webkit-scrollbar{ width:10px; }
+.jourj-resultats::-webkit-scrollbar-thumb{
+  background:var(--gold-pale); border-radius:999px;
+  border:3px solid transparent; background-clip:content-box;
 }
 
 .jourj-carte{
-  border:2px solid var(--sand); border-radius:14px; background:var(--white);
-  padding:1.1rem 1.3rem;
+  position:relative; overflow:hidden;
+  border:1.5px solid var(--sand); border-radius:16px; background:var(--white);
+  padding:1rem 1.2rem 1.1rem 1.45rem;
+  box-shadow:0 12px 26px -22px rgba(33,28,23,.55);
+  transition:transform .18s var(--ease), box-shadow .18s var(--ease);
+  /* Repli si un statut inconnu arrive de la base : la carte reste lisible. */
+  --jj-accent:var(--jj-neutre); --jj-accent-bg:var(--jj-neutre-bg);
 }
-.jourj-carte.is-figee{ opacity:.55; }
+/* Le liseré fait tout le repérage : on lit une couleur avant de lire un mot. */
+.jourj-carte::before{
+  content:""; position:absolute; inset:0 auto 0 0; width:6px;
+  background:var(--jj-accent);
+}
+.jourj-carte:hover{
+  transform:translateY(-2px);
+  box-shadow:0 18px 32px -22px rgba(33,28,23,.6);
+}
 
-.jourj-carte-entete{ display:flex; align-items:baseline; justify-content:space-between; gap:1rem; flex-wrap:wrap; }
-.jourj-code{ font-size:1.3rem; font-weight:800; letter-spacing:.04em; color:var(--gold-deep); }
-.jourj-nom{ font-size:1.1rem; font-weight:600; }
+.jourj-carte--en_attente{ --jj-accent:var(--jj-attente);   --jj-accent-bg:var(--jj-attente-bg); }
+.jourj-carte--confirmee { --jj-accent:var(--jj-confirmee); --jj-accent-bg:var(--jj-confirmee-bg); }
+.jourj-carte--prete     { --jj-accent:var(--jj-prete);     --jj-accent-bg:var(--jj-prete-bg); }
+.jourj-carte--recuperee { --jj-accent:var(--jj-recuperee); --jj-accent-bg:var(--jj-recuperee-bg); }
+.jourj-carte--annulee   { --jj-accent:var(--jj-annulee);   --jj-accent-bg:var(--jj-annulee-bg); }
+
+/* « Prête » est la seule à porter un fond teinté : c'est la commande qu'on
+   cherche des yeux quand quelqu'un se présente au comptoir. */
+.jourj-carte--prete{
+  background:linear-gradient(180deg, var(--jj-prete-bg) 0%, var(--white) 42%);
+  border-color:#cbe3d3;
+}
+
+/* Récupérée ou annulée : plus rien à faire dessus, mais elles restent
+   consultables. On les efface sans les cacher. */
+.jourj-carte.is-figee{ opacity:.62; box-shadow:none; }
+.jourj-carte.is-figee:hover{ opacity:.9; }
+
+.jourj-carte-entete{
+  display:flex; align-items:baseline; justify-content:space-between;
+  gap:.6rem 1rem; flex-wrap:wrap;
+}
+.jourj-code{
+  font-size:1.45rem; font-weight:800; letter-spacing:.05em; color:var(--gold-deep);
+  /* Chiffres de largeur fixe : les codes s'alignent d'une carte à l'autre,
+     ce qui rend la comparaison visuelle immédiate. */
+  font-variant-numeric:tabular-nums;
+}
+.jourj-nom{ font-size:1.12rem; font-weight:600; flex:1; min-width:0; }
 .jourj-statut-badge{
-  font-size:.8rem; font-weight:600; padding:.25em .8em; border-radius:999px;
-  background:var(--sand); white-space:nowrap;
+  font-size:.75rem; font-weight:700; letter-spacing:.03em;
+  padding:.35em .9em; border-radius:999px; white-space:nowrap;
+  color:var(--jj-accent); background:var(--jj-accent-bg);
+  box-shadow:inset 0 0 0 1px color-mix(in srgb, var(--jj-accent) 22%, transparent);
 }
 
-.jourj-detail{ margin:.6rem 0 0; font-size:.95rem; color:var(--ink-soft); }
-.jourj-detail strong{ color:var(--ink); }
+.jourj-detail{
+  margin:.55rem 0 0; font-size:.95rem; line-height:1.45; color:var(--ink-soft);
+  overflow-wrap:anywhere;
+}
+.jourj-detail strong{
+  color:#8a7f72; font-size:.74rem; font-weight:700;
+  letter-spacing:.08em; text-transform:uppercase;
+  display:inline-block; margin-right:.35em;
+}
+/* Le téléphone se lit et se recopie : même traitement que le code. */
+.jourj-detail--tel{ font-size:1.05rem; font-weight:600; color:var(--ink); font-variant-numeric:tabular-nums; }
+/* Les produits sont la raison d'être de la carte, ils passent devant. */
+.jourj-detail--items{
+  margin-top:.7rem; padding-top:.7rem; border-top:1px dashed var(--sand);
+  color:var(--ink); font-weight:600;
+}
+/* Un commentaire est rare : quand il y en a un, il ne doit pas se noyer. */
+.jourj-detail--note{
+  margin-top:.7rem; padding:.55rem .8rem; border-radius:10px;
+  background:var(--jj-accent-bg); color:var(--ink); font-style:italic;
+}
 
-.jourj-vide{ text-align:center; color:var(--ink-soft); margin-top:3rem; font-size:1.05rem; }
+.jourj-vide{
+  grid-column:1 / -1; align-self:start;
+  text-align:center; color:#8a7f72; font-size:1.05rem;
+  margin-top:2.5rem; padding:2.5rem 1.5rem;
+  border:2px dashed var(--sand); border-radius:16px;
+}
+
+/* ---- Pied ---- */
+.jourj-pied{ flex:none; display:flex; justify-content:center; gap:.6rem; padding-top:.9rem; }
+
+.jourj-sortie{
+  border:none; background:none; color:#8a7f72; font-family:inherit;
+  font-size:.85rem; padding:.7em 1.2em; min-height:44px; border-radius:999px;
+  cursor:pointer; text-decoration:underline; text-underline-offset:4px;
+  transition:color .18s var(--ease), background .18s var(--ease);
+}
+.jourj-sortie:hover{ color:var(--ink); background:rgba(33,28,23,.05); }
+.jourj-sortie:focus-visible{ outline:2px solid var(--gold); outline-offset:2px; }
 
 @media (max-width: 720px){
-  .jourj-overlay{ padding:.9rem .7rem; }
+  .jourj-overlay{ padding-left:.7rem; padding-right:.7rem; }
   .jourj-recherche{ font-size:1.2rem; padding:.8rem 1rem; }
+  /* Une seule colonne : en dessous de 720px, deux cartes couperaient les
+     noms et les listes de produits. */
+  .jourj-resultats{ grid-template-columns:1fr; gap:.7rem; margin-top:.8rem; }
+  .jourj-carte{ padding:.9rem 1rem 1rem 1.25rem; border-radius:14px; }
+  .jourj-code{ font-size:1.3rem; }
+  .jourj-nom{ font-size:1.05rem; }
+  /* Le badge passe sous le nom plutôt que de le comprimer. */
+  .jourj-carte-entete{ gap:.45rem .7rem; }
+  .jourj-sous-titre{ margin-top:.7rem; font-size:.72rem; }
+  .jourj-vide{ margin-top:1.5rem; padding:2rem 1rem; }
+}
+
+@media (max-width: 420px){
+  /* Le filtre de date et ses deux raccourcis ne tiennent plus sur une ligne :
+     la date prend la sienne, les raccourcis se partagent la suivante. */
+  .jourj-filtre-date input[type="date"]{ flex:1 1 100%; }
+  .jourj-lien{ flex:1; padding-inline:.6em; }
+}
+
+/* Écrans hauts et larges : on profite de la place plutôt que d'étirer des
+   cartes à 900px de large, illisibles en diagonale. */
+@media (min-width: 1400px){
+  .jourj-resultats{ grid-template-columns:repeat(auto-fill, minmax(340px, 1fr)); }
+}
+
+@media (prefers-reduced-motion: reduce){
+  .jourj-carte, .jourj-recherche, .jourj-lien, .jourj-sortie{ transition:none; }
+  .jourj-carte:hover{ transform:none; }
 }
 
 /* Popup de code, au-dessus du mode jour J lui-même (z-index supérieur) :
    « Quitter » ouvre ceci, ça ne ferme jamais rien tout seul. */
 .jourj-pin-overlay{
   position:fixed; inset:0; z-index:1100;
-  background:rgba(33,28,23,.6);
+  background:rgba(33,28,23,.55);
+  backdrop-filter:blur(3px); -webkit-backdrop-filter:blur(3px);
   display:flex; align-items:center; justify-content:center;
   padding:1.5rem;
 }
 .jourj-pin-overlay[hidden]{ display:none; }
 
 .jourj-pin-carte{
-  background:var(--white); border-radius:16px; padding:2rem 1.8rem;
-  max-width:320px; width:100%; text-align:center;
+  background:var(--white); border-radius:20px; padding:2.1rem 1.9rem;
+  max-width:340px; width:100%; text-align:center;
   display:flex; flex-direction:column; align-items:center; gap:1rem;
+  box-shadow:0 30px 60px -30px rgba(33,28,23,.7);
 }
-.jourj-pin-titre{ font-size:1.05rem; font-weight:600; margin:0; }
-.jourj-pin-sous-texte{ font-size:.8rem; color:var(--ink-soft); margin:-.6rem 0 0; }
+.jourj-pin-titre{ font-size:1.1rem; font-weight:700; margin:0; }
+.jourj-pin-sous-texte{ font-size:.8rem; line-height:1.45; color:#8a7f72; margin:-.6rem 0 0; }
 .jourj-pin-input{
-  width:180px; font-size:2rem; letter-spacing:.6em; text-align:center;
-  padding:.6em .4em .6em .8em; border:2px solid var(--sand); border-radius:12px;
-  font-family:inherit; background:var(--white);
+  width:190px; font-size:2rem; letter-spacing:.6em; text-align:center;
+  padding:.6em .4em .6em .8em; border:2px solid var(--sand); border-radius:14px;
+  font-family:inherit; background:var(--cream); color:var(--ink);
+  font-variant-numeric:tabular-nums;
+  transition:border-color .18s var(--ease), box-shadow .18s var(--ease);
 }
-.jourj-pin-input:focus{ outline:none; border-color:var(--gold-deep); }
-.jourj-pin-erreur{ color:#a13a25; font-weight:600; margin:0; }
+.jourj-pin-input:focus{
+  outline:none; border-color:var(--gold); background:var(--white);
+  box-shadow:0 0 0 4px rgba(200,133,58,.16);
+}
+.jourj-pin-erreur{ color:#a13a25; font-weight:700; font-size:.9rem; margin:0; }
 .jourj-pin-actions{ display:flex; gap:.8rem; margin-top:.2rem; }
-.jourj-pin-actions .btn{ min-width:120px; }
+.jourj-pin-actions .btn{ min-width:120px; min-height:44px; }

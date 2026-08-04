@@ -345,18 +345,22 @@ function fermerModeJourJ() {
 function jourjCarteHTML(o) {
   const statut = STATUTS[o.statut] || { label: o.statut, suivant: null, actionSuivante: null };
   const figee = !statut.suivant;
+  // Le CSS colore la carte d'après cette classe. Un statut absent de STATUTS
+  // n'en produit aucune : la carte retombe sur le gris neutre plutôt que de
+  // fabriquer un nom de classe à partir d'une valeur venue de la base.
+  const classeStatut = STATUTS[o.statut] ? `jourj-carte--${o.statut}` : '';
 
   return `
-    <div class="jourj-carte ${figee ? 'is-figee' : ''}" data-id="${escapeAttr(o.id)}">
+    <div class="jourj-carte ${classeStatut} ${figee ? 'is-figee' : ''}" data-id="${escapeAttr(o.id)}">
       <div class="jourj-carte-entete">
         <span class="jourj-code">${escapeAttr(o.code || '——')}</span>
         <span class="jourj-nom">${escapeAttr(nomClient(o.client))}</span>
         <span class="jourj-statut-badge">${statut.emoji || ''} ${escapeAttr(statut.label)}</span>
       </div>
-      <p class="jourj-detail"><strong>Retrait :</strong> ${escapeAttr(fmtDateRetrait(o.dateRetrait))}</p>
-      <p class="jourj-detail"><strong>Tél :</strong> ${escapeAttr(fmtTelephone(o.client?.telephone))}</p>
-      <p class="jourj-detail">${(o.items || []).map(it => `${it.quantite}× ${escapeAttr(it.nom)}`).join(' · ')}</p>
-      ${o.commentaire ? `<p class="jourj-detail">💬 « ${escapeAttr(o.commentaire)} »</p>` : ''}
+      <p class="jourj-detail"><strong>Retrait</strong> ${escapeAttr(fmtDateRetrait(o.dateRetrait))}</p>
+      <p class="jourj-detail jourj-detail--tel"><strong>Tél</strong> ${escapeAttr(fmtTelephone(o.client?.telephone))}</p>
+      <p class="jourj-detail jourj-detail--items">${(o.items || []).map(it => `${it.quantite}× ${escapeAttr(it.nom)}`).join(' · ')}</p>
+      ${o.commentaire ? `<p class="jourj-detail jourj-detail--note">💬 « ${escapeAttr(o.commentaire)} »</p>` : ''}
     </div>`;
 }
 
