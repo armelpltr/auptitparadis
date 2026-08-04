@@ -749,8 +749,13 @@ button.back-to-site{ background:none; border:none; cursor:pointer; font-family:i
   margin-top:.7rem;
 }
 .jourj-filtre-date input[type="date"]{
-  border:1px solid var(--sand); border-radius:8px; padding:.5em .7em;
-  font-family:inherit; font-size:.9rem; background:var(--white);
+  border:2px solid var(--sand); border-radius:10px; padding:.55em .8em;
+  font-family:inherit; font-size:.95rem; font-weight:600; color:var(--ink);
+  background:var(--white); cursor:pointer;
+}
+.jourj-filtre-date input[type="date"]:focus{ outline:none; border-color:var(--gold-deep); }
+.jourj-filtre-date input[type="date"]::-webkit-calendar-picker-indicator{
+  cursor:pointer; opacity:.65;
 }
 .jourj-lien{
   border:none; background:none; color:var(--ink-soft); font-size:.85rem;
@@ -799,12 +804,6 @@ button.back-to-site{ background:none; border:none; cursor:pointer; font-family:i
 .jourj-detail{ margin:.6rem 0 0; font-size:.95rem; color:var(--ink-soft); }
 .jourj-detail strong{ color:var(--ink); }
 
-.jourj-action{
-  width:100%; margin-top:1rem; padding:1rem; font-size:1.15rem; font-weight:700;
-  border:none; border-radius:12px; background:var(--gold-deep); color:var(--white); cursor:pointer;
-}
-.jourj-action:active{ transform:scale(.98); }
-
 .jourj-vide{ text-align:center; color:var(--ink-soft); margin-top:3rem; font-size:1.05rem; }
 
 @media (max-width: 720px){
@@ -828,6 +827,7 @@ button.back-to-site{ background:none; border:none; cursor:pointer; font-family:i
   display:flex; flex-direction:column; align-items:center; gap:1rem;
 }
 .jourj-pin-titre{ font-size:1.05rem; font-weight:600; margin:0; }
+.jourj-pin-sous-texte{ font-size:.8rem; color:var(--ink-soft); margin:-.6rem 0 0; }
 .jourj-pin-input{
   width:180px; font-size:2rem; letter-spacing:.6em; text-align:center;
   padding:.6em .4em .6em .8em; border:2px solid var(--sand); border-radius:12px;

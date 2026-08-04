@@ -220,7 +220,13 @@ function renderPrepa() {
 /* Une interface à part, pas un simple filtre dans la liste habituelle :
    au comptoir le jour du retrait, la vitesse et la lisibilité priment sur
    tout — pas d'onglets, pas de statistiques, pas de menu déroulant à
-   plusieurs choix. Une recherche, une carte, un bouton. */
+   plusieurs choix. Une recherche, une carte.
+
+   Volontairement consultatif : aucune action n'y modifie une commande, pas
+   même avancer son statut. C'est une vue pour des employés qui n'ont pas
+   accès au panel — ils peuvent chercher et lire, pas écrire. Changer un
+   statut reste réservé à l'onglet Commandes classique, aux comptes
+   admin/superadmin. */
 
 /* Le verrou doit survivre à un rechargement de page, pas seulement à une
    navigation dans le panel : sinon un F5 (ou un tirer-pour-actualiser sur
@@ -350,9 +356,6 @@ function jourjCarteHTML(o) {
       <p class="jourj-detail"><strong>Retrait :</strong> ${escapeAttr(fmtDateRetrait(o.dateRetrait))}</p>
       <p class="jourj-detail">${(o.items || []).map(it => `${it.quantite}× ${escapeAttr(it.nom)}`).join(' · ')}</p>
       ${o.commentaire ? `<p class="jourj-detail">💬 « ${escapeAttr(o.commentaire)} »</p>` : ''}
-      ${statut.suivant
-        ? `<button type="button" class="jourj-action" data-action="avancer">${escapeAttr(statut.actionSuivante)}</button>`
-        : ''}
     </div>`;
 }
 
@@ -384,25 +387,7 @@ function renderJourJ() {
   zone.innerHTML = liste.length
     ? liste.map(jourjCarteHTML).join('')
     : '<p class="jourj-vide">Aucune commande ne correspond.</p>';
-
-  zone.querySelectorAll('.jourj-carte [data-action="avancer"]').forEach(btn => {
-    const id = btn.closest('.jourj-carte').dataset.id;
-    btn.addEventListener('click', () => avancerJourJ(id));
-  });
 }
-
-async function avancerJourJ(id) {
-  const o = ordersCache.find(x => x.id === id);
-  const suivant = STATUTS[o?.statut]?.suivant;
-  if (!suivant) return;
-
-  try {
-    await updateDoc(doc(db, 'orders', id), { statut: suivant });
-    o.statut = suivant;   // évite d'attendre un rechargement complet pour réafficher
-    renderJourJ();
-  } catch (err) {
-    showStatus('Changement de statut refusé : ' + err.message, true);
-  }
 }
 
 /* ---------- Chargement ---------- */
