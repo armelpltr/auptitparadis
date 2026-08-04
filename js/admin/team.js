@@ -121,8 +121,8 @@ export async function loadTeam() {
       return `
       <div class="team-row ${perimee ? 'is-expiree' : ''}">
         <div class="team-info">
-          <strong>Lien ${ROLE_LABELS[inv.role] ? ROLE_LABELS[inv.role].toLowerCase() : 'éditeur'}</strong>
-          <span>Créé le ${escapeAttr(fmtDate(inv.createdAt))}${
+          <strong>${escapeAttr(inv.email || 'adresse inconnue')}</strong>
+          <span>Lien ${ROLE_LABELS[inv.role] ? ROLE_LABELS[inv.role].toLowerCase() : 'éditeur'} · créé le ${escapeAttr(fmtDate(inv.createdAt))}${
             expire ? ` · ${perimee ? 'expiré' : 'expire'} le ${escapeAttr(fmtDate(inv.expiresAt))}` : ''
           }</span>
         </div>
@@ -222,8 +222,21 @@ async function cancelInvite(token) {
 
 export function initTeam() {
   document.getElementById('inviteBtn').addEventListener('click', async () => {
-    const token = crypto.randomUUID();
     const btn = document.getElementById('inviteBtn');
+
+    /* L'invitation porte l'adresse de la personne invitée, et le Worker
+       refuse toute autre adresse à l'acceptation. Sans ça, qui recevait le
+       lien créait le compte avec la boîte de son choix — donc avec celle qui
+       reçoit ensuite les codes de connexion. */
+    const champEmail = document.getElementById('inviteEmail');
+    const email = champEmail.value.trim().toLowerCase();
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
+      showStatus("Indiquez l'adresse e-mail de la personne à inviter.", true);
+      champEmail.focus();
+      return;
+    }
+
+    const token = crypto.randomUUID();
     btn.disabled = true;
     try {
       // Le rôle est fixé ici, pas au moment où l'invité crée son compte : les
@@ -232,6 +245,7 @@ export function initTeam() {
       // valoir un accès au bout d'une semaine.
       const expiresAt = new Date(Date.now() + INVITE_VALIDITE_JOURS * 86400000);
       await setDoc(doc(db, 'invites', token), {
+        email,
         role: val('inviteRole') || 'editor',
         createdAt: new Date(),
         createdBy: auth.currentUser.email,

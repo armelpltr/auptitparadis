@@ -84,8 +84,14 @@ function texte(v, { min = 0, max, champ }) {
 export async function handleInviteAccept(request, env, cors) {
   const body = await request.json().catch(() => ({}));
 
+  /* Format d'UUID exigé, et pas seulement une longueur : ce jeton finissait
+     dans un chemin Firestore, où un segment `..` sort du document visé. Les
+     invitations sont créées par `crypto.randomUUID()`, aucune valeur
+     légitime n'est refusée ici. */
   const token = String(body.token ?? '').trim();
-  if (!token || token.length > 100) throw httpError('Invitation introuvable ou expirée.', 400);
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(token)) {
+    throw httpError('Invitation introuvable ou expirée.', 400);
+  }
 
   const prenom = texte(body.prenom, { min: 2, max: 40, champ: 'Le prénom' });
   const nom    = texte(body.nom,    { min: 2, max: 40, champ: 'Le nom' });
@@ -113,6 +119,23 @@ export async function handleInviteAccept(request, env, cors) {
   // invité au rôle « contenu » se déclarerait superadmin en éditant l'appel.
   const role = invite.fields?.role?.stringValue ?? 'editor';
   if (!ROLES.includes(role)) throw httpError('Invitation illisible.', 400);
+
+  /* L'adresse aussi vient de l'invitation. Sans ce contrôle, le porteur du
+     lien créait le compte avec l'adresse de son choix — donc avec la boîte
+     qui recevra ensuite les codes de double authentification. Un lien égaré
+     ou transféré valait alors un accès complet.
+     Une invitation sans adresse date d'avant ce contrôle : on la refuse
+     plutôt que de rouvrir le cas qu'on vient de fermer. */
+  const emailInvite = String(invite.fields?.email?.stringValue ?? '').trim().toLowerCase();
+  if (!emailInvite) {
+    throw httpError(
+      "Cette invitation date d'avant la dernière mise à jour. Demandez-en une nouvelle.",
+      400
+    );
+  }
+  if (email !== emailInvite) {
+    throw httpError("Ce lien a été émis pour une autre adresse e-mail.", 403);
+  }
 
   /* Une adresse déjà connue de Firebase n'est pas forcément un problème :
      quelqu'un peut avoir un compte sans figurer dans `admins`. On le

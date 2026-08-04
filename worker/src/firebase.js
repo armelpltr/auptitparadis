@@ -68,8 +68,19 @@ let _jwksCache = null, _jwksCacheAt = 0;
 
 async function getGoogleJwks() {
   if (_jwksCache && Date.now() - _jwksCacheAt < 3600 * 1000) return _jwksCache;
+
   const res = await fetch('https://www.googleapis.com/service_accounts/v1/jwk/securetoken@system.gserviceaccount.com');
-  _jwksCache = await res.json();
+  /* Sans ce contrôle, une réponse d'erreur de Google était mise en cache une
+     heure durant, et toute vérification de jeton échouait pendant ce temps :
+     plus personne n'entrait dans le panel. On préfère refaire l'appel à la
+     requête suivante que garder une réponse inutilisable. */
+  if (!res.ok) throw new Error(`Clés publiques Google indisponibles (${res.status})`);
+  const jwks = await res.json();
+  if (!Array.isArray(jwks?.keys) || jwks.keys.length === 0) {
+    throw new Error('Clés publiques Google illisibles');
+  }
+
+  _jwksCache = jwks;
   _jwksCacheAt = Date.now();
   return _jwksCache;
 }
@@ -161,9 +172,27 @@ function docsUrl(env, path = '') {
   return `https://firestore.googleapis.com/v1/projects/${env.FIREBASE_PROJECT_ID}/databases/(default)/documents${path}`;
 }
 
+/**
+ * Encode un chemin de document ou de collection avant de l'interpoler dans
+ * une URL.
+ *
+ * Sans ça, un segment `..` venu d'une valeur d'appelant sortait du document
+ * visé : le parseur d'URL normalise les points, et
+ * `documents/invites/../admins/UID` désigne `documents/admins/UID`. Les
+ * appelants n'ont pas tous une valeur de confiance à passer — un jeton
+ * d'invitation vient du corps d'une requête publique.
+ */
+function cheminSur(path) {
+  const segments = String(path ?? '').split('/');
+  return segments.map(s => {
+    if (!s || /^\.+$/.test(s)) throw new Error('Chemin Firestore invalide');
+    return encodeURIComponent(s);
+  }).join('/');
+}
+
 export async function firestoreGet(path, env) {
   const token = await getAccessToken(env);
-  const res = await fetch(docsUrl(env, `/${path}`), {
+  const res = await fetch(docsUrl(env, `/${cheminSur(path)}`), {
     headers: { Authorization: `Bearer ${token}` }
   });
   if (!res.ok) throw new Error(`Firestore ${res.status}`);
@@ -172,7 +201,7 @@ export async function firestoreGet(path, env) {
 
 export async function firestoreDelete(path, env) {
   const token = await getAccessToken(env);
-  const res = await fetch(docsUrl(env, `/${path}`), {
+  const res = await fetch(docsUrl(env, `/${cheminSur(path)}`), {
     method: 'DELETE', headers: { Authorization: `Bearer ${token}` }
   });
   if (!res.ok) throw new Error(`Firestore delete ${res.status}: ${await res.text()}`);
@@ -180,7 +209,7 @@ export async function firestoreDelete(path, env) {
 
 export async function firestoreList(collectionPath, env) {
   const token = await getAccessToken(env);
-  const res = await fetch(docsUrl(env, `/${collectionPath}?pageSize=300`), {
+  const res = await fetch(docsUrl(env, `/${cheminSur(collectionPath)}?pageSize=300`), {
     headers: { Authorization: `Bearer ${token}` }
   });
   if (!res.ok) throw new Error(`Firestore list ${res.status}`);
@@ -194,7 +223,7 @@ export async function firestoreList(collectionPath, env) {
 /** Crée un document et renvoie son identifiant. */
 export async function firestoreCreate(collectionPath, data, env) {
   const token = await getAccessToken(env);
-  const res = await fetch(docsUrl(env, `/${collectionPath}`), {
+  const res = await fetch(docsUrl(env, `/${cheminSur(collectionPath)}`), {
     method: 'POST',
     headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({ fields: toFirestoreFields(data) })
@@ -212,7 +241,7 @@ export async function firestoreCreate(collectionPath, data, env) {
  */
 export async function firestoreSet(path, data, env) {
   const token = await getAccessToken(env);
-  const res = await fetch(docsUrl(env, `/${path}`), {
+  const res = await fetch(docsUrl(env, `/${cheminSur(path)}`), {
     method: 'PATCH',
     headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({ fields: toFirestoreFields(data) })
@@ -256,7 +285,7 @@ export async function firestoreUpdate(path, data, env) {
   const masque = Object.keys(data)
     .map(k => `updateMask.fieldPaths=${encodeURIComponent(k)}`)
     .join('&');
-  const res = await fetch(docsUrl(env, `/${path}?${masque}`), {
+  const res = await fetch(docsUrl(env, `/${cheminSur(path)}?${masque}`), {
     method: 'PATCH',
     headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({ fields: toFirestoreFields(data) })

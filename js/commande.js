@@ -353,9 +353,9 @@ async function envoyerCommande(e) {
 
     if (!res.ok) {
       resetTurnstile();
-      afficherErreur(body.duplicate && body.code
-        ? `${body.error} Votre code est le ${body.code}. Passez en boutique pour la confirmer ou la modifier.`
-        : (body.error || `La réservation a échoué (erreur ${res.status}).`));
+      // Le code de la commande existante n'est plus renvoyé par le Worker :
+      // le message qu'il compose se suffit à lui-même.
+      afficherErreur(body.error || `La réservation a échoué (erreur ${res.status}).`);
       return;
     }
 

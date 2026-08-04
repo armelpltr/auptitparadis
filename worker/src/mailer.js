@@ -390,7 +390,10 @@ Au P'tit Paradis — administration du site`;
   try {
     await envoyer({
       destinataire: email,
-      sujet: `Code de connexion — ${code}`,
+      // Le code n'est plus dans l'objet : une notification d'écran verrouillé
+      // affiche l'objet sans qu'on déverrouille la boîte, ce qui rendait le
+      // second facteur lisible à qui a le téléphone sous les yeux.
+      sujet: 'Votre code de connexion à l\'administration',
       html,
       texte
     }, env);

@@ -63,10 +63,27 @@ function codeFactice() {
 
 /* ---------- Validation des champs libres ---------- */
 
-function texte(v, { min = 0, max, champ }) {
+/* Refuse les caractères de contrôle. Seul le commentaire garde le saut de
+   ligne : un prénom en portant un traversait jusqu'à l'objet des e-mails.
+   Écrit en points de code plutôt qu'en classe de caractères, où les
+   échappements se lisent mal et se recopient plus mal encore. */
+function contientControle(s, autoriserSautLigne) {
+  for (const c of s) {
+    const p = c.codePointAt(0);
+    if (p === 10 && autoriserSautLigne) continue;
+    if (p < 32 || (p >= 127 && p <= 159)) return true;
+  }
+  return false;
+}
+
+function texte(v, { min = 0, max, champ, multiligne = false }) {
   const s = String(v ?? '').trim();
   if (s.length < min) throw httpError(`${champ} est trop court.`, 400);
   if (s.length > max) throw httpError(`${champ} est trop long (${max} caractères maximum).`, 400);
+
+  if (contientControle(s, multiligne)) {
+    throw httpError(`${champ} contient des caractères interdits.`, 400);
+  }
   return s;
 }
 
@@ -322,14 +339,18 @@ export async function handleOrder(request, env, cors) {
     telephone: telephoneFr(body.client?.telephone),
     email:     email(body.client?.email)
   };
-  const commentaire = texte(body.commentaire, { max: 300, champ: 'Le commentaire' });
+  const commentaire = texte(body.commentaire, { max: 300, champ: 'Le commentaire', multiligne: true });
 
+  /* Le code de la commande existante ne repart plus dans la réponse : il
+     suffisait de soumettre le numéro de quelqu'un pour apprendre qu'il avait
+     commandé, et récupérer son code au passage. Le client légitime a le sien
+     par e-mail ; celui qui ne l'a plus passe en boutique, où on l'identifie. */
   const doublon = await reservationEnCours(client.telephone, env);
   if (doublon) {
     return json({
-      error: 'Une réservation est déjà en cours avec ce numéro de téléphone.',
-      duplicate: true,
-      code: doublon.code || ''
+      error: 'Une réservation est déjà en cours avec ce numéro de téléphone. '
+           + 'Retrouvez son code dans votre e-mail de confirmation, ou passez en boutique.',
+      duplicate: true
     }, 409, cors);
   }
 

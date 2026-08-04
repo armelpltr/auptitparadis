@@ -35,9 +35,14 @@ const FENETRE_MS     = 30 * 60 * 1000;   // durée de la fenêtre de comptage
    d'une boulangerie n'est pas toujours sous surveillance. */
 const VALIDITE_ACCES_MS = 8 * 60 * 60 * 1000;
 
+/* Tirage par rejet plutôt qu'un modulo : 2^32 n'est pas un multiple d'un
+   million, et `% 1000000` rendait les 967 296 premiers codes légèrement plus
+   probables que les autres. Le biais était infime, la boucle coûte trois
+   lignes — autant ne pas laisser la question ouverte. */
 function genererCode() {
   const a = new Uint32Array(1);
-  crypto.getRandomValues(a);
+  const plafond = Math.floor(4294967296 / 1000000) * 1000000;
+  do { crypto.getRandomValues(a); } while (a[0] >= plafond);
   return String(a[0] % 1000000).padStart(6, '0');
 }
 

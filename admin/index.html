@@ -107,6 +107,13 @@
     <div class="form-row">
       <label for="inviteFormEmail">E-mail</label>
       <input type="email" id="inviteFormEmail" required maxlength="120" autocomplete="username">
+      <!-- Le lien est émis pour une adresse précise et le serveur refuse les
+           autres : la page ne peut pas la pré-remplir, l'invitation n'étant
+           lisible que par le panel. D'où cette précision. -->
+      <p class="field-hint">
+        Indiquez l'adresse à laquelle l'invitation vous a été envoyée : c'est
+        elle qui recevra ensuite vos codes de connexion.
+      </p>
     </div>
     <div class="form-row">
       <label for="inviteFormPassword">Mot de passe</label>
@@ -511,7 +518,14 @@
 
       <div class="admin-card" id="teamInviteCard" hidden>
         <h2>Inviter quelqu'un</h2>
-        <p class="admin-card-hint">Choisissez un rôle, transmettez le lien généré. La personne saisira elle-même son prénom, son nom, son adresse e-mail et son mot de passe.</p>
+        <p class="admin-card-hint">Indiquez l'adresse e-mail de la personne et son rôle, puis transmettez le lien généré. Elle saisira elle-même son prénom, son nom et son mot de passe.</p>
+        <!-- Le lien ne vaut que pour cette adresse : c'est elle qui recevra
+             ensuite les codes de connexion. Sans ce champ, qui recevait le
+             lien créait le compte avec la boîte de son choix. -->
+        <div class="form-row">
+          <label for="inviteEmail">Adresse e-mail de la personne</label>
+          <input type="email" id="inviteEmail" autocomplete="off" placeholder="prenom@exemple.fr">
+        </div>
         <div class="form-row">
           <label for="inviteRole">Rôle</label>
           <select id="inviteRole">
