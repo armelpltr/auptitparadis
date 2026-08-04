@@ -14,7 +14,7 @@ import { initSettings, loadSettings } from "./admin/settings.js";
 import { initBlocks, loadBlocks } from "./admin/blocks.js";
 import { initTeam, loadTeam } from "./admin/team.js";
 import { initNoel, loadNoel } from "./admin/noel.js";
-import { initOrders, loadOrders, appliquerRoleOrders, entrerModeComptoir } from "./admin/orders.js";
+import { initOrders, loadOrders, appliquerRoleOrders, entrerModeComptoir, modeJourJVerrouille, ouvrirModeJourJ } from "./admin/orders.js";
 
 initTabs();
 initSettings();
@@ -32,6 +32,17 @@ initAuth((role) => {
   if (role === 'comptoir') {
     loadOrders();
     entrerModeComptoir();
+    return;
+  }
+
+  // Ce poste était verrouillé en mode jour J avant un rechargement de
+  // page (F5, tirer-pour-actualiser) : on y retourne directement, sans
+  // laisser les onglets apparaître ne serait-ce qu'un instant. Le code
+  // reste la seule façon d'en sortir, exactement comme avant le
+  // rechargement — sinon un simple F5 suffirait à le contourner.
+  if (modeJourJVerrouille()) {
+    loadOrders();
+    ouvrirModeJourJ();
     return;
   }
 

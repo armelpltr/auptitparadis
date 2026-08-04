@@ -222,7 +222,30 @@ function renderPrepa() {
    tout — pas d'onglets, pas de statistiques, pas de menu déroulant à
    plusieurs choix. Une recherche, une carte, un bouton. */
 
-function ouvrirModeJourJ() {
+/* Le verrou doit survivre à un rechargement de page, pas seulement à une
+   navigation dans le panel : sinon un F5 (ou un tirer-pour-actualiser sur
+   tablette) revient direct sur l'écran normal, sans jamais demander le
+   code — exactement ce qu'on essaie d'empêcher. localStorage tient sur
+   cet appareil précis, ce qui tombe bien : l'idée est de verrouiller CE
+   poste de comptoir, peu importe qui s'y connecte ensuite. */
+const CLE_VERROU_JOURJ = 'jourjVerrouille';
+
+function verrouillerJourJ() {
+  try { localStorage.setItem(CLE_VERROU_JOURJ, '1'); } catch { /* stockage indisponible, tant pis */ }
+}
+function deverrouillerJourJ() {
+  try { localStorage.removeItem(CLE_VERROU_JOURJ); } catch { /* idem */ }
+}
+
+/** Appelé au chargement du panel : si ce poste était verrouillé avant le
+ *  rechargement, on repart directement en mode jour J plutôt que de
+ *  laisser admin.js afficher les onglets, ne serait-ce qu'un instant. */
+export function modeJourJVerrouille() {
+  try { return localStorage.getItem(CLE_VERROU_JOURJ) === '1'; } catch { return false; }
+}
+
+export function ouvrirModeJourJ() {
+  verrouillerJourJ();
   const overlay = document.getElementById('jourjOverlay');
   const recherche = document.getElementById('jourjRecherche');
   overlay.hidden = false;
@@ -280,6 +303,7 @@ function validerCodeSortie() {
 }
 
 function fermerModeJourJ() {
+  deverrouillerJourJ();
   document.getElementById('jourjOverlay').hidden = true;
 }
 
