@@ -6,7 +6,11 @@ export function corsHeaders(env) {
   return {
     'Access-Control-Allow-Origin': env.ALLOWED_ORIGIN,
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    /* `X-Dossier` porte le dossier de destination d'une photo. Un en-tête
+       absent de cette liste fait échouer le préflight, et le navigateur
+       n'envoie jamais la requête : l'import remontait « connexion
+       impossible », alors que rien n'était parti. */
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Dossier',
     'Access-Control-Max-Age': '86400',
   };
 }
