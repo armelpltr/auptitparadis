@@ -4,48 +4,31 @@
 // Le SDK Firebase du navigateur ne sait supprimer que le compte connecté.
 // Retirer quelqu'un d'autre demande les droits admin, donc la clé de service.
 //
-//   1. vérifie le jeton de l'appelant (signature Google, pas juste son contenu)
-//   2. vérifie qu'il est bien administrateur dans Firestore
-//   3. refuse de supprimer le dernier administrateur, et l'auto-suppression
-//   4. supprime le document admins/<uid> puis le compte Firebase
+//   1. vérifie le jeton de l'appelant, son appartenance au panel, sa double
+//      authentification et son rôle — tout cela dans `membre.js`
+//   2. refuse de supprimer le dernier administrateur, et l'auto-suppression
+//   3. supprime le document admins/<uid> puis le compte Firebase
 // ============================================================
 
 import { json, httpError } from './http.js';
-import {
-  verifyIdToken, firestoreGet, firestoreDelete, firestoreList, deleteAuthUser
-} from './firebase.js';
-
-async function requireAdmin(request, env) {
-  const auth = request.headers.get('Authorization') || '';
-  const idToken = auth.startsWith('Bearer ') ? auth.slice(7) : null;
-  if (!idToken) throw httpError('Jeton manquant', 401);
-
-  let caller;
-  try {
-    caller = await verifyIdToken(idToken, env);
-  } catch (err) {
-    throw httpError('Jeton invalide : ' + err.message, 401);
-  }
-
-  const doc = await firestoreGet(`admins/${caller.localId}`, env).catch(() => null);
-  if (!doc) throw httpError("Vous n'avez pas accès à l'administration.", 403);
-
-  // Rôle absent = administrateur : le tout premier compte a été créé à la main
-  // dans la console, avant que les rôles n'existent. Même défaut que les règles.
-  const role = doc.fields?.role?.stringValue ?? 'admin';
-  if (!['superadmin', 'admin'].includes(role)) {
-    throw httpError('Seul un administrateur peut supprimer un compte.', 403);
-  }
-
-  return { ...caller, role };
-}
+import { membreOuRefus } from './membre.js';
+import { firestoreDelete, firestoreList, deleteAuthUser } from './firebase.js';
 
 export async function handleDeleteUser(request, env, cors) {
-  const caller = await requireAdmin(request, env);
+  /* Ici le jeton voyage dans l'en-tête et non dans le corps, contrairement
+     aux autres routes du panel. Le contrôle lui-même est commun : membre,
+     double authentification franchie, et rôle de gestion. Sans l'exigence
+     de 2FA, cette route supprimait des comptes avec le mot de passe seul —
+     la clé de service contourne les règles Firestore qui l'imposent. */
+  const entete = request.headers.get('Authorization') || '';
+  const idToken = entete.startsWith('Bearer ') ? entete.slice(7) : null;
+  if (!idToken) throw httpError('Jeton manquant', 401);
+
+  const caller = await membreOuRefus(idToken, env, { gestion: true });
   const { uid } = await request.json();
 
   if (!uid) return json({ error: 'uid manquant' }, 400, cors);
-  if (uid === caller.localId) {
+  if (uid === caller.uid) {
     return json({ error: 'Vous ne pouvez pas supprimer votre propre compte ici.' }, 400, cors);
   }
 

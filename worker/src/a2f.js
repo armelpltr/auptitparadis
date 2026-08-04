@@ -19,8 +19,9 @@
 // ============================================================
 
 import { json, httpError } from './http.js';
+import { membreOuRefus } from './membre.js';
 import {
-  verifyIdToken, firestoreGet, firestoreSet, firestoreDelete,
+  firestoreGet, firestoreSet, firestoreDelete,
   firestoreIncrement, firestoreUpdate, fromFirestoreFields, setCustomClaims
 } from './firebase.js';
 import { envoyerCodeA2F } from './mailer.js';
@@ -60,36 +61,18 @@ function memeCode(a, b) {
   return diff === 0;
 }
 
-/* Le jeton prouve seulement qu'on s'est connecté à Firebase — n'importe
-   qui peut s'y créer un compte. L'appartenance au panel se vérifie ici, et
-   c'est aussi elle qui donne l'adresse où écrire : celle inscrite dans
-   `admins`, jamais celle fournie par l'appelant. */
-async function membreOuRefus(idToken, env) {
-  let user;
-  try {
-    user = await verifyIdToken(idToken, env);
-  } catch {
-    throw httpError('Session invalide. Reconnectez-vous.', 401);
-  }
+/* Le jeton prouve seulement qu'on s'est connecté à Firebase — n'importe qui
+   peut s'y créer un compte. L'appartenance au panel se vérifie dans
+   `membre.js`, qui donne aussi l'adresse où écrire : celle du compte, jamais
+   celle fournie par l'appelant.
 
-  let membre;
-  try {
-    const doc = await firestoreGet(`admins/${user.localId}`, env);
-    membre = fromFirestoreFields(doc.fields);
-  } catch {
-    throw httpError("Ce compte n'a pas accès à l'administration.", 403);
-  }
-
-  /* L'adresse du compte Firebase d'abord, celle du document `admins`
-     seulement en secours. C'est celle avec laquelle on vient de
-     s'authentifier : elle est forcément juste, sinon la connexion aurait
-     échoué. Le champ de `admins` n'est qu'une copie faite à la création de
-     l'accès, et une copie diverge — ici elle portait une faute de frappe,
-     et les codes partaient depuis le début vers une boîte inexistante. */
-  const email = user.email || membre.email;
-  if (!email) throw httpError('Aucune adresse e-mail sur ce compte.', 400);
-
-  return { uid: user.localId, email, prenom: membre.prenom || '', authTime: user.authTime };
+   `exigerA2F: false`, et c'est la seule place où ce soit légitime : on ne
+   peut pas demander d'avoir franchi la double authentification pour obtenir
+   le code qui la franchit. */
+async function membreSansA2F(idToken, env) {
+  const membre = await membreOuRefus(idToken, env, { exigerA2F: false });
+  if (!membre.email) throw httpError('Aucune adresse e-mail sur ce compte.', 400);
+  return membre;
 }
 
 /* ---------- Demande d'un code ---------- */
@@ -98,7 +81,7 @@ export async function handleA2fRequest(request, env, cors) {
   const body = await request.json().catch(() => {
     throw httpError('Requête illisible.', 400);
   });
-  const { uid, email, prenom } = await membreOuRefus(body.idToken, env);
+  const { uid, email, prenom } = await membreSansA2F(body.idToken, env);
 
   const chemin = `otpChallenges/${uid}`;
   const maintenant = Date.now();
@@ -208,7 +191,7 @@ export async function handleA2fVerify(request, env, cors) {
   const code = String(body.code ?? '').trim();
   if (!/^\d{6}$/.test(code)) throw httpError('Le code doit comporter six chiffres.', 400);
 
-  const { uid, authTime } = await membreOuRefus(body.idToken, env);
+  const { uid, authTime } = await membreSansA2F(body.idToken, env);
   const chemin = `otpChallenges/${uid}`;
 
   let defi;

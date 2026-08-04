@@ -218,7 +218,13 @@ function calculerLimiteAnnulation(delaiJours, dateRetrait, maintenant) {
    demande, sinon la limite ne protégerait rien contre deux personnes qui
    commandent au même instant. */
 async function quantitesReservees(dateRetrait, env) {
-  const commandes = await firestoreQueryByField('orders', 'dateRetrait', dateRetrait, env, 300);
+  /* La limite plafonne ce qui est compté, donc ce qui est protégé : au-delà,
+     les commandes suivantes ne sont pas vues et la capacité se dépasse en
+     silence. 2000 met la borne hors d'atteinte pour une boulangerie — un
+     seul jour de retrait n'en verra pas autant — sans ouvrir une lecture
+     sans fin. Si ce chiffre devenait atteignable, il faudrait paginer plutôt
+     que le relever encore. */
+  const commandes = await firestoreQueryByField('orders', 'dateRetrait', dateRetrait, env, 2000);
   const parProduit = new Map();
   for (const o of commandes) {
     if (o.statut === 'annulee') continue;

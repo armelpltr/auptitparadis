@@ -6,13 +6,14 @@
 // les règles y interdisent toujours toute lecture publique de `orders`.
 // Tout passe par le Worker, qui relit la commande avec la clé de service.
 //
-// Script classique et non module : rien ici n'a besoin de Firebase.
+// Module, pour une seule raison : partager l'adresse du Worker plutôt que
+// d'en garder une troisième copie en dur. Rien ici n'a besoin de Firebase.
 // ============================================================
+
+import { WORKER_URL } from "./config.js";
 
 (function () {
   'use strict';
-
-  var WORKER_URL = 'https://auptitparadis-worker.armelpltr14-ad6.workers.dev';
 
   var euros = new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' });
 

@@ -24,9 +24,9 @@
 // ============================================================
 
 import { json, httpError } from './http.js';
+import { membreOuRefus } from './membre.js';
 import {
-  verifyIdToken, firestoreGet, firestoreSet, firestoreIncrement,
-  fromFirestoreFields
+  firestoreGet, firestoreSet, firestoreIncrement, fromFirestoreFields
 } from './firebase.js';
 
 const CHEMIN_CODE    = 'panelSecrets/jourj';
@@ -45,29 +45,6 @@ function memeValeur(a, b) {
   let diff = 0;
   for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
   return diff === 0;
-}
-
-/* Le jeton prouve seulement qu'on s'est connecté à Firebase. L'appartenance
-   au panel, et le rôle, se vérifient ici. */
-async function membreOuRefus(idToken, env) {
-  let user;
-  try {
-    user = await verifyIdToken(idToken, env);
-  } catch {
-    throw httpError('Session invalide. Reconnectez-vous.', 401);
-  }
-
-  let membre;
-  try {
-    const doc = await firestoreGet(`admins/${user.localId}`, env);
-    membre = fromFirestoreFields(doc.fields);
-  } catch {
-    throw httpError("Ce compte n'a pas accès à l'administration.", 403);
-  }
-
-  // Même défaut que les règles : le tout premier compte a été créé à la main
-  // dans la console, avant que les rôles n'existent.
-  return { uid: user.localId, role: membre.role || 'admin' };
 }
 
 function codeValide(v) {
@@ -116,15 +93,15 @@ export async function handleJourJCode(request, env, cors) {
     throw httpError('Requête illisible.', 400);
   });
 
-  const { uid, role } = await membreOuRefus(body.idToken, env);
   const action = String(body.action ?? '');
 
   /* Définir le code relève de la gestion de la boutique, pas du comptoir :
-     même exigence que `settings/noel` dans les règles. */
+     même exigence que `settings/noel` dans les règles. Les deux autres
+     actions restent ouvertes à tout membre — le comptoir doit pouvoir
+     sortir du mode, et le panel connaître l'état du réglage. */
+  const { uid } = await membreOuRefus(body.idToken, env, { gestion: action === 'definir' });
+
   if (action === 'definir') {
-    if (!['superadmin', 'admin'].includes(role)) {
-      throw httpError('Seul un administrateur peut changer ce code.', 403);
-    }
     const code = codeValide(body.code);
     const sel = crypto.randomUUID();
     await firestoreSet(CHEMIN_CODE, {

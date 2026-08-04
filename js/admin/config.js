@@ -2,7 +2,8 @@
 // CONFIG — points d'entrée externes du panel
 // ============================================================
 
-/* Supprimer le compte de quelqu'un d'autre, ou valider un jeton anti-bot,
-   demande des droits que le SDK navigateur n'a pas. Le Worker les détient et
-   refait toutes les vérifications côté serveur : le client peut mentir. */
-export const WORKER_URL = 'https://auptitparadis-worker.armelpltr14-ad6.workers.dev';
+/* Réexporté depuis la configuration du site plutôt que réécrit ici :
+   l'adresse figurait en dur dans ce fichier et dans deux fichiers publics,
+   et une copie oubliée le jour d'un changement de domaine casse une page
+   sans que rien ne le signale. Les imports du panel restent inchangés. */
+export { WORKER_URL } from "../config.js";

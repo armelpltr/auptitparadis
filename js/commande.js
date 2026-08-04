@@ -7,11 +7,10 @@
 // ============================================================
 
 import { db } from "./firebase-config.js";
+import { WORKER_URL } from "./config.js";
 import {
   doc, getDoc, collection, getDocs, query, orderBy
 } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
-
-const WORKER_URL = 'https://auptitparadis-worker.armelpltr14-ad6.workers.dev';
 
 const MAX_QUANTITE = 20;   // doit rester aligné sur worker/src/orders.js
 

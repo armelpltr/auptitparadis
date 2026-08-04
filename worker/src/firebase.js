@@ -119,7 +119,17 @@ export async function verifyIdToken(idToken, env) {
   const valid = await crypto.subtle.verify('RSASSA-PKCS1-v1_5', key, b64urlDecode(parts[2]), sigInput);
   if (!valid) throw new Error('Signature invalide');
 
-  return { localId: payload.sub, email: payload.email, authTime: payload.auth_time };
+  /* `claims` porte la charge utile entière, attributs personnalisés compris.
+     C'est là que vivent `a2fUntil` et `a2fAuthTime`, dont les routes ont
+     besoin : ce Worker parle à Firestore avec la clé de service, laquelle
+     contourne les règles — l'exigence de double authentification qu'elles
+     posent ne le couvre donc pas, il doit la refaire lui-même. */
+  return {
+    localId: payload.sub,
+    email: payload.email,
+    authTime: payload.auth_time,
+    claims: payload
+  };
 }
 
 /* ---------- Conversion entre JSON et le format de Firestore ---------- */
