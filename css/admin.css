@@ -734,6 +734,7 @@ button.back-to-site{ background:none; border:none; cursor:pointer; font-family:i
    d'autre ne doit être visible ni accessible par erreur. Contraste fort et
    cibles larges — c'est pensé pour un doigt sur une tablette, pas une
    souris, et pour être lu vite dans le rush. */
+.jourj-overlay[hidden]{ display:none; }
 .jourj-overlay{
   position:fixed; inset:0; z-index:1000;
   background:var(--cream, #fbf6ee);
