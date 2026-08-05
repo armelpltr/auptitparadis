@@ -42,6 +42,17 @@ export async function purgerCommandes(env, maintenant = new Date()) {
 
   let effacees = 0;
   for (const commande of perimees) {
+    /* La requête compare des chaînes : une date vide, ou mal formée, trie
+       avant n'importe quelle date réelle et remonterait ici quel que soit
+       son âge. `dateIso()` impose le format à l'écriture, mais une
+       suppression définitive ne se fonde pas sur cette confiance — on
+       revérifie ce qu'on s'apprête à effacer. */
+    const jour = String(commande.dateRetrait ?? '');
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(jour) || jour >= limite) {
+      console.error(`[purge] ${commande.id} epargnee — dateRetrait inattendue : « ${jour} »`);
+      continue;
+    }
+
     try {
       await firestoreDelete(`orders/${commande.id}`, env);
       effacees++;
