@@ -221,9 +221,17 @@ service cloud.firestore {
          il le faut : le panel lit cette entrée AVANT d'afficher l'écran du
          code, pour savoir s'il a affaire à un membre. L'exiger ici
          refuserait la lecture, le panel conclurait « pas d'accès » et
-         personne n'entrerait plus. Ce qu'elle expose se limite au rôle et à
-         l'adresse de qui la demande — rien qu'il ne sache déjà. */
-      allow get:  if isMember();
+         personne n'entrerait plus.
+
+         D'où l'égalité sur l'uid, et non un simple `isMember()` : celui-ci
+         laissait n'importe quel membre lire l'entrée de n'importe quel
+         autre — adresse, nom, rôle — pourvu qu'il en connaisse l'uid. Le
+         commentaire annonçait « sa propre entrée », la règle en ouvrait
+         bien plus. Un `editor` ou un comptoir, à qui la liste de l'équipe
+         est justement refusée, la reconstituait entrée par entrée.
+         Le panel ne lit jamais que la sienne : les gestionnaires passent
+         par `list`, juste en dessous. */
+      allow get:  if request.auth != null && request.auth.uid == uid;
       allow list: if isOwner();
 
       // Plus aucune création depuis un navigateur. C'est le Worker qui écrit
