@@ -105,7 +105,10 @@ function telephoneFr(v) {
 function email(v) {
   const s = String(v ?? '').trim();
   if (!s) throw httpError("Merci d'indiquer une adresse e-mail.", 400);
-  if (s.length > 120 || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(s)) {
+  /* `\s` couvre l'espace et le saut de ligne, mais pas les autres caractères
+     de contrôle : une adresse portant un octet nul passait le motif, et cette adresse
+     part ensuite en destinataire d'e-mail. */
+  if (s.length > 120 || contientControle(s, false) || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(s)) {
     throw httpError('Adresse e-mail invalide.', 400);
   }
   return s;

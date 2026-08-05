@@ -27,6 +27,13 @@
 ">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 
+<!-- Refuse d'être affiché dans l'iframe d'un tiers. GitHub Pages n'envoie
+     pas X-Frame-Options, et `frame-ancestors` est ignoré quand la
+     politique vient d'une balise <meta> : la CSP ci-dessus ne couvre donc
+     pas ce point. Placé après elle pour qu'elle le gouverne aussi, et
+     avant le <body> pour s'exécuter avant tout affichage. -->
+<script src="../js/antiframe.js"></script>
+
 <link rel="icon" href="../assets/favicon.png" type="image/png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>

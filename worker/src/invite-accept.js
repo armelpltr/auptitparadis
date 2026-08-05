@@ -74,10 +74,23 @@ function verifierMotDePasse(mdp, personnel) {
   }
 }
 
+/* Même garde que dans `orders.js`, qui manquait ici : le prénom saisi à
+   l'acceptation d'une invitation est recopié dans `admins`, puis repris dans
+   l'e-mail qui porte le code de connexion. Un caractère de contrôle n'a rien
+   à faire sur ce chemin. */
+function contientControle(s) {
+  for (const c of s) {
+    const p = c.codePointAt(0);
+    if (p < 32 || (p >= 127 && p <= 159)) return true;
+  }
+  return false;
+}
+
 function texte(v, { min = 0, max, champ }) {
   const s = String(v ?? '').trim();
   if (s.length < min) throw httpError(`${champ} est trop court.`, 400);
   if (s.length > max) throw httpError(`${champ} est trop long (${max} caractères maximum).`, 400);
+  if (contientControle(s)) throw httpError(`${champ} contient des caractères interdits.`, 400);
   return s;
 }
 
