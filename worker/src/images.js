@@ -56,9 +56,17 @@ export async function handleImageUpload(request, env, cors) {
     throw httpError('Format non accepté. Utilisez un JPG, PNG, WebP ou AVIF.', 415);
   }
 
-  /* `Content-Length` est déclaré par l'appelant : il sert à refuser tôt, pas
-     à faire foi. La taille réelle est revérifiée après lecture. */
-  const annonce = Number(request.headers.get('Content-Length') || 0);
+  /* `Content-Length` est déclaré par l'appelant, donc il ne fait pas foi —
+     la taille réelle est revérifiée après lecture. Mais il est exigé, et
+     c'est ce qui compte ici : sans lui, `arrayBuffer()` chargeait en mémoire
+     tout ce qu'on lui envoyait avant que la moindre vérification n'ait lieu.
+     Un membre authentifié pouvait faire tomber le Worker en poussant un
+     corps de plusieurs centaines de Mo. Un navigateur envoyant un fichier
+     renseigne toujours cet en-tête. */
+  const annonce = Number(request.headers.get('Content-Length'));
+  if (!Number.isFinite(annonce) || annonce <= 0) {
+    throw httpError('Taille du fichier non déclarée.', 411);
+  }
   if (annonce > TAILLE_MAX) throw httpError('Photo trop lourde — 8 Mo maximum.', 413);
 
   const octets = await request.arrayBuffer();
