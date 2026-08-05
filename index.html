@@ -7,18 +7,20 @@
 <meta name="description" content="Au P'tit Paradis, boulangerie-pâtisserie artisanale à Luc-sur-Mer. Pain frais, viennoiseries, pâtisseries gourmandes et glaces maison, à deux pas de la plage.">
 
 <!-- GitHub Pages ne permet pas d'en-têtes HTTP : la politique passe par une
-     balise. Le widget d'avis Featurable impose ses domaines dans la liste. -->
+     balise. Le widget d'avis Featurable a ete retire : ses domaines ont
+     disparu de la politique avec lui. Les avis viennent maintenant du panel,
+     rendus par site-data.js — aucun script tiers sur cette page. -->
 <meta http-equiv="Content-Security-Policy" content="
   default-src 'self';
   base-uri 'self';
   object-src 'none';
   form-action 'self';
-  script-src 'self' https://www.gstatic.com https://cdn.featurable.com https://*.featurable.com;
-  style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://*.featurable.com;
+  script-src 'self' https://www.gstatic.com;
+  style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
   font-src 'self' https://fonts.gstatic.com data:;
   img-src 'self' data: blob: https:;
-  connect-src 'self' https://firestore.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://www.googleapis.com https://*.featurable.com;
-  frame-src https://www.google.com https://*.featurable.com;
+  connect-src 'self' https://firestore.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://www.googleapis.com;
+  frame-src https://www.google.com;
 ">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 
@@ -280,15 +282,6 @@
   <span class="google-reviews-cta">Voir les avis →</span>
 </a>
 
-<!-- ===================== AVIS GOOGLE (widget Featurable) ===================== -->
-<section class="avis" id="avis">
-  <div class="section-inner">
-    <p class="eyebrow">Ce qu'on en dit</p>
-    <h2>Vos avis</h2>
-    <div id="featurable-59ce2776-cac9-4f79-853e-a22cd8a29735" data-featurable-async></div>
-  </div>
-</section>
-
 <!-- ===================== FOOTER ===================== -->
 <footer class="site-footer">
 
@@ -396,6 +389,5 @@
 
 <script type="module" src="js/site-data.js"></script>
 <script src="js/script.js"></script>
-<script src="https://cdn.featurable.com/widget/v2/embed.js" defer charset="UTF-8"></script>
 </body>
 </html>
