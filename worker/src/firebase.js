@@ -337,6 +337,42 @@ export async function firestoreQueryByField(collectionId, fieldPath, value, env,
     }));
 }
 
+/**
+ * Documents dont un champ est strictement inférieur à une valeur. Sert à la
+ * purge : retrouver ce qui a dépassé la durée de conservation.
+ *
+ * Un seul champ, donc aucun index composite à créer à la main — même raison
+ * que pour la recherche par égalité juste au-dessus.
+ */
+export async function firestoreQueryBefore(collectionId, fieldPath, valeur, env, limit = 300) {
+  const token = await getAccessToken(env);
+  const res = await fetch(docsUrl(env, ':runQuery'), {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      structuredQuery: {
+        from: [{ collectionId }],
+        where: {
+          fieldFilter: {
+            field: { fieldPath },
+            op: 'LESS_THAN',
+            value: toFirestoreValue(valeur)
+          }
+        },
+        limit
+      }
+    })
+  });
+  if (!res.ok) throw new Error(`Firestore query ${res.status}: ${await res.text()}`);
+  const rows = await res.json();
+  return rows
+    .filter(r => r.document)
+    .map(r => ({
+      id: r.document.name.split('/').pop(),
+      ...fromFirestoreFields(r.document.fields)
+    }));
+}
+
 /* ---------- Identity Toolkit ---------- */
 
 /**

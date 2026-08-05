@@ -24,6 +24,12 @@ binding = "IMAGES"
 bucket_name = "auptitparadis-images"
 jurisdiction = "eu"
 
+# Purge des commandes dont la durée de conservation est passée. La nuit,
+# à une heure creuse et décalée d'un quart d'heure : les crons qui tombent
+# pile à l'heure ronde partagent la file d'attente de tout le monde.
+[triggers]
+crons = ["17 3 * * *"]
+
 [vars]
 ALLOWED_ORIGIN = "https://armelpltr.github.io"
 FIREBASE_PROJECT_ID = "au-ptit-paradis"

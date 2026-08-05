@@ -13,9 +13,14 @@
 //   POST /image          recevoir une photo du panel et la ranger dans R2
 //   GET  /image/<clé>    la servir, avec un cache long
 //
-// Les deux passent par la clé de service, qui ne peut pas vivre dans du
+// Et une tâche planifiée : la purge des commandes dont la durée de
+// conservation est passée.
+//
+// Toutes passent par la clé de service, qui ne peut pas vivre dans du
 // JavaScript servi aux visiteurs. Ce Worker est le seul endroit où elle
-// est à l'abri.
+// est à l'abri — et, corollaire à ne jamais perdre de vue, le seul que
+// les règles Firestore ne protègent pas : elle les contourne. Chaque
+// route refait donc les vérifications elle-même, via membre.js.
 // ============================================================
 
 import { corsHeaders, json } from './http.js';
@@ -26,6 +31,7 @@ import { handleA2fRequest, handleA2fVerify } from './a2f.js';
 import { handleInviteAccept } from './invite-accept.js';
 import { handleJourJCode } from './jourj.js';
 import { handleImageUpload, handleImageGet } from './images.js';
+import { purgerCommandes } from './purge.js';
 
 const ROUTES = {
   '/delete-user': handleDeleteUser,
@@ -76,5 +82,12 @@ export default {
       if (!err.status) console.error('Erreur non gérée :', err);
       return json({ error: message }, status, cors);
     }
+  },
+
+  /* Purge nocturne des commandes hors durée de conservation. Le cron est
+     déclaré dans wrangler.toml. `waitUntil` n'est pas nécessaire ici : le
+     runtime attend la promesse rendue par `scheduled`. */
+  async scheduled(event, env, ctx) {
+    await purgerCommandes(env);
   },
 };
