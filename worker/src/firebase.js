@@ -273,8 +273,13 @@ export async function firestoreSet(path, data, env) {
  *
  * Échoue si le document n'existe pas encore : un `transform` seul ne le
  * crée pas. Les appelants rattrapent ce cas en posant la valeur initiale.
+ *
+ * `pas` vaut 1 par défaut, et accepte un entier négatif : c'est ce qui
+ * permet de réserver plusieurs places d'un coup, puis de les rendre si la
+ * séance s'avère pleine. Une réservation qui ne peut pas être annulée
+ * atomiquement laisserait des places fantômes.
  */
-export async function firestoreIncrement(path, champ, env) {
+export async function firestoreIncrement(path, champ, env, pas = 1) {
   const token = await getAccessToken(env);
   const res = await fetch(docsUrl(env, ':commit'), {
     method: 'POST',
@@ -283,7 +288,7 @@ export async function firestoreIncrement(path, champ, env) {
       writes: [{
         transform: {
           document: `projects/${env.FIREBASE_PROJECT_ID}/databases/(default)/documents/${cheminSur(path)}`,
-          fieldTransforms: [{ fieldPath: champ, increment: { integerValue: '1' } }]
+          fieldTransforms: [{ fieldPath: champ, increment: { integerValue: String(pas) } }]
         }
       }]
     })

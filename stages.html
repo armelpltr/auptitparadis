@@ -3,12 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Commander pour Noël — Au P'tit Paradis</title>
-<meta name="description" content="Réservez vos bûches et coffrets de Noël à la boulangerie Au P'tit Paradis, à Luc-sur-Mer. Réservation en ligne, retrait et règlement en boutique.">
+<title>Ateliers pâtisserie &amp; boulangerie — Au P'tit Paradis</title>
+<meta name="description" content="Ateliers de pâtisserie et de boulangerie pendant les vacances scolaires à Luc-sur-Mer. Pensés pour les enfants, ouverts aux adultes. Places limitées, inscription en ligne.">
 
 <!-- GitHub Pages ne permet pas d'en-têtes HTTP : la politique passe par une
      balise. Turnstile a besoin de son script et de son iframe ; le Worker
-     reçoit la commande. -->
+     reçoit l'inscription. -->
 <meta http-equiv="Content-Security-Policy" content="
   default-src 'self';
   base-uri 'self';
@@ -29,11 +29,9 @@
 <link href="https://fonts.googleapis.com/css2?family=Atma:wght@300;400;500;600;700&family=Jost:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/style.css">
 
-<!-- Habillage de Noël. Chargé ici, bloquant et avant le <body> : posé après
-     coup, le thème produirait un clignotement crème → rouge. -->
 <script src="js/theme.js"></script>
 </head>
-<body class="page-commander">
+<body class="page-stages">
 
 <a class="skip-link" href="#main">Aller au contenu</a>
 
@@ -50,10 +48,9 @@
       <nav class="main-nav" aria-label="Navigation principale">
         <ul>
           <li><a href="index.html#specialites">Nos spécialités</a></li>
-          <li><a href="index.html#histoire">Notre histoire</a></li>
+          <li><a href="stages.html" aria-current="page">Ateliers</a></li>
           <li><a href="index.html#horaires">Horaires &amp; accès</a></li>
-          <li><a href="stages.html">Ateliers</a></li>
-          <li><a href="commander.html" class="nav-cta" aria-current="page">Commander</a></li>
+          <li><a href="commander.html" class="nav-cta">Commander</a></li>
         </ul>
       </nav>
       <button class="nav-toggle" id="navToggle" aria-expanded="false" aria-controls="mobile-nav" aria-label="Ouvrir le menu">
@@ -65,10 +62,10 @@
   <nav class="mobile-nav" id="mobile-nav" aria-label="Navigation mobile" aria-hidden="true">
     <ul>
       <li><a href="index.html#specialites">Nos spécialités</a></li>
+      <li><a href="stages.html" aria-current="page">Ateliers</a></li>
       <li><a href="index.html#histoire">Notre histoire</a></li>
       <li><a href="index.html#horaires">Horaires &amp; accès</a></li>
-      <li><a href="stages.html">Ateliers</a></li>
-      <li><a href="commander.html" aria-current="page">Commander</a></li>
+      <li><a href="commander.html" class="nav-cta">Commander</a></li>
     </ul>
   </nav>
 
@@ -77,134 +74,143 @@
 
 <main id="main" class="commande-main">
 
-  <!-- ===================== EN-TÊTE DE PAGE ===================== -->
-  <!-- Masqué une fois la réservation enregistrée : il invite à choisir des
-       produits, ce qui n'a plus de sens sur un écran de confirmation. -->
-  <section class="commande-head" id="commandeHead">
+  <!-- ===================== PRÉSENTATION ===================== -->
+  <section class="stage-head" id="stageHead">
     <div class="section-inner">
-      <p class="eyebrow">Réservation en ligne</p>
-      <h1>Vos bûches et coffrets de Noël</h1>
+      <p class="eyebrow">Pendant les vacances</p>
+      <h1>Les mains dans la farine</h1>
       <p class="commande-intro">
-        Choisissez vos produits, indiquez le jour où vous passerez les chercher.
-        Vous recevrez un code de réservation — présentez-le en boutique pour
-        confirmer votre commande. Le règlement se fait sur place, au retrait.
+        Une matinée dans le fournil, tablier sur le dos, à façonner pour de vrai.
+        On pétrit, on tourne, on décore — et chacun repart avec ce qu'il a fait,
+        dans sa boîte, à montrer à toute la famille.
       </p>
-      <p class="commande-message" id="commandeMessage" hidden></p>
+      <p class="stage-blague">
+        Les ateliers sont pensés pour les enfants. Les adultes sont les
+        bienvenus, à une condition : ne pas manger la pâte crue. On surveille.
+      </p>
+      <p class="commande-message" id="stageMessage" hidden></p>
+
+      <ul class="stage-atouts">
+        <li>
+          <span class="stage-atout-titre">Tout est fourni</span>
+          <span>Tablier, ingrédients, matériel. Venez les mains vides.</span>
+        </li>
+        <li>
+          <span class="stage-atout-titre">Petits groupes</span>
+          <span>Quelques places par séance, pour que chacun ait son plan de travail.</span>
+        </li>
+        <li>
+          <span class="stage-atout-titre">On repart avec</span>
+          <span>Ce qui sort du four est à vous, emballé pour le trajet.</span>
+        </li>
+      </ul>
     </div>
   </section>
 
-  <div class="divider" id="commandeDivider" aria-hidden="true">
+  <div class="divider" aria-hidden="true">
     <svg viewBox="0 0 1200 80" preserveAspectRatio="none"><path d="M0,40 C100,40 200,10 400,45 C600,80 700,15 900,40 C1050,62 1150,38 1200,40" /></svg>
   </div>
 
-  <!-- ===================== COMMANDES FERMÉES ===================== -->
-  <section class="commande-closed" id="commandeClosed" hidden>
+  <!-- ===================== INSCRIPTIONS FERMÉES ===================== -->
+  <section class="commande-closed" id="stageClosed" hidden>
     <div class="section-inner">
-      <h2>Les réservations ne sont pas ouvertes</h2>
+      <h2>Pas de séance programmée pour l'instant</h2>
       <p>
-        Les commandes de Noël ouvriront prochainement. En attendant, passez nous
-        voir en boutique ou appelez-nous, on vous renseignera avec plaisir.
+        Les prochaines dates arrivent avec le calendrier des vacances. Passez
+        nous voir en boutique ou appelez-nous : on vous préviendra dès que
+        c'est ouvert.
       </p>
       <a href="index.html#horaires" class="btn btn-ghost">Horaires &amp; adresse</a>
     </div>
   </section>
 
-  <!-- ===================== FORMULAIRE ===================== -->
-  <section class="commande-body" id="commandeBody" hidden>
+  <!-- ===================== SÉANCES + FORMULAIRE ===================== -->
+  <section class="commande-body" id="stageBody" hidden>
     <div class="section-inner commande-grid">
 
-      <!-- --- Catalogue --- -->
+      <!-- --- Les séances --- -->
       <div class="commande-catalogue">
-        <h2>Le catalogue</h2>
-        <p class="commande-hint" id="catalogueHint">Chargement du catalogue…</p>
-        <div class="produits-grid" id="produitsGrid"></div>
+        <h2>Les prochaines séances</h2>
+        <p class="commande-hint" id="seancesHint">Chargement des séances…</p>
+        <div class="seances-liste" id="seancesListe"></div>
       </div>
 
-      <!-- --- Panier + coordonnées --- -->
-      <form class="commande-panier" id="commandeForm" novalidate>
-        <h2>Votre réservation</h2>
+      <!-- --- Inscription --- -->
+      <form class="commande-panier stage-form" id="stageForm" novalidate>
+        <h2>Votre inscription</h2>
 
-        <div class="panier-lignes" id="panierLignes">
-          <p class="panier-vide">Votre panier est vide.</p>
+        <div class="stage-choix" id="stageChoix">
+          <p class="panier-vide">Choisissez d'abord une séance dans la liste.</p>
         </div>
 
-        <div class="panier-total" id="panierTotal" hidden>
-          <span>Total à régler en boutique</span>
-          <strong id="panierTotalValeur">0,00 €</strong>
+        <div class="stage-participants" id="stageParticipantsBloc" hidden>
+          <p class="stage-sous-titre">Qui participe ?</p>
+          <div id="participantsListe"></div>
+          <button type="button" class="btn btn-ghost btn-small" id="ajouterParticipant">
+            + Ajouter un participant
+          </button>
+          <p class="form-hint" id="participantsHint">
+            L'âge nous aide à préparer les bons postes de travail. Facultatif pour les grands.
+          </p>
         </div>
+
+        <div class="panier-total" id="stageTotal" hidden>
+          <span>Total à régler sur place</span>
+          <strong id="stageTotalValeur">0,00 €</strong>
+        </div>
+
+        <p class="stage-sous-titre">Vos coordonnées</p>
 
         <div class="form-duo">
           <div class="form-field">
-            <label for="ordDate" id="ordDateLabel">Jour de retrait</label>
-            <!-- Le <select> reste la source de vérité ; commande.js construit
-                 par-dessus une liste stylable, la liste native étant dessinée
-                 par le système et hors de portée du CSS. -->
-            <select id="ordDate" required></select>
-          </div>
-          <!-- Masqué tant qu'aucune plage horaire n'est réglée côté admin :
-               la commande continue alors de ne porter qu'un jour. -->
-          <div class="form-field" id="ordHeureChamp" hidden>
-            <label for="ordHeure" id="ordHeureLabel">Heure de retrait</label>
-            <select id="ordHeure"></select>
-          </div>
-        </div>
-
-        <div class="form-duo">
-          <div class="form-field">
-            <label for="ordPrenom">Prénom</label>
-            <input type="text" id="ordPrenom" maxlength="40" autocomplete="given-name" required>
+            <label for="stgPrenom">Prénom</label>
+            <input type="text" id="stgPrenom" maxlength="40" autocomplete="given-name" required>
           </div>
           <div class="form-field">
-            <label for="ordNom">Nom</label>
-            <input type="text" id="ordNom" maxlength="40" autocomplete="family-name" required>
+            <label for="stgNom">Nom</label>
+            <input type="text" id="stgNom" maxlength="40" autocomplete="family-name" required>
           </div>
         </div>
 
         <div class="form-field">
-          <label for="ordTel">Téléphone</label>
-          <input type="tel" id="ordTel" maxlength="20" autocomplete="tel" required>
-          <p class="form-hint">Pour vous joindre si besoin. Aucun démarchage.</p>
+          <label for="stgTel">Téléphone</label>
+          <input type="tel" id="stgTel" maxlength="20" autocomplete="tel" required>
+          <p class="form-hint">Pour vous joindre si la séance devait bouger. Aucun démarchage.</p>
         </div>
 
         <div class="form-field">
-          <label for="ordEmail">E-mail</label>
-          <input type="email" id="ordEmail" maxlength="120" autocomplete="email" required>
+          <label for="stgEmail">E-mail</label>
+          <input type="email" id="stgEmail" maxlength="120" autocomplete="email" required>
         </div>
 
         <div class="form-field">
-          <label for="ordCommentaire">Précisions <span class="form-optional">(facultatif)</span></label>
-          <!-- Le seul indice conservé : il guide sans imiter une valeur déjà
-               saisie, et l'heure de passage n'y figure plus, un champ la
-               demandant désormais. -->
-          <textarea id="ordCommentaire" rows="2" maxlength="300" placeholder="Allergies, demande particulière…"></textarea>
+          <label for="stgCommentaire">Précisions <span class="form-optional">(facultatif)</span></label>
+          <textarea id="stgCommentaire" rows="2" maxlength="300" placeholder="Allergies, intolérances, une main à surveiller…"></textarea>
         </div>
 
-        <!-- Piège à robots : masqué en CSS, sans intérêt pour un visiteur.
-             Un formulaire rempli automatiquement le remplit aussi, et la
-             commande est alors ignorée. -->
+        <!-- Piège à robots : masqué en CSS, sans intérêt pour un visiteur. -->
         <div class="form-honeypot" aria-hidden="true">
-          <label for="ordWebsite">Site web</label>
-          <input type="text" id="ordWebsite" name="website" tabindex="-1" autocomplete="off">
+          <label for="stgWebsite">Site web</label>
+          <input type="text" id="stgWebsite" name="website" tabindex="-1" autocomplete="off">
         </div>
 
-        <!-- Turnstile s'insère ici et dépose son jeton dans un champ caché.
-             La clé publique n'est pas un secret : elle est lisible dans la
+        <!-- La clé publique n'est pas un secret : elle est lisible dans la
              page. Son pendant secret vit dans le Worker. -->
         <div class="cf-turnstile commande-turnstile"
              data-sitekey="0x4AAAAAAED7yI96qPuGBOUj"
              data-language="fr"
              data-appearance="interaction-only"></div>
 
-        <p class="commande-erreur" id="commandeErreur" hidden></p>
+        <p class="commande-erreur" id="stageErreur" hidden></p>
 
-        <button type="submit" class="btn btn-primary commande-submit" id="commandeSubmit" disabled>
-          Réserver
+        <button type="submit" class="btn btn-primary commande-submit" id="stageSubmit" disabled>
+          Réserver ma place
         </button>
         <p class="form-hint commande-legal">
-          Réservation sans paiement en ligne. Votre commande est confirmée
-          lorsque vous présentez votre code en boutique.<br>
-          Vos coordonnées servent uniquement à préparer et à confirmer cette
-          réservation — <a href="confidentialite.html" target="_blank" rel="noopener">en savoir plus</a>.
+          Inscription sans paiement en ligne : le règlement se fait sur place,
+          le jour de l'atelier.<br>
+          Les coordonnées et l'âge servent uniquement à organiser la séance —
+          <a href="confidentialite.html" target="_blank" rel="noopener">en savoir plus</a>.
         </p>
       </form>
 
@@ -212,19 +218,17 @@
   </section>
 
   <!-- ===================== CONFIRMATION ===================== -->
-  <section class="commande-succes" id="commandeSucces" hidden>
+  <section class="commande-succes" id="stageSucces" hidden>
     <div class="section-inner">
       <p class="eyebrow">C'est noté</p>
-      <h2>Votre réservation est enregistrée</h2>
-      <p class="succes-code-label">Votre code de réservation</p>
-      <p class="succes-code" id="succesCode">——————</p>
-      <p class="succes-detail" id="succesDetail"></p>
-      <!-- Affiché seulement si l'e-mail est réellement parti : le Worker le
-           dit dans sa réponse, on ne le suppose pas. -->
-      <p class="succes-email" id="succesEmail" hidden></p>
+      <h2>Votre place est réservée</h2>
+      <p class="succes-code-label">Votre code d'inscription</p>
+      <p class="succes-code" id="stageSuccesCode">——————</p>
+      <p class="succes-detail" id="stageSuccesDetail"></p>
+      <p class="succes-email" id="stageSuccesEmail" hidden></p>
       <p>
-        Notez-le ou gardez cette page ouverte. Présentez-le en boutique pour
-        confirmer votre commande — c'est aussi là que vous réglerez, au retrait.
+        Rendez-vous à la boutique dix minutes avant le début, en tenue qui ne
+        craint rien. Le tablier, c'est nous qui l'apportons.
       </p>
       <a href="index.html" class="btn btn-ghost">Retour au site</a>
     </div>
@@ -267,9 +271,9 @@
         <p class="footer-section-label">Le site</p>
         <ul>
           <li><a href="index.html#specialites">Nos spécialités</a></li>
+          <li><a href="stages.html">Ateliers</a></li>
           <li><a href="index.html#histoire">Notre histoire</a></li>
           <li><a href="index.html#horaires">Horaires &amp; accès</a></li>
-          <li><a href="stages.html">Ateliers</a></li>
           <li><a href="commander.html">Commander</a></li>
         </ul>
       </nav>
@@ -324,7 +328,7 @@
 
 <script type="module" src="js/site-data.js"></script>
 <script src="js/script.js"></script>
-<script type="module" src="js/commande.js"></script>
+<script type="module" src="js/stages.js"></script>
 <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" defer></script>
 </body>
 </html>

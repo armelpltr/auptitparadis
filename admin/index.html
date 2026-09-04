@@ -190,6 +190,7 @@
       <button type="button" class="admin-tab is-active" data-tab="settings">Réglages du site</button>
       <button type="button" class="admin-tab" data-tab="orders">Commandes</button>
       <button type="button" class="admin-tab" data-tab="noel">Catalogue Noël</button>
+      <button type="button" class="admin-tab" data-tab="stages">Ateliers</button>
       <button type="button" class="admin-tab" data-tab="team">Équipe</button>
     </nav>
 
@@ -514,6 +515,47 @@
         <p class="admin-card-hint">Les produits proposés à la réservation. Un produit en rupture reste affiché, mais ne peut plus être ajouté au panier.</p>
         <div id="noelList" class="noel-list"></div>
         <button type="button" class="btn btn-ghost btn-small" id="addNoelBtn">+ Ajouter un produit</button>
+      </div>
+    </section>
+
+    <!-- ===================== ONGLET ATELIERS ===================== -->
+    <section class="admin-panel" id="panel-stages">
+
+      <div class="admin-card">
+        <h2>Inscriptions aux ateliers</h2>
+        <p class="admin-card-hint">Tant que les inscriptions sont fermées, la page « Ateliers » reste consultable et présente les stages, mais n'accepte aucune réservation.</p>
+
+        <label class="switch-row">
+          <input type="checkbox" id="stages-ouvert">
+          <span>Accepter les inscriptions en ligne</span>
+        </label>
+
+        <div class="form-row">
+          <label for="stages-message">Message affiché en haut de la page (optionnel)</label>
+          <textarea id="stages-message" rows="2" placeholder="ex. Vacances de la Toussaint : trois séances, réglement sur place."></textarea>
+        </div>
+
+        <div class="card-actions">
+          <button type="button" class="btn btn-primary btn-small" id="saveStagesReglagesBtn">Enregistrer les réglages</button>
+        </div>
+      </div>
+
+      <div class="admin-card">
+        <h2>Les séances</h2>
+        <p class="admin-card-hint">Une séance = une date, un créneau, un nombre de places. Une séance masquée n'apparaît pas sur le site ; une séance passée disparaît toute seule de la page publique, mais reste ici avec ses inscrits.</p>
+        <div id="stagesList" class="noel-list"></div>
+        <div class="card-actions">
+          <button type="button" class="btn btn-ghost btn-small" id="addStageBtn">+ Ajouter une séance</button>
+          <span id="stagesExemples" hidden>
+            <button type="button" class="btn btn-ghost btn-small" id="addStageExemplesBtn">Partir de trois exemples</button>
+          </span>
+        </div>
+      </div>
+
+      <div class="admin-card">
+        <h2>Les inscrits</h2>
+        <p class="admin-card-hint">Groupés par séance, dans l'ordre des dates. Annuler ou supprimer une inscription rend la place aussitôt sur le site — mais ne prévient personne : passez un coup de fil.</p>
+        <div id="inscriptionsList" class="inscriptions-liste"></div>
       </div>
     </section>
 

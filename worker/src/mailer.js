@@ -440,6 +440,149 @@ export async function envoyerAnnulation(commande, env) {
   return diffuser(commande, mailClientAnnulation(commande, env), mailPatronAnnulation(commande), env);
 }
 
+/* ---------- Ateliers ---------- */
+
+function seanceLisible(inscription) {
+  const jour = jourLisible(inscription.date);
+  if (!jour) return '';
+  if (!inscription.heureDebut) return jour;
+  const debut = String(inscription.heureDebut).replace(':', 'h');
+  const fin = inscription.heureFin ? ` à ${String(inscription.heureFin).replace(':', 'h')}` : '';
+  return `${jour}, de ${debut}${fin}`;
+}
+
+function participantsHtml(liste) {
+  return (liste || []).map(p => `
+    <tr>
+      <td style="padding:6px 0;">${esc([p.prenom, p.nom].filter(Boolean).join(' '))}</td>
+      <td style="padding:6px 0;text-align:right;color:#4a423a;">${p.age ? esc(`${p.age} ans`) : ''}</td>
+    </tr>`).join('');
+}
+
+function participantsTexte(liste) {
+  return (liste || [])
+    .map(p => `  - ${[p.prenom, p.nom].filter(Boolean).join(' ')}${p.age ? ` (${p.age} ans)` : ''}`)
+    .join('
+');
+}
+
+function mailClientStage(inscription) {
+  const { code, client, participants, total, stageNom, commentaire } = inscription;
+  const seance = seanceLisible(inscription);
+  const pluriel = (participants || []).length > 1;
+
+  const html = `
+<div style="font-family:Helvetica,Arial,sans-serif;color:#211c17;max-width:520px;margin:0 auto;">
+  <h1 style="font-size:20px;margin:0 0 4px;">C'est noté !</h1>
+  <p style="color:#4a423a;margin:0 0 24px;">Bonjour ${esc(client.prenom || client.nom)},</p>
+
+  <p style="margin:0 0 16px;">
+    ${pluriel ? 'Vos places sont réservées' : 'Votre place est réservée'}
+    pour l'atelier <strong>${esc(stageNom)}</strong>.
+  </p>
+
+  <div style="background:#f1e6d3;border-radius:10px;padding:18px;text-align:center;margin-bottom:22px;">
+    <p style="margin:0 0 6px;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:#4a423a;">
+      Votre code d'inscription
+    </p>
+    <p style="margin:0;font-size:30px;font-weight:bold;letter-spacing:.2em;color:#8c5a26;">
+      ${esc(code)}
+    </p>
+  </div>
+
+  <p style="margin:0 0 8px;"><strong>Quand :</strong> ${esc(seance)}</p>
+  <p style="margin:0 0 16px;"><strong>Où :</strong> à la boulangerie, on vous attend dix minutes avant.</p>
+
+  <table style="width:100%;border-collapse:collapse;border-top:1px solid #e7c79a;">
+    ${participantsHtml(participants)}
+    <tr>
+      <td style="padding:10px 0;font-weight:bold;border-top:1px solid #e7c79a;">À régler sur place</td>
+      <td style="padding:10px 0;text-align:right;font-weight:bold;border-top:1px solid #e7c79a;">${esc(euros(total))}</td>
+    </tr>
+  </table>
+
+  ${commentaire ? `<p style="background:#f1e6d3;padding:12px 16px;font-style:italic;margin:16px 0 0;">« ${esc(commentaire)} »</p>` : ''}
+
+  <p style="color:#4a423a;font-size:13px;margin:22px 0 0;">
+    Un empêchement ? Appelez-nous : une place libérée à temps fera un heureux.
+  </p>
+  <p style="color:#4a423a;font-size:13px;margin:6px 0 0;">Au P'tit Paradis — Luc-sur-Mer</p>
+</div>`;
+
+  const texte = `C'est noté !
+
+Bonjour ${client.prenom || client.nom},
+
+${pluriel ? 'Vos places sont réservées' : 'Votre place est réservée'} pour l'atelier ${stageNom}.
+
+Votre code d'inscription : ${code}
+
+Quand : ${seance}
+Où : à la boulangerie, on vous attend dix minutes avant.
+
+Participants :
+${participantsTexte(participants)}
+
+À régler sur place : ${euros(total)}
+${commentaire ? `
+Votre message : « ${commentaire} »
+` : ''}
+Un empêchement ? Appelez-nous : une place libérée à temps fera un heureux.
+
+Au P'tit Paradis — Luc-sur-Mer`;
+
+  return { sujet: `Inscription confirmée — ${stageNom} — code ${code}`, html, texte };
+}
+
+function mailPatronStage(inscription) {
+  const { code, client, participants, total, stageNom, date, commentaire } = inscription;
+  const nom = client.nomComplet || `${client.prenom} ${client.nom}`;
+  const seance = seanceLisible(inscription);
+
+  const html = `
+<div style="font-family:Helvetica,Arial,sans-serif;color:#211c17;max-width:520px;margin:0 auto;">
+  <h1 style="font-size:18px;margin:0 0 16px;">Nouvelle inscription atelier — ${esc(code)}</h1>
+  <p style="margin:0 0 4px;"><strong>${esc(stageNom)}</strong> — ${esc(seance)}</p>
+  <p style="margin:0 0 4px;">${esc(nom)}</p>
+  <p style="margin:0 0 16px;">${esc(client.telephone)} · ${esc(client.email)}</p>
+  <table style="width:100%;border-collapse:collapse;">
+    ${participantsHtml(participants)}
+    <tr>
+      <td style="padding:10px 0;font-weight:bold;">Total</td>
+      <td style="padding:10px 0;text-align:right;font-weight:bold;">${esc(euros(total))}</td>
+    </tr>
+  </table>
+  ${commentaire ? `<p style="background:#f1e6d3;padding:12px 16px;font-style:italic;">« ${esc(commentaire)} »</p>` : ''}
+  <p style="color:#4a423a;font-size:13px;">Les places restantes se voient dans l'onglet Ateliers du panel.</p>
+</div>`;
+
+  const texte = `Nouvelle inscription atelier — ${code}
+
+${stageNom} — ${seance}
+${nom}
+${client.telephone} · ${client.email}
+
+${participantsTexte(participants)}
+
+Total : ${euros(total)}
+${commentaire ? `
+Commentaire : « ${commentaire} »
+` : ''}
+Les places restantes se voient dans l'onglet Ateliers du panel.`;
+
+  return { sujet: `Nouvelle inscription — ${stageNom} — ${date}`, html, texte };
+}
+
+/**
+ * Confirme l'inscription à un atelier, et prévient les membres abonnés aux
+ * alertes. Mêmes garanties que pour les commandes : ne lève jamais, la
+ * place est déjà réservée quoi qu'il arrive à l'e-mail.
+ */
+export async function envoyerConfirmationStage(inscription, env) {
+  if (!env.BREVO_API_KEY || !env.EMAIL_EXPEDITEUR) return false;
+  return diffuser(inscription, mailClientStage(inscription), mailPatronStage(inscription), env);
+}
+
 /* Un e-mail au client, un à chaque membre abonné. L'échec de l'un
    n'empêche pas les autres : la boulangerie doit être prévenue même si
    l'adresse du client rebondit. */

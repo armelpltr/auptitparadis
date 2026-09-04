@@ -97,6 +97,40 @@ async function purgerDefisA2F(env, maintenant) {
   }
 }
 
+/* ---------- Inscriptions aux ateliers ---------- */
+/* Même règle que pour les commandes, et pour la même raison : une
+   inscription porte le prénom d'un enfant, son âge, et les coordonnées
+   d'un parent. Le décompte part du jour de la séance — avant, l'atelier
+   n'a pas eu lieu et la liste sert encore à l'accueillir. */
+async function purgerInscriptions(env, limite) {
+  try {
+    const perimees = await firestoreQueryBefore(
+      'inscriptions', 'date', limite, env, MAX_PAR_PASSAGE
+    );
+
+    let effacees = 0;
+    for (const inscription of perimees) {
+      /* Même garde que pour les commandes : la requête compare des chaînes,
+         et une date vide trie avant n'importe quelle date réelle. */
+      const jour = String(inscription.date ?? '');
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(jour) || jour >= limite) {
+        console.error(`[purge] inscription ${inscription.id} épargnée — date inattendue : « ${jour} »`);
+        continue;
+      }
+      try {
+        await firestoreDelete(`inscriptions/${inscription.id}`, env);
+        effacees++;
+      } catch (err) {
+        console.error(`[purge] inscription ${inscription.id} non supprimée :`, err.message);
+      }
+    }
+
+    console.log(`[purge] séances avant ${limite} — ${effacees}/${perimees.length} inscriptions effacées`);
+  } catch (err) {
+    console.error('[purge] inscriptions illisibles :', err.message);
+  }
+}
+
 export async function purgerCommandes(env, maintenant = new Date()) {
   const limite = limiteISO(maintenant);
 
@@ -132,6 +166,7 @@ export async function purgerCommandes(env, maintenant = new Date()) {
   /* Les compteurs éphémères partent dans le même passage : une seule
      tâche planifiée, un seul réveil du Worker. Un échec de leur côté ne
      doit pas remettre en cause la purge des commandes, déjà faite. */
+  await purgerInscriptions(env, limite);
   await purgerCompteurs(env, maintenant);
   await purgerDefisA2F(env, maintenant);
 

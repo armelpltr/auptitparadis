@@ -6,6 +6,7 @@
 //   POST /order          enregistrer une commande après vérification anti-bot
 //   POST /order/manage   relire une commande depuis le lien reçu par e-mail
 //   POST /order/cancel   l'annuler tant que le délai le permet
+//   POST /stage/reserve  inscrire à un atelier, places décomptées au serveur
 //   POST /invite/accept  créer un accès à partir d'une invitation, ce qui
 //                        permet de fermer l'inscription publique
 //   POST /jourj/code     poser et vérifier le code de sortie du mode jour J,
@@ -27,6 +28,7 @@ import { corsHeaders, json } from './http.js';
 import { handleDeleteUser } from './admin-delete.js';
 import { handleOrder } from './orders.js';
 import { handleOrderManage, handleOrderCancel } from './order-manage.js';
+import { handleStageReserve } from './stages.js';
 import { handleA2fRequest, handleA2fVerify } from './a2f.js';
 import { handleInviteAccept } from './invite-accept.js';
 import { handleJourJCode } from './jourj.js';
@@ -38,6 +40,7 @@ const ROUTES = {
   '/order': handleOrder,
   '/order/manage': handleOrderManage,
   '/order/cancel': handleOrderCancel,
+  '/stage/reserve': handleStageReserve,
   '/a2f/request': handleA2fRequest,
   '/a2f/verify': handleA2fVerify,
   '/invite/accept': handleInviteAccept,

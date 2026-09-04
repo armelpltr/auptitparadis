@@ -152,7 +152,8 @@ service cloud.firestore {
       // Le comptoir est membre du panel pour lire sa propre entrée `admins`
       // et passer le contrôle d'accès, mais ce n'est pas un droit sur le
       // contenu du site : il ne doit pouvoir écrire nulle part ici.
-      allow write: if membreVerifie() && myRole() != 'comptoir' && docId != 'noel';
+      allow write: if membreVerifie() && myRole() != 'comptoir'
+                   && docId != 'noel' && docId != 'stages';
     }
 
     // Ouverture des commandes, dates de retrait, délai d'annulation : cela
@@ -160,6 +161,41 @@ service cloud.firestore {
     match /settings/noel {
       allow read:  if true;
       allow write: if isOwner();
+    }
+
+    // Ouverture des inscriptions aux ateliers. Même raison que pour
+    // `settings/noel` : cela engage des créneaux et des places, pas
+    // seulement l'apparence du site. Sans l'exclusion posée plus haut dans
+    // `settings/{docId}`, un rôle « contenu » rouvrirait les inscriptions.
+    match /settings/stages {
+      allow read:  if true;
+      allow write: if isOwner();
+    }
+
+    // Séances d'atelier. Publiques en lecture — la page les affiche, avec
+    // leurs places restantes — et modifiables par ceux qui gèrent la
+    // boutique. Le compteur `placesPrises` est incrémenté par le Worker
+    // avec la clé de service, qui contourne ces règles : rien à ouvrir ici
+    // pour lui.
+    match /stages/{stageId} {
+      allow read:  if true;
+      allow write: if isOwner();
+    }
+
+    /* Inscriptions aux ateliers. Elles portent le prénom et l'âge
+       d'enfants, et les coordonnées d'un parent : rien n'est ouvert au
+       public, pas même la création. Le formulaire passe par le Worker, qui
+       vérifie le jeton Turnstile puis réserve la place avant d'écrire.
+
+       Une création directe depuis le navigateur ne se contenterait pas
+       d'ignorer la vérification anti-bot : elle prendrait une place sans
+       passer par le compteur, et la séance afficherait des places qu'elle
+       n'a plus. Le rôle « contenu » n'y a pas accès non plus, pour la
+       même raison que les commandes. */
+    match /inscriptions/{inscriptionId} {
+      allow read:   if isOwner();
+      allow create: if false;
+      allow update, delete: if isOwner();
     }
 
     match /blocks/{blockId} {

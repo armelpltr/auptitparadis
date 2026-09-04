@@ -1039,3 +1039,64 @@ button.back-to-site{ background:none; border:none; cursor:pointer; font-family:i
 .jourj-pin-erreur{ color:#a13a25; font-weight:700; font-size:.9rem; margin:0; }
 .jourj-pin-actions{ display:flex; gap:.8rem; margin-top:.2rem; }
 .jourj-pin-actions .btn{ min-width:120px; min-height:44px; }
+
+/* =========================================================
+   ONGLET ATELIERS
+   Les séances réutilisent la carte du catalogue de Noël
+   (`.noel-item`) : même objet à l'écran, une fiche qu'on
+   déplie et qu'on enregistre. Seuls le récapitulatif et la
+   liste des inscrits sont propres à cet onglet.
+   ========================================================= */
+
+.stage-recap{ margin:-.2rem 0 .9rem; color:var(--ink-soft); }
+.stage-recap strong{ color:#a13a25; }
+
+.inscriptions-liste{ display:flex; flex-direction:column; gap:1.6rem; }
+
+.inscription-groupe-titre{
+  display:flex; flex-wrap:wrap; align-items:baseline; gap:.2rem .7rem;
+  font-size:1.05rem; margin:0 0 .7rem;
+  padding-bottom:.5rem; border-bottom:1px solid var(--gold-pale);
+}
+.inscription-groupe-titre span{
+  font-family:var(--font-body); font-size:.82rem; font-weight:500; color:var(--ink-soft);
+}
+/* Une séance passée reste consultable, mais elle ne réclame plus rien. */
+.inscription-groupe.is-passee{ opacity:.6; }
+
+.inscription-ligne{
+  display:flex; justify-content:space-between; align-items:flex-start; gap:1rem;
+  padding:.75rem 0; border-bottom:1px solid rgba(200,133,58,.18);
+}
+.inscription-ligne:last-child{ border-bottom:none; }
+/* Annulée : barrée d'un trait de couleur à gauche, pour la repérer sans
+   avoir à lire le menu déroulant de chaque ligne. */
+.inscription-ligne.statut-annulee{ opacity:.55; }
+.inscription-ligne.statut-annulee .inscription-code{ text-decoration:line-through; }
+
+.inscription-info{ display:flex; flex-direction:column; gap:.15rem; min-width:0; }
+.inscription-code{
+  font-size:.75rem; font-weight:700; letter-spacing:.08em;
+  color:var(--gold-deep);
+}
+.inscription-contact{ font-size:.85rem; color:var(--ink-soft); overflow-wrap:anywhere; }
+.inscription-contact a{ color:inherit; text-decoration:underline; }
+.inscription-note{ font-size:.85rem; font-style:italic; color:var(--ink-soft); }
+.inscription-total{ font-size:.85rem; font-weight:600; }
+
+.inscription-actions{ display:flex; align-items:center; gap:.5rem; flex-shrink:0; }
+.inscription-statut{
+  font-family:inherit; font-size:.85rem; padding:.35em .6em;
+  border:1px solid var(--gold-pale); border-radius:4px; background:var(--white);
+}
+
+@media (max-width: 720px){
+  /* Les actions passent sous les coordonnées : côte à côte, le menu
+     déroulant écrasait l'adresse e-mail sur un téléphone. */
+  .inscription-ligne{ flex-direction:column; gap:.6rem; }
+  .inscription-actions{ width:100%; }
+  .inscription-statut{ flex:1; }
+  /* Les exemples ne tiennent pas sur la même ligne que « + Ajouter ». */
+  #stagesExemples{ width:100%; }
+  #stagesExemples .btn{ width:100%; }
+}

@@ -15,6 +15,7 @@ import { initSettings, loadSettings } from "./admin/settings.js";
 import { initBlocks, loadBlocks } from "./admin/blocks.js";
 import { initTeam, loadTeam, ROLE_LABELS } from "./admin/team.js";
 import { initNoel, loadNoel } from "./admin/noel.js";
+import { initStages, loadStages } from "./admin/stages.js";
 import { initOrders, loadOrders, appliquerRoleOrders, entrerModeComptoir, modeJourJVerrouille, ouvrirModeJourJ, demarrerAutoRefresh } from "./admin/orders.js";
 
 initTabs();
@@ -22,6 +23,7 @@ initSettings();
 initBlocks();
 initTeam();
 initNoel();
+initStages();
 initOrders();
 
 /* Le header affiche qui est connecté : utile dès qu'un même poste sert à
@@ -69,6 +71,7 @@ initAuth((role, prenom) => {
   if (role === 'superadmin' || role === 'admin') {
     loadTeam();
     loadNoel();
+    loadStages();
     loadOrders();
     demarrerAutoRefresh();
     // La remise à zéro de la numérotation n'est ouverte qu'au superadmin.

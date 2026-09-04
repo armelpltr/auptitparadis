@@ -13,8 +13,8 @@
    réellement les lectures et les écritures. Masquer les onglets évite
    surtout d'afficher des pages qui échoueraient. */
 const ONGLETS_PAR_ROLE = {
-  superadmin: ['settings', 'orders', 'noel', 'team'],
-  admin:      ['settings', 'orders', 'noel', 'team'],
+  superadmin: ['settings', 'orders', 'noel', 'stages', 'team'],
+  admin:      ['settings', 'orders', 'noel', 'stages', 'team'],
   editor:     ['settings']
 };
 
