@@ -1554,6 +1554,27 @@ p{ margin:0 0 1em; color:var(--ink-soft); }
 }
 .stage-atouts li span:last-child{ font-size:.92rem; color:var(--ink-soft); line-height:1.5; }
 
+/* Bandeau photo. Un rapport large plutôt qu'un carré : la photo d'un
+   atelier se lit en largeur — un plan de travail, des mains, une file de
+   têtes — et un format haut mangerait tout l'écran avant les séances,
+   qui sont ce qu'on vient chercher. */
+.stage-bandeau{
+  margin:2.2rem 0 0; border-radius:var(--radius); overflow:hidden;
+  border:1px solid var(--gold-pale);
+}
+.stage-bandeau img{
+  width:100%; aspect-ratio:21/9; object-fit:cover; display:block;
+}
+
+.stage-atout-icone{
+  width:34px; height:34px; color:var(--gold-deep); margin-bottom:.2rem;
+}
+.stage-atout-icone svg{
+  width:100%; height:100%;
+  fill:none; stroke:currentColor; stroke-width:1.5;
+  stroke-linecap:round; stroke-linejoin:round;
+}
+
 /* ---------- Liste des séances ---------- */
 .seances-liste{ display:grid; gap:1.2rem; }
 
@@ -1562,9 +1583,6 @@ p{ margin:0 0 1em; color:var(--ink-soft); }
   overflow:hidden; display:grid; grid-template-columns:190px 1fr;
   transition:border-color .2s var(--ease), box-shadow .2s var(--ease);
 }
-/* Sans photo, la carte n'a qu'une colonne : une colonne vide de 190px
-   laisserait un blanc que rien ne justifie. */
-.seance-carte:not(:has(.seance-photo)){ grid-template-columns:1fr; }
 .seance-carte:hover{ border-color:var(--gold); }
 .seance-carte.is-choisie{
   border-color:var(--gold); box-shadow:0 0 0 2px var(--gold-pale);
@@ -1572,6 +1590,18 @@ p{ margin:0 0 1em; color:var(--ink-soft); }
 .seance-carte.is-complet{ opacity:.62; }
 
 .seance-photo{ width:100%; height:100%; min-height:170px; object-fit:cover; }
+
+/* Repli quand la séance n'a pas encore sa photo : le dessin occupe la même
+   case, la liste garde son rythme. */
+.seance-photo--vide{
+  display:flex; align-items:center; justify-content:center;
+  background:var(--sand); color:var(--gold-pale);
+}
+.seance-photo--vide svg{
+  width:58%; max-width:110px; height:auto;
+  fill:none; stroke:currentColor; stroke-width:2.4;
+  stroke-linecap:round; stroke-linejoin:round;
+}
 .seance-corps{ padding:1.2rem 1.3rem; }
 
 .seance-date{
@@ -1640,14 +1670,24 @@ p{ margin:0 0 1em; color:var(--ink-soft); }
 }
 
 @media (max-width: 720px){
-  .stage-atouts{ grid-template-columns:1fr; gap:.9rem; margin-top:1.8rem; }
+  /* En colonne, l'icône passe à gauche du texte : trois lignes de 34px
+     empilées au-dessus de leur titre allongeraient la page pour rien. */
+  .stage-atouts{ grid-template-columns:1fr; gap:1.1rem; margin-top:1.8rem; }
+  .stage-atouts li{
+    display:grid; grid-template-columns:34px 1fr; column-gap:.9rem;
+  }
+  .stage-atout-icone{ grid-row:span 2; margin-bottom:0; }
   .stage-blague{ font-size:.94rem; }
 
   /* La photo repasse au-dessus du texte : à 190px de large sur un
      téléphone, elle ne montrait plus rien et volait la place au titre. */
-  .seance-carte,
-  .seance-carte:not(:has(.seance-photo)){ grid-template-columns:1fr; }
+  .seance-carte{ grid-template-columns:1fr; }
   .seance-photo{ aspect-ratio:16/9; height:auto; min-height:0; }
+  .seance-photo--vide svg{ max-width:84px; }
+  /* Le bandeau se rapproche du carré : en 21/9 sur un téléphone, il ne
+     reste qu'une bande de quelques dizaines de pixels. */
+  .stage-bandeau img{ aspect-ratio:16/9; }
+  .stage-bandeau{ margin-top:1.8rem; }
   .seance-corps{ padding:1.1rem 1.1rem 1.2rem; }
   .seance-choisir{ width:100%; }
 }

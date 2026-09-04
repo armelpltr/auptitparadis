@@ -88,6 +88,23 @@ function placesRestantes(s) {
 
 /* ---------- Liste des séances ---------- */
 
+/* Repli quand une séance n'a pas encore sa photo. Un dessin plutôt qu'un
+   rectangle vide, et surtout pas une carte sans image : deux cartes voisines
+   dont l'une seulement porte une photo se décalent, et la liste donne
+   l'impression d'être à moitié remplie. Le motif est ici en dur, non
+   téléchargé : une image de secours qui met du temps à venir ne vaut pas
+   mieux qu'un trou. */
+const SEANCE_SANS_PHOTO = `
+  <div class="seance-photo seance-photo--vide" aria-hidden="true">
+    <svg viewBox="0 0 64 64">
+      <path d="M14 40h36" />
+      <path d="M20 40c0-8 5.4-14 12-14s12 6 12 14" />
+      <path d="M24 26c0-3 1.6-5 3.6-5 1.3 0 2.2.7 2.7 1.7.6-1.9 2-3.2 3.9-3.2 2.3 0 4 1.9 4 4.4 0 .7-.1 1.4-.4 2" />
+      <path d="M11 46h42" />
+      <circle cx="32" cy="17" r="1.6" />
+    </svg>
+  </div>`;
+
 function renderSeances() {
   const liste = $('seancesListe');
   const hint = $('seancesHint');
@@ -107,7 +124,9 @@ function renderSeances() {
 
     return `
       <article class="seance-carte ${complet ? 'is-complet' : ''} ${choisie === s.id ? 'is-choisie' : ''}" data-id="${escapeHTML(s.id)}">
-        ${img ? `<img class="seance-photo" src="${escapeHTML(img)}" alt="${escapeHTML(s.nom)}" loading="lazy">` : ''}
+        ${img
+          ? `<img class="seance-photo" src="${escapeHTML(img)}" alt="${escapeHTML(s.nom)}" loading="lazy">`
+          : SEANCE_SANS_PHOTO}
         <div class="seance-corps">
           <p class="seance-date">${escapeHTML(fmtJour(s.date))}${creneau ? ` · ${escapeHTML(creneau)}` : ''}</p>
           <h3>${escapeHTML(s.nom || 'Atelier')}</h3>
@@ -383,6 +402,19 @@ async function rechargerSeances() {
     reglages = snap.exists() ? snap.data() : {};
   } catch (err) {
     console.error('Réglages des ateliers illisibles :', err.message);
+  }
+
+  /* La photo de la page vient du panel. Sans elle, le bandeau garde la
+     texture posée dans le HTML : on ne remplace que si l'adresse est
+     sûre, une valeur d'admin finissant dans un `src`. */
+  const bandeau = safeUrl(reglages.imageUrl);
+  if (bandeau) {
+    $('stageBandeau').src = bandeau;
+    /* La description par défaut parle de la devanture : elle deviendrait
+       fausse dès qu'une autre photo prend sa place. On ne sait pas ce que
+       montre celle-là, alors on dit le peu qu'on sait, plutôt que de
+       laisser une description à côté de la plaque. */
+    $('stageBandeau').alt = "Un atelier à la boulangerie Au P'tit Paradis.";
   }
 
   if (reglages.message) {

@@ -90,16 +90,34 @@
       </p>
       <p class="commande-message" id="stageMessage" hidden></p>
 
+      <!-- Photo de la page. Elle se change depuis le panel (onglet Ateliers) ;
+           tant qu'aucune n'est posée, on garde la texture du fond d'accueil,
+           qui appartient déjà au site — mieux qu'un bandeau gris. -->
+      <figure class="stage-bandeau">
+        <img id="stageBandeau" src="assets/hero-bg.jpg"
+             alt="La devanture de la boulangerie Au P'tit Paradis, à Luc-sur-Mer, en fin de journée."
+             loading="lazy">
+      </figure>
+
       <ul class="stage-atouts">
         <li>
+          <span class="stage-atout-icone" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M6.5 13v6.5h11V13"/><path d="M6.5 13a3.5 3.5 0 0 1-1-6.85 3.6 3.6 0 0 1 6.5-2.3 3.6 3.6 0 0 1 6.5 2.3A3.5 3.5 0 0 1 17.5 13Z"/></svg>
+          </span>
           <span class="stage-atout-titre">Tout est fourni</span>
           <span>Tablier, ingrédients, matériel. Venez les mains vides.</span>
         </li>
         <li>
+          <span class="stage-atout-icone" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><circle cx="9" cy="8.5" r="3"/><path d="M3.5 19c.6-2.9 2.8-4.6 5.5-4.6s4.9 1.7 5.5 4.6"/><circle cx="17.3" cy="10.3" r="2.2"/><path d="M16.4 15.1c2.1.1 3.7 1.5 4.2 3.9"/></svg>
+          </span>
           <span class="stage-atout-titre">Petits groupes</span>
           <span>Quelques places par séance, pour que chacun ait son plan de travail.</span>
         </li>
         <li>
+          <span class="stage-atout-icone" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M3.5 8.5h17V19a1 1 0 0 1-1 1h-15a1 1 0 0 1-1-1Z"/><rect x="2.5" y="5.5" width="19" height="3" rx=".6"/><path d="M12 8.5V20"/><path d="M12 5.5C11.2 4 10.2 3.2 9 3.2c-1.5 0-2 1.9-.4 2.3Z"/><path d="M12 5.5c.8-1.5 1.8-2.3 3-2.3 1.5 0 2 1.9.4 2.3Z"/></svg>
+          </span>
           <span class="stage-atout-titre">On repart avec</span>
           <span>Ce qui sort du four est à vous, emballé pour le trajet.</span>
         </li>

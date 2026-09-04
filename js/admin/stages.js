@@ -116,6 +116,17 @@ export async function loadStages() {
     const s = snap.exists() ? snap.data() : {};
     document.getElementById('stages-ouvert').checked = s.ouvert === true;
     setVal('stages-message', s.message || '');
+
+    /* L'uploader est recréé à chaque chargement plutôt que rempli : c'est
+       lui qui porte l'aperçu, et poser la valeur dans son champ caché
+       laisserait la vignette d'avant à l'écran. */
+    const mount = document.querySelector('.stage-page-img-mount');
+    if (mount) {
+      mount.innerHTML = '';
+      mount.appendChild(createImageUploader({
+        className: 'stg-page-img', value: s.imageUrl || '', folder: 'stages'
+      }));
+    }
   } catch (err) {
     showStatus('Réglages des ateliers illisibles : ' + err.message, true);
   }
@@ -570,7 +581,8 @@ export function initStages() {
     try {
       await setDoc(doc(db, 'settings', 'stages'), {
         ouvert,
-        message: val('stages-message')
+        message: val('stages-message'),
+        imageUrl: document.querySelector('.stg-page-img')?.value.trim() || ''
       }, { merge: true });
       await showSuccess('Réglages enregistrés ✓', 'La page des ateliers est à jour.');
     } catch (err) {
