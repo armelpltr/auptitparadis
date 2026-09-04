@@ -18,8 +18,17 @@
 
 import { json, httpError } from './http.js';
 import { membreOuRefus } from './membre.js';
+import { firestoreIncrement, firestoreSet } from './firebase.js';
 
 const TAILLE_MAX = 8 * 1024 * 1024;   // doit rester aligné sur js/admin/uploader.js
+
+/* Plafond d'envois par membre et par jour. La route exige déjà un membre
+   authentifié et passé par la double authentification, donc il ne s'agit
+   pas de se défendre d'Internet : il s'agit de borner ce qu'un compte
+   égaré — ou une boucle dans le panel — peut déverser dans R2, où rien
+   n'expire tout seul. Cinquante photos par jour ne gênent aucun usage
+   normal : une refonte complète des visuels du site en compte moins. */
+const ENVOIS_MAX_PAR_JOUR = 50;
 
 /* Liste blanche plutôt que liste noire : un format non prévu est refusé,
    pas toléré. Le SVG en est absent volontairement — c'est du XML, il porte
@@ -37,6 +46,32 @@ const FORMATS = {
 function dossierSur(v) {
   const s = String(v ?? 'images').trim().toLowerCase();
   return /^[a-z0-9-]{1,32}$/.test(s) ? s : 'images';
+}
+
+/* Un document par membre et par jour : le nom porte la date, donc rien à
+   remettre à zéro et l'incrément reste atomique. `expireLe` le fait
+   disparaître à la purge nocturne, deux jours plus tard — le délai évite
+   qu'un compteur du jour soit effacé par une purge qui tourne à 3 h du
+   matin dans un autre fuseau que celui du poste. */
+async function compterEnvoi(uid, env) {
+  const jour = new Date().toISOString().slice(0, 10);
+  const chemin = `imageQuota/${uid}_${jour}`;
+
+  let envois;
+  try {
+    envois = await firestoreIncrement(chemin, 'envois', env);
+  } catch {
+    // Un `transform` seul n'ouvre pas un document absent.
+    await firestoreSet(chemin, {
+      envois: 1,
+      expireLe: new Date(Date.now() + 2 * 86400000)
+    }, env);
+    envois = 1;
+  }
+
+  if (envois > ENVOIS_MAX_PAR_JOUR) {
+    throw httpError('Trop de photos envoyées aujourd’hui. Reprenez demain.', 429);
+  }
 }
 
 export async function handleImageUpload(request, env, cors) {
@@ -68,6 +103,11 @@ export async function handleImageUpload(request, env, cors) {
     throw httpError('Taille du fichier non déclarée.', 411);
   }
   if (annonce > TAILLE_MAX) throw httpError('Photo trop lourde — 8 Mo maximum.', 413);
+
+  /* Compté une fois la requête reconnue valable, et avant de lire le corps :
+     un format refusé n'entame pas le quota de la journée, un envoi accepté
+     l'entame même si l'écriture dans R2 échoue ensuite. */
+  await compterEnvoi(membre.uid, env);
 
   const octets = await request.arrayBuffer();
   if (octets.byteLength === 0) throw httpError('Fichier vide.', 400);

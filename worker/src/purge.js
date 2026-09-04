@@ -33,6 +33,70 @@ function limiteISO(maintenant) {
   return d.toISOString().slice(0, 10);
 }
 
+/* ---------- Compteurs à durée de vie ---------- */
+
+/* Les plafonds anti-force-brute portent désormais leur fenêtre dans le nom
+   du document (`<uid>_<fenêtre>`), ce qui rend l'incrément atomique mais
+   laisse un document derrière chaque fenêtre utilisée. Ils ne contiennent
+   qu'un entier et une date, mais rien ne les efface : la purge nocturne
+   passe derrière, sur le même principe que les commandes.
+
+   `expireLe` est un timestamp : la comparaison se fait sur la date du jour,
+   pas sur une chaîne. Un document sans ce champ ne remonte pas — Firestore
+   écarte les documents où le champ filtré est absent — et reste donc en
+   place, ce qui est le bon défaut : on n'efface que ce qui s'annonce
+   périmé. */
+const COMPTEURS_EPHEMERES = ['jourjEssais', 'imageQuota'];
+
+async function purgerCompteurs(env, maintenant) {
+  for (const collection of COMPTEURS_EPHEMERES) {
+    try {
+      const perimes = await firestoreQueryBefore(
+        collection, 'expireLe', maintenant, env, MAX_PAR_PASSAGE
+      );
+      let effaces = 0;
+      for (const doc of perimes) {
+        try {
+          await firestoreDelete(`${collection}/${doc.id}`, env);
+          effaces++;
+        } catch (err) {
+          console.error(`[purge] ${collection}/${doc.id} non supprimé :`, err.message);
+        }
+      }
+      if (perimes.length) console.log(`[purge] ${collection} — ${effaces}/${perimes.length} compteurs effacés`);
+    } catch (err) {
+      // Une collection encore vide n'existe pas : ce n'est pas une panne.
+      console.error(`[purge] ${collection} illisible :`, err.message);
+    }
+  }
+}
+
+/* Les défis de double authentification s'effacent d'eux-mêmes — à la
+   validation, à l'expiration constatée, au dépassement du nombre d'essais.
+   Restent ceux qu'on abandonne en fermant l'onglet : ils portent un code
+   haché et salé, donc rien d'utilisable, mais ils n'ont plus de raison
+   d'être une fois leur validité passée. `expiresAt` y est un nombre de
+   millisecondes, d'où la comparaison numérique. */
+async function purgerDefisA2F(env, maintenant) {
+  try {
+    const perimes = await firestoreQueryBefore(
+      'otpChallenges', 'expiresAt', maintenant.getTime(), env, MAX_PAR_PASSAGE
+    );
+    let effaces = 0;
+    for (const doc of perimes) {
+      try {
+        await firestoreDelete(`otpChallenges/${doc.id}`, env);
+        effaces++;
+      } catch (err) {
+        console.error(`[purge] otpChallenges/${doc.id} non supprimé :`, err.message);
+      }
+    }
+    if (perimes.length) console.log(`[purge] otpChallenges — ${effaces}/${perimes.length} défis effacés`);
+  } catch (err) {
+    console.error('[purge] otpChallenges illisible :', err.message);
+  }
+}
+
 export async function purgerCommandes(env, maintenant = new Date()) {
   const limite = limiteISO(maintenant);
 
@@ -64,5 +128,12 @@ export async function purgerCommandes(env, maintenant = new Date()) {
   }
 
   console.log(`[purge] retraits avant ${limite} — ${effacees}/${perimees.length} commandes effacées`);
+
+  /* Les compteurs éphémères partent dans le même passage : une seule
+     tâche planifiée, un seul réveil du Worker. Un échec de leur côté ne
+     doit pas remettre en cause la purge des commandes, déjà faite. */
+  await purgerCompteurs(env, maintenant);
+  await purgerDefisA2F(env, maintenant);
+
   return effacees;
 }

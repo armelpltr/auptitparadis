@@ -33,11 +33,21 @@ jobs:
         uses: actions/checkout@v4
       - name: Setup Pages
         uses: actions/configure-pages@v5
+      # Seuls les fichiers du site partent en ligne. Avec `path: '.'`, c'est
+      # tout le dépôt qui était servi : worker/src/*.js, wrangler.toml et
+      # firestore.rules devenaient consultables à l'adresse publique. Aucun
+      # secret ne s'y trouve — ils vivent dans `wrangler secret` — mais cela
+      # publiait la logique serveur et le nom des collections que les règles
+      # ferment justement en silence (panelSecrets, otpChallenges).
+      - name: Assembler le site
+        run: |
+          mkdir -p _site
+          cp *.html _site/
+          cp -r assets css js admin _site/
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          # Upload entire repository
-          path: '.'
+          path: '_site'
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v5

@@ -8,3 +8,6 @@ worker/.wrangler/
 serviceAccount*.json
 
 node_modules/
+
+# Dossier d'assemblage du site, reconstruit à chaque déploiement.
+_site/

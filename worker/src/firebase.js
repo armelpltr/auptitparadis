@@ -264,6 +264,15 @@ export async function firestoreSet(path, data, env) {
  * opération côté serveur. Lire puis réécrire ne conviendrait pas : deux
  * requêtes simultanées liraient le même compteur et le plafond d'essais
  * ne bornerait plus rien face à une force brute parallèle.
+ *
+ * Le chemin passe par `cheminSur()` comme partout ailleurs. C'était la
+ * seule fonction Firestore à l'interpoler brut : aucun appelant actuel ne
+ * lui passe autre chose qu'un uid vérifié ou une constante, mais un
+ * durcissement qui dépend de la vigilance du prochain appelant n'en est
+ * pas un.
+ *
+ * Échoue si le document n'existe pas encore : un `transform` seul ne le
+ * crée pas. Les appelants rattrapent ce cas en posant la valeur initiale.
  */
 export async function firestoreIncrement(path, champ, env) {
   const token = await getAccessToken(env);
@@ -273,7 +282,7 @@ export async function firestoreIncrement(path, champ, env) {
     body: JSON.stringify({
       writes: [{
         transform: {
-          document: `projects/${env.FIREBASE_PROJECT_ID}/databases/(default)/documents/${path}`,
+          document: `projects/${env.FIREBASE_PROJECT_ID}/databases/(default)/documents/${cheminSur(path)}`,
           fieldTransforms: [{ fieldPath: champ, increment: { integerValue: '1' } }]
         }
       }]

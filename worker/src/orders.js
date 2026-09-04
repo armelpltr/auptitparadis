@@ -353,12 +353,24 @@ export async function handleOrder(request, env, cors) {
   /* Le code de la commande existante ne repart plus dans la réponse : il
      suffisait de soumettre le numéro de quelqu'un pour apprendre qu'il avait
      commandé, et récupérer son code au passage. Le client légitime a le sien
-     par e-mail ; celui qui ne l'a plus passe en boutique, où on l'identifie. */
+     par e-mail ; celui qui ne l'a plus passe en boutique, où on l'identifie.
+
+     Le message lui-même ne confirme la réservation que si l'adresse e-mail
+     correspond aussi. Sinon, il restait un oracle : saisir le numéro d'un
+     tiers et lire « une réservation est déjà en cours » apprenait qu'il
+     avait commandé. Le blocage, lui, reste le même dans les deux cas —
+     c'est lui qui empêche le doublon. */
   const doublon = await reservationEnCours(client.telephone, env);
   if (doublon) {
+    const memeClient = String(doublon.client?.email ?? '').trim().toLowerCase()
+                    === client.email.toLowerCase();
     return json({
-      error: 'Une réservation est déjà en cours avec ce numéro de téléphone. '
-           + 'Retrouvez son code dans votre e-mail de confirmation, ou passez en boutique.',
+      error: memeClient
+        ? 'Une réservation est déjà en cours avec ce numéro de téléphone. '
+          + 'Retrouvez son code dans votre e-mail de confirmation, ou passez en boutique.'
+        : "Cette réservation n'a pas pu être enregistrée. Si vous en avez déjà "
+          + "une en cours, son code est dans votre e-mail de confirmation — sinon, "
+          + "appelez-nous, on la prendra par téléphone.",
       duplicate: true
     }, 409, cors);
   }

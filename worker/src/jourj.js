@@ -64,27 +64,40 @@ async function lireConfig(env) {
 
 /* Quatre chiffres se parcourent en dix mille essais. Sans plafond, la
    vérification côté serveur ne vaudrait pas mieux que celle qu'elle
-   remplace. Le compteur est incrémenté avant la comparaison, et
-   atomiquement : deux requêtes simultanées ne doivent pas lire le même
-   compteur et passer toutes les deux. */
+   remplace.
+
+   La fenêtre est portée par le NOM du document (`<uid>_<numéro de
+   fenêtre>`), et non par un champ qu'on remet à zéro. La version
+   précédente relisait le compteur, constatait la fenêtre écoulée et
+   réécrivait `attempts: 0` avant d'incrémenter : deux requêtes simultanées
+   passaient toutes les deux par cette remise à zéro, et le plafond qu'on
+   venait de poser retombait à zéro à chaque paire. Un document par
+   fenêtre n'a rien à remettre à zéro — il ne reste que l'incrément, qui
+   lui est atomique.
+
+   Le compteur reste incrémenté AVANT la comparaison : un essai qui
+   n'aboutit pas doit coûter autant qu'un essai juste. */
 async function compterEssai(uid, env) {
-  const chemin = `jourjEssais/${uid}`;
   const maintenant = Date.now();
+  const fenetre = Math.floor(maintenant / FENETRE_MS);
+  const chemin = `jourjEssais/${uid}_${fenetre}`;
 
-  let precedent = null;
+  let essais;
   try {
-    const doc = await firestoreGet(chemin, env);
-    precedent = fromFirestoreFields(doc.fields);
-  } catch { /* aucune tentative en cours */ }
-
-  const fenetreOuverte = precedent && (maintenant - (precedent.windowStart || 0)) < FENETRE_MS;
-  if (!fenetreOuverte) {
-    await firestoreSet(chemin, { windowStart: maintenant, attempts: 0 }, env);
+    essais = await firestoreIncrement(chemin, 'attempts', env);
+  } catch {
+    /* Un `transform` seul n'ouvre pas un document absent : la première
+       tentative de la fenêtre le crée. `expireLe` sert à la purge
+       nocturne, qui balaie ces compteurs une fois leur fenêtre passée. */
+    await firestoreSet(chemin, {
+      attempts: 1,
+      expireLe: new Date(maintenant + FENETRE_MS)
+    }, env);
+    essais = 1;
   }
 
-  const essais = await firestoreIncrement(chemin, 'attempts', env);
   if (essais > MAX_ESSAIS) {
-    throw httpError('Trop de tentatives. Réessayez dans un quart d\'heure.', 429);
+    throw httpError("Trop de tentatives. Réessayez dans un quart d'heure.", 429);
   }
 }
 
