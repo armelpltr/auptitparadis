@@ -382,7 +382,13 @@ function afficherSucces(body) {
   const email = $('succesEmail');
   email.hidden = !body.emailEnvoye;
   if (body.emailEnvoye) {
-    email.textContent = `Une confirmation vient de vous être envoyée à ${body.email}.`;
+    email.textContent = body.smsEnvoye
+      ? `Une confirmation vient de vous être envoyée à ${body.email}, et votre code par SMS.`
+      : `Une confirmation vient de vous être envoyée à ${body.email}.`;
+  } else if (body.smsEnvoye) {
+    // L'e-mail n'est pas parti, le SMS si : le client a quand même son code.
+    email.hidden = false;
+    email.textContent = 'Votre code vient de vous être envoyé par SMS.';
   }
 
   /* L'en-tête et son trait de séparation disparaissent avec le formulaire :

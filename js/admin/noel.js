@@ -91,6 +91,7 @@ export async function loadNoel() {
     const snap = await getDoc(doc(db, 'settings', 'noel'));
     const s = snap.exists() ? snap.data() : {};
     document.getElementById('noel-ouvert').checked = s.ouvert === true;
+    document.getElementById('noel-sms').checked = s.sms === true;
     document.getElementById('noel-theme').checked  = s.theme  === true;
     setVal('noel-themeFin', s.themeFin || '');
     setVal('noel-dateDebut', s.dateDebut || '');
@@ -313,6 +314,7 @@ export function initNoel() {
     }
 
     const ouvert = document.getElementById('noel-ouvert').checked;
+    const sms = document.getElementById('noel-sms').checked;
     if (ouvert && !(debut && fin)) {
       showStatus('Renseigne les deux dates avant d\'ouvrir les commandes.', true);
       return;
@@ -352,12 +354,17 @@ export function initNoel() {
 
     try {
       await setDoc(doc(db, 'settings', 'noel'), {
-        ouvert, dateDebut: debut, dateFin: fin, message: val('noel-message'),
+        ouvert, sms, dateDebut: debut, dateFin: fin, message: val('noel-message'),
         delaiAnnulationJours: delaiBrut,
         heureDebut, heureFin,
         pasCreneauMinutes: Number(val('noel-pasCreneau')) || 30
       }, { merge: true });
-      await showSuccess('Période enregistrée ✓', 'La page de commande est à jour.');
+      await showSuccess(
+        'Période enregistrée ✓',
+        sms
+          ? 'La page de commande est à jour. Chaque réservation déclenchera un SMS au client.'
+          : "La page de commande est à jour. Aucun SMS ne part : seul l'e-mail de confirmation est envoyé."
+      );
     } catch (err) {
       showStatus("Erreur lors de l'enregistrement : " + err.message, true);
     }

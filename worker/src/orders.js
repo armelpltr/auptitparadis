@@ -20,6 +20,7 @@ import {
   firestoreIncrement, firestoreSet
 } from './firebase.js';
 import { envoyerConfirmation } from './mailer.js';
+import { envoyerConfirmationSms } from './sms.js';
 
 const MAX_LIGNES        = 10;   // produits distincts dans une même commande
 const MAX_QUANTITE      = 20;   // exemplaires d'un même produit
@@ -182,7 +183,11 @@ async function lirePeriode(env) {
   return {
     dateDebut: s.dateDebut,
     dateFin: s.dateFin,
-    delaiAnnulationJours: normaliserDelai(s.delaiAnnulationJours)
+    delaiAnnulationJours: normaliserDelai(s.delaiAnnulationJours),
+    /* Le SMS de confirmation coûte des crédits, l'e-mail non : il ne part
+       que si la boutique l'a demandé, et le réglage est relu à chaque
+       commande — couper l'envoi ne doit pas demander un déploiement. */
+    smsActif: s.sms === true
   };
 }
 
@@ -408,5 +413,13 @@ export async function handleOrder(request, env, cors) {
   // enregistrée dont l'e-mail échoue reste une commande valable.
   const emailEnvoye = await envoyerConfirmation(commande, env);
 
-  return json({ ok: true, code, total, dateRetrait, heureRetrait, emailEnvoye, email: client.email }, 200, cors);
+  /* Même règle que pour l'e-mail : la commande est déjà écrite, un SMS qui
+     ne part pas ne la remet pas en cause. On ne dit à la page que ce qui est
+     réellement parti, pour qu'elle ne promette rien de plus. */
+  const smsEnvoye = periode.smsActif ? await envoyerConfirmationSms(commande, env) : false;
+
+  return json({
+    ok: true, code, total, dateRetrait, heureRetrait,
+    emailEnvoye, email: client.email, smsEnvoye
+  }, 200, cors);
 }

@@ -51,6 +51,10 @@ SITE_URL = "https://armelpltr.github.io/auptitparadis"
 # ici puis redéployer : elle est visible par tous les clients.
 EMAIL_EXPEDITEUR = "pltrarmel@gmail.com"
 EMAIL_EXPEDITEUR_NOM = "Au P'tit Paradis"
+# Expéditeur affiché sur le SMS : 11 caractères alphanumériques maximum, et
+# il doit être déclaré chez Brevo pour la France — sans déclaration,
+# l'opérateur le remplace ou refuse le message. Vide, aucun SMS ne part.
+SMS_EXPEDITEUR = "PtitParadis"
 #
 # Qui reçoit une alerte à chaque commande n'est plus réglé ici : chaque
 # membre du panel coche ou décoche sa propre case dans l'onglet Équipe.
