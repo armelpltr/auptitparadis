@@ -462,8 +462,7 @@ function participantsHtml(liste) {
 function participantsTexte(liste) {
   return (liste || [])
     .map(p => `  - ${[p.prenom, p.nom].filter(Boolean).join(' ')}${p.age ? ` (${p.age} ans)` : ''}`)
-    .join('
-');
+    .join('\n');
 }
 
 function mailClientStage(inscription) {
