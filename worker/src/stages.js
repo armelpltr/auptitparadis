@@ -303,36 +303,22 @@ export async function handleStageReserve(request, env, cors) {
 
   await reserverPlaces(seance, participants.length, env);
 
-  const code = await genererCode(env);
-  const maintenant = new Date();
-
-  /* Comme pour les commandes : un jeton qui n'authentifie rien auprès de
-     Firestore, mais qui permettra de retrouver l'inscription depuis un
-     lien si on ouvre un jour la gestion en ligne. 122 bits, hors de portée
-     d'une énumération. */
-  const manageToken = crypto.randomUUID();
-
-  const inscription = {
-    code,
-    statut: 'en_attente',
-    stageId: seance.id,
-    // Le nom, la date et le prix sont recopiés : la séance sera modifiée
-    // ou supprimée, l'inscription doit rester lisible telle qu'elle a été
-    // prise — c'est ce que le client a sous les yeux dans son e-mail.
-    stageNom: seance.nom || 'Atelier',
-    date: seance.date,
-    heureDebut: seance.heureDebut || '',
-    heureFin: seance.heureFin || '',
-    prixUnitaire,
-    total,
-    participants,
-    nbParticipants: participants.length,
-    client,
-    commentaire,
-    manageToken
-  };
-
-  await firestoreCreate('inscriptions', { ...inscription, createdAt: maintenant }, env);
+  /* Les places sont prises avant que l'inscription n'existe : c'est le seul
+     ordre qui empêche deux personnes de réserver la même dernière place.
+     En contrepartie, tout ce qui suit doit rendre les places s'il échoue —
+     sans quoi la séance reste marquée pleine au profit d'une inscription
+     qui n'a jamais été écrite, et il faut le recompte manuel du panel pour
+     s'en apercevoir. */
+  let inscription;
+  let code;
+  try {
+    code = await genererCode(env);
+    inscription = construireInscription({ code, seance, participants, client, commentaire, prixUnitaire, total });
+    await firestoreCreate('inscriptions', { ...inscription, createdAt: new Date() }, env);
+  } catch (err) {
+    await firestoreIncrement(`stages/${seance.id}`, 'placesPrises', env, -participants.length).catch(() => {});
+    throw err;
+  }
 
   // Après l'écriture, et sans pouvoir la remettre en cause : une
   // inscription enregistrée dont l'e-mail échoue reste une inscription.
@@ -350,4 +336,31 @@ export async function handleStageReserve(request, env, cors) {
     emailEnvoye,
     email: client.email
   }, 200, cors);
+}
+
+/* Le document tel qu'il sera relu par le panel et par l'e-mail. */
+function construireInscription({ code, seance, participants, client, commentaire, prixUnitaire, total }) {
+  return {
+    code,
+    statut: 'en_attente',
+    stageId: seance.id,
+    // Le nom, la date et le prix sont recopiés : la séance sera modifiée
+    // ou supprimée, l'inscription doit rester lisible telle qu'elle a été
+    // prise — c'est ce que le client a sous les yeux dans son e-mail.
+    stageNom: seance.nom || 'Atelier',
+    date: seance.date,
+    heureDebut: seance.heureDebut || '',
+    heureFin: seance.heureFin || '',
+    prixUnitaire,
+    total,
+    participants,
+    nbParticipants: participants.length,
+    client,
+    commentaire,
+    /* Comme pour les commandes : un jeton qui n'authentifie rien auprès de
+       Firestore, mais qui permettra de retrouver l'inscription depuis un
+       lien si on ouvre un jour la gestion en ligne. 122 bits, hors de
+       portée d'une énumération. */
+    manageToken: crypto.randomUUID()
+  };
 }
