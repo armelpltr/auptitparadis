@@ -30,11 +30,18 @@ const jourLong = new Intl.DateTimeFormat('fr-FR', {
 
 let seances = [];
 let choisie = null;
-/* Photo de repli des cartes : celle de la page, posée dans le panel. Une
-   séance sans photo affiche donc le fournil plutôt qu'un dessin — une
-   photo qui n'est pas exactement celle de l'atelier reste plus parlante
-   qu'un pictogramme. Le dessin ne sert plus que si la page elle-même n'a
-   pas de photo. */
+/* Photo d'une carte, par ordre de préférence : celle de la séance, celle
+   de la page (posée dans le panel), puis l'une de ces trois, livrées avec
+   le site. Une photo d'illustration reste plus parlante qu'un pictogramme,
+   et personne n'a à passer par le panel pour que la page tienne debout.
+   Trois plutôt qu'une : la même image répétée sur toutes les cartes se
+   remarque plus qu'elle n'habille. Le rang dans la liste décide, donc
+   l'attribution ne bouge pas d'un chargement à l'autre. */
+const PHOTOS_LIVREES = [
+  'assets/ateliers/sables.jpg',
+  'assets/ateliers/baguette.jpg',
+  'assets/ateliers/eclairs.jpg'
+];
 let photoParDefaut = '';
 /* Un participant = une ligne du formulaire. On garde la saisie en mémoire
    plutôt que de relire le DOM à chaque frappe : la liste se redessine quand
@@ -122,10 +129,11 @@ function renderSeances() {
   }
   hint.hidden = true;
 
-  liste.innerHTML = seances.map(s => {
+  liste.innerHTML = seances.map((s, rang) => {
     const restant = placesRestantes(s);
     const complet = restant <= 0;
-    const img = safeUrl(s.imageUrl) || photoParDefaut;
+    const img = safeUrl(s.imageUrl) || photoParDefaut
+             || PHOTOS_LIVREES[rang % PHOTOS_LIVREES.length];
     const creneau = fmtCreneau(s);
 
     return `
