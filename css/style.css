@@ -1710,3 +1710,91 @@ p{ margin:0 0 1em; color:var(--ink-soft); }
   .seance-meta{ font-size:.84rem; }
   .stage-choix-carte{ padding:.8rem .9rem; }
 }
+
+/* =========================================================
+   ATELIERS — aperçu sur l'accueil (index.html)
+   La présentation et les prochaines dates, rien de plus :
+   l'inscription reste sur stages.html. Les trois atouts
+   réutilisent .stage-atouts, déjà défini plus haut — même
+   bloc, même comportement sur petits écrans.
+   ========================================================= */
+
+.accueil-ateliers{ background:var(--cream); }
+.accueil-ateliers + .divider{ background:linear-gradient(to bottom, var(--cream), var(--sand)); }
+.accueil-ateliers h2{ font-size:clamp(2rem, 4vw, 2.6rem); }
+.accueil-ateliers .ateliers-intro{ max-width:660px; }
+.accueil-ateliers .stage-atouts{ max-width:1000px; }
+
+/* Message du panel (« séances complètes », « report »…). Encadré discret,
+   au même titre que la blague de la page des ateliers. */
+.ateliers-message{
+  border-left:3px solid var(--gold-pale);
+  padding:.1rem 0 .1rem 1rem;
+  margin:1.2rem 0 0;
+  font-size:.98rem; color:var(--ink-soft);
+  max-width:660px;
+}
+
+/* ---------- Les prochaines dates ---------- */
+.ateliers-dates{ margin-top:2.4rem; }
+.ateliers-dates-label{
+  font-size:.78rem; font-weight:600; letter-spacing:.08em; text-transform:uppercase;
+  color:var(--gold-deep); margin:0 0 .8rem;
+}
+.ateliers-seances{ list-style:none; margin:0; padding:0; display:grid; gap:.7rem; max-width:760px; }
+
+/* Une ligne par séance, pas une carte : trois dates empilées en cartes
+   feraient concurrence aux spécialités juste au-dessus, alors qu'ici on
+   veut seulement donner envie de cliquer. */
+.ateliers-seance{
+  display:grid; grid-template-columns:auto 1fr auto; align-items:center; gap:1rem;
+  background:var(--white); border:1px solid var(--gold-pale); border-radius:var(--radius);
+  padding:.75rem 1rem; text-decoration:none; color:inherit;
+  transition:border-color .2s var(--ease), transform .2s var(--ease);
+}
+.ateliers-seance:hover{ border-color:var(--gold); transform:translateY(-2px); }
+.ateliers-seance.is-complet{ opacity:.62; }
+
+.as-date{
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  width:52px; padding:.35rem 0;
+  background:var(--sand); border-radius:10px; line-height:1;
+}
+.as-jour{ font-family:var(--font-display); font-weight:600; font-size:1.35rem; color:var(--ink); }
+.as-mois{ font-size:.72rem; text-transform:uppercase; letter-spacing:.06em; color:var(--ink-soft); margin-top:.2em; }
+
+.as-corps{ display:flex; flex-direction:column; gap:.15rem; min-width:0; }
+.as-nom{ font-family:var(--font-display); font-weight:600; font-size:1.08rem; color:var(--ink); }
+.as-meta{ font-size:.88rem; color:var(--ink-soft); }
+
+.as-places{
+  font-size:.82rem; font-weight:600; white-space:nowrap;
+  background:var(--sea-pale); color:var(--sea);
+  padding:.25em .7em; border-radius:100px;
+}
+/* Trois places ou moins : l'information devient une raison de se décider. */
+.as-places.is-tendu{ background:#f6e2dc; color:#a13a25; }
+.as-complet{ background:var(--sand); color:var(--ink-soft); }
+
+.ateliers-vide{ font-size:.95rem; color:var(--ink-soft); margin:0; max-width:560px; }
+
+.ateliers-cta{ margin:2rem 0 0; }
+
+/* ---------- Aperçu des ateliers : écrans étroits ---------- */
+@media (max-width: 720px){
+  .ateliers-dates{ margin-top:2rem; }
+  /* Le compteur passe sous le nom : à trois colonnes sur un téléphone, le
+     nom de l'atelier se coupait au milieu. */
+  .ateliers-seance{ grid-template-columns:auto 1fr; row-gap:.5rem; }
+  .as-places{ grid-column:2; justify-self:start; }
+  .ateliers-cta .btn{ width:100%; }
+}
+
+@media (max-width: 480px){
+  .ateliers-seance{ padding:.7rem .8rem; gap:.8rem; }
+  .as-date{ width:46px; }
+  .as-jour{ font-size:1.2rem; }
+  .as-nom{ font-size:1rem; }
+  .as-meta{ font-size:.84rem; }
+  .ateliers-message{ font-size:.94rem; }
+}

@@ -59,7 +59,7 @@
           <li><a href="#specialites">Nos spécialités</a></li>
           <li><a href="#histoire">Notre histoire</a></li>
           <li><a href="#horaires">Horaires &amp; accès</a></li>
-          <li><a href="stages.html">Ateliers</a></li>
+          <li><a href="#ateliers">Ateliers</a></li>
           <li><a href="commander.html" class="nav-cta">Commander</a></li>
         </ul>
       </nav>
@@ -74,7 +74,7 @@
       <li><a href="#specialites">Nos spécialités</a></li>
       <li><a href="#histoire">Notre histoire</a></li>
       <li><a href="#horaires">Horaires &amp; accès</a></li>
-      <li><a href="stages.html">Ateliers</a></li>
+      <li><a href="#ateliers">Ateliers</a></li>
       <li><a href="commander.html" class="nav-cta">Commander</a></li>
     </ul>
   </nav>
@@ -185,6 +185,68 @@
   </section>
 
   <div class="divider divider-flip" aria-hidden="true">
+    <svg viewBox="0 0 1200 80" preserveAspectRatio="none"><path d="M0,40 C100,40 200,10 400,45 C600,80 700,15 900,40 C1050,62 1150,38 1200,40" /></svg>
+  </div>
+
+  <!-- ===================== ATELIERS (aperçu) ===================== -->
+  <!-- Vitrine des ateliers sur l'accueil : la présentation et les
+       prochaines dates, lues dans Firestore comme sur stages.html.
+       L'inscription, elle, reste sur sa page — c'est là que vivent le
+       formulaire et la vérification anti-robot. -->
+  <section class="accueil-ateliers" id="ateliers">
+    <div class="section-inner">
+      <p class="eyebrow">Pendant les vacances</p>
+      <h2>Les mains dans la farine</h2>
+      <p class="ateliers-intro">
+        Une matinée dans le fournil, tablier sur le dos, à façonner pour de
+        vrai. On pétrit, on tourne, on décore — et chacun repart avec ce qu'il
+        a fait, dans sa boîte, à montrer à toute la famille.
+      </p>
+      <p class="ateliers-message" id="ateliersMessage" hidden></p>
+
+      <ul class="stage-atouts">
+        <li>
+          <span class="stage-atout-icone" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M6.5 13v6.5h11V13"/><path d="M6.5 13a3.5 3.5 0 0 1-1-6.85 3.6 3.6 0 0 1 6.5-2.3 3.6 3.6 0 0 1 6.5 2.3A3.5 3.5 0 0 1 17.5 13Z"/></svg>
+          </span>
+          <span class="stage-atout-titre">Tout est fourni</span>
+          <span>Tablier, ingrédients, matériel. Venez les mains vides.</span>
+        </li>
+        <li>
+          <span class="stage-atout-icone" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><circle cx="9" cy="8.5" r="3"/><path d="M3.5 19c.6-2.9 2.8-4.6 5.5-4.6s4.9 1.7 5.5 4.6"/><circle cx="17.3" cy="10.3" r="2.2"/><path d="M16.4 15.1c2.1.1 3.7 1.5 4.2 3.9"/></svg>
+          </span>
+          <span class="stage-atout-titre">Petits groupes</span>
+          <span>Quelques places par séance, pour que chacun ait son plan de travail.</span>
+        </li>
+        <li>
+          <span class="stage-atout-icone" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M3.5 8.5h17V19a1 1 0 0 1-1 1h-15a1 1 0 0 1-1-1Z"/><rect x="2.5" y="5.5" width="19" height="3" rx=".6"/><path d="M12 8.5V20"/><path d="M12 5.5C11.2 4 10.2 3.2 9 3.2c-1.5 0-2 1.9-.4 2.3Z"/><path d="M12 5.5c.8-1.5 1.8-2.3 3-2.3 1.5 0 2 1.9.4 2.3Z"/></svg>
+          </span>
+          <span class="stage-atout-titre">On repart avec</span>
+          <span>Ce qui sort du four est à vous, emballé pour le trajet.</span>
+        </li>
+      </ul>
+
+      <!-- Rempli par js/ateliers-accueil.js. Reste caché si Firestore ne
+           répond pas : mieux vaut une vitrine sans dates qu'un bloc
+           « chargement… » qui ne se termine jamais. -->
+      <div class="ateliers-dates" id="ateliersDates" hidden>
+        <p class="ateliers-dates-label">Les prochaines séances</p>
+        <ul class="ateliers-seances" id="ateliersSeances"></ul>
+        <p class="ateliers-vide" id="ateliersVide" hidden>
+          Pas de séance programmée pour l'instant. Les prochaines dates
+          arrivent avec le calendrier des vacances.
+        </p>
+      </div>
+
+      <p class="ateliers-cta">
+        <a href="stages.html" class="btn btn-primary" id="ateliersCta">Voir les ateliers</a>
+      </p>
+    </div>
+  </section>
+
+  <div class="divider" aria-hidden="true">
     <svg viewBox="0 0 1200 80" preserveAspectRatio="none"><path d="M0,40 C100,40 200,10 400,45 C600,80 700,15 900,40 C1050,62 1150,38 1200,40" /></svg>
   </div>
 
@@ -391,6 +453,7 @@
 </div>
 
 <script type="module" src="js/site-data.js"></script>
+<script type="module" src="js/ateliers-accueil.js"></script>
 <script src="js/script.js"></script>
 </body>
 </html>
