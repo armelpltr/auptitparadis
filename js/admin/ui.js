@@ -60,10 +60,16 @@ export const showSuccess = showMessage;
 /* ---------- Message de statut ---------- */
 let statusTimer = null;
 
-export function showStatus(message, isError = false) {
+/* `ton` vaut 'error', 'warn', ou rien pour une réussite. Le booléen d'avant
+   reste accepté : la plupart des appels ne disent que « erreur ».
+   L'avertissement sert aux enregistrements qui réussissent sans rien publier
+   — une fiche masquée est bien écrite, mais personne ne la voit. */
+export function showStatus(message, ton = false) {
+  const classe = (ton === true || ton === 'error') ? ' is-error'
+               : ton === 'warn' ? ' is-warn' : '';
   const statusEl = document.getElementById('adminStatus');
   statusEl.textContent = message;
-  statusEl.className = 'admin-status' + (isError ? ' is-error' : '');
+  statusEl.className = 'admin-status' + classe;
   statusEl.hidden = false;
   clearTimeout(statusTimer);
   statusTimer = setTimeout(() => { statusEl.hidden = true; }, 4000);

@@ -25,6 +25,11 @@ import { parsePrix, fmtPrix } from "./noel.js";
 
 let seancesCache = [];
 let inscriptionsCache = [];
+/* Dernier état lu de `settings/stages`. Une séance peut être en ligne sans
+   rien afficher : tant que les inscriptions sont fermées, la page publique
+   ne liste aucune séance. Le panel doit pouvoir le dire au moment où on
+   enregistre, pas seulement dans la carte du haut. */
+let reglagesOuvert = false;
 
 const STATUTS = {
   en_attente: { label: 'En attente', suivant: 'confirmee' },
@@ -84,6 +89,27 @@ function placesPrises(seance) {
   return Number(seance.placesPrises) || 0;
 }
 
+/* Ce que le visiteur verra, dit en une phrase. Trois choses peuvent retenir
+   une séance parfaitement enregistrée : elle est masquée, sa date est
+   passée, ou les inscriptions sont fermées — auquel cas la page publique
+   n'affiche aucune séance, même en ligne. Sans cette phrase, « Séance
+   enregistrée » laisse croire qu'elle est sur le site. */
+function etatPublication(seance) {
+  if (seance.visible === false) {
+    return { texte: "elle reste masquée et n'apparaît pas sur le site.", ton: 'warn' };
+  }
+  if ((seance.date || '') < dateDuJour()) {
+    return { texte: 'sa date est passée : la page publique ne montre que les séances à venir.', ton: 'warn' };
+  }
+  if (!reglagesOuvert) {
+    return {
+      texte: "les inscriptions sont fermées : la page n'affiche aucune séance tant qu'elles le sont.",
+      ton: 'warn'
+    };
+  }
+  return { texte: 'elle est en ligne sur le site.', ton: false };
+}
+
 function placesRestantes(seance) {
   return Math.max(0, (Number(seance.places) || 0) - placesPrises(seance));
 }
@@ -114,7 +140,8 @@ export async function loadStages() {
   try {
     const snap = await getDoc(doc(db, 'settings', 'stages'));
     const s = snap.exists() ? snap.data() : {};
-    document.getElementById('stages-ouvert').checked = s.ouvert === true;
+    reglagesOuvert = s.ouvert === true;
+    document.getElementById('stages-ouvert').checked = reglagesOuvert;
     setVal('stages-message', s.message || '');
 
     /* L'uploader est recréé à chaque chargement plutôt que rempli : c'est
@@ -300,7 +327,8 @@ async function saveSeance(id, el) {
        marquer. Le message de statut, lui, est en bas de l'écran — mais deux
        signaux valent mieux qu'un quand la fiche fait un écran de haut. */
     document.querySelector(`.noel-item[data-id="${CSS.escape(id)}"]`)?.classList.add('is-saved');
-    showStatus('Séance enregistrée.');
+    const etat = etatPublication(seancesCache.find(s => s.id === id) || {});
+    showStatus(`Séance enregistrée — ${etat.texte}`, etat.ton);
   } catch (err) {
     showStatus("Erreur lors de l'enregistrement : " + err.message, true);
   }
@@ -312,6 +340,8 @@ async function toggleVisible(id) {
   try {
     await updateDoc(doc(db, 'stages', id), { visible: s.visible === false });
     await loadStages();
+    const etat = etatPublication(seancesCache.find(x => x.id === id) || {});
+    showStatus(`Séance ${s.visible === false ? 'mise en ligne' : 'masquée'} — ${etat.texte}`, etat.ton);
   } catch (err) {
     showStatus('Erreur : ' + err.message, true);
   }
@@ -588,7 +618,13 @@ export function initStages() {
         message: val('stages-message'),
         imageUrl: document.querySelector('.stg-page-img')?.value.trim() || ''
       }, { merge: true });
-      await showSuccess('Réglages enregistrés ✓', 'La page des ateliers est à jour.');
+      reglagesOuvert = ouvert;
+      await showSuccess(
+        'Réglages enregistrés ✓',
+        ouvert
+          ? `Les inscriptions sont ouvertes : ${enLigne.length} séance${enLigne.length > 1 ? 's' : ''} à venir ${enLigne.length > 1 ? 'sont affichées' : 'est affichée'} sur la page.`
+          : "Les inscriptions sont fermées : la page présente les ateliers, mais n'affiche aucune séance."
+      );
     } catch (err) {
       showStatus("Erreur lors de l'enregistrement : " + err.message, true);
     }

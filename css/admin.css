@@ -114,6 +114,17 @@ button.back-to-site{ background:none; border:none; cursor:pointer; font-family:i
   box-shadow:0 8px 26px -10px rgba(33,28,23,.45);
 }
 .admin-status.is-error{ background:#fbe4e0; color:#a13a25; border-color:rgba(161,58,37,.3); }
+/* Enregistré, mais rien n'est publié : ni vert (ce serait faux), ni rouge
+   (rien n'a échoué). */
+.admin-status.is-warn{ background:#fdf1dd; color:#8c5a26; border-color:rgba(140,90,38,.3); }
+
+@media (max-width: 600px){
+  /* Centré, un bandeau de 92vw laisse deux marges inégales dès que le texte
+     est long : on le colle aux deux bords. */
+  .admin-status{
+    left:.8rem; right:.8rem; bottom:.8rem; transform:none; max-width:none;
+  }
+}
 
 /* ---------- Cards ---------- */
 .admin-card{
