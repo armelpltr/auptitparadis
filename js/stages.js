@@ -30,6 +30,12 @@ const jourLong = new Intl.DateTimeFormat('fr-FR', {
 
 let seances = [];
 let choisie = null;
+/* Photo de repli des cartes : celle de la page, posée dans le panel. Une
+   séance sans photo affiche donc le fournil plutôt qu'un dessin — une
+   photo qui n'est pas exactement celle de l'atelier reste plus parlante
+   qu'un pictogramme. Le dessin ne sert plus que si la page elle-même n'a
+   pas de photo. */
+let photoParDefaut = '';
 /* Un participant = une ligne du formulaire. On garde la saisie en mémoire
    plutôt que de relire le DOM à chaque frappe : la liste se redessine quand
    on ajoute ou retire une ligne, et une valeur tapée ne doit pas disparaître
@@ -119,13 +125,15 @@ function renderSeances() {
   liste.innerHTML = seances.map(s => {
     const restant = placesRestantes(s);
     const complet = restant <= 0;
-    const img = safeUrl(s.imageUrl);
+    const img = safeUrl(s.imageUrl) || photoParDefaut;
     const creneau = fmtCreneau(s);
 
     return `
       <article class="seance-carte ${complet ? 'is-complet' : ''} ${choisie === s.id ? 'is-choisie' : ''}" data-id="${escapeHTML(s.id)}">
         ${img
-          ? `<img class="seance-photo" src="${escapeHTML(img)}" alt="${escapeHTML(s.nom)}" loading="lazy">`
+          ? `<img class="seance-photo" src="${escapeHTML(img)}"
+                  alt="${escapeHTML(safeUrl(s.imageUrl) ? s.nom : "Un atelier à la boulangerie Au P'tit Paradis.")}"
+                  loading="lazy">`
           : SEANCE_SANS_PHOTO}
         <div class="seance-corps">
           <p class="seance-date">${escapeHTML(fmtJour(s.date))}${creneau ? ` · ${escapeHTML(creneau)}` : ''}</p>
@@ -408,6 +416,7 @@ async function rechargerSeances() {
      texture posée dans le HTML : on ne remplace que si l'adresse est
      sûre, une valeur d'admin finissant dans un `src`. */
   const bandeau = safeUrl(reglages.imageUrl);
+  photoParDefaut = bandeau;
   if (bandeau) {
     $('stageBandeau').src = bandeau;
     /* La description par défaut parle de la devanture : elle deviendrait
