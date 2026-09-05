@@ -100,10 +100,20 @@ button.back-to-site{ background:none; border:none; cursor:pointer; font-family:i
 .admin-panel{ display:none; }
 .admin-panel.is-active{ display:block; }
 
+/* Message de statut. Fixé en bas de l'écran, et non posé en haut du panel :
+   les fiches (séances, produits, commandes) s'enregistrent une par une, et
+   le bouton est souvent à plusieurs écrans du haut de page. Le message y
+   partait hors champ, disparaissait au bout de quatre secondes, et un
+   enregistrement réussi ressemblait à un bouton qui ne fait rien. */
 .admin-status{
-  background:#e3f1e4; color:#2c6b35; padding:.8em 1.2em; border-radius:var(--radius); margin-bottom:1.4rem; font-size:.92rem;
+  position:fixed; left:50%; bottom:1.4rem; transform:translateX(-50%);
+  z-index:60; margin:0; max-width:min(92vw, 520px);
+  background:#e3f1e4; color:#2c6b35; padding:.8em 1.2em; border-radius:var(--radius);
+  font-size:.92rem; text-align:center;
+  border:1px solid rgba(44,107,53,.25);
+  box-shadow:0 8px 26px -10px rgba(33,28,23,.45);
 }
-.admin-status.is-error{ background:#fbe4e0; color:#a13a25; }
+.admin-status.is-error{ background:#fbe4e0; color:#a13a25; border-color:rgba(161,58,37,.3); }
 
 /* ---------- Cards ---------- */
 .admin-card{
@@ -505,6 +515,17 @@ button.back-to-site{ background:none; border:none; cursor:pointer; font-family:i
 }
 /* En rupture : la fiche s'efface sans disparaître — elle reste modifiable. */
 .noel-item.is-rupture{ background:var(--sand); opacity:.82; }
+
+/* La liste est redessinée après un enregistrement : sans ce liseré, rien à
+   l'écran ne dit laquelle vient d'être sauvegardée. */
+.noel-item.is-saved{ animation:itemSaved 1.8s var(--ease, ease); }
+@keyframes itemSaved{
+  0%, 45%{ border-color:var(--gold); box-shadow:0 0 0 2px rgba(200,133,58,.28); }
+  100%{ border-color:var(--sand); box-shadow:none; }
+}
+@media (prefers-reduced-motion: reduce){
+  .noel-item.is-saved{ animation:none; border-color:var(--gold); }
+}
 
 .noel-item-header{
   display:flex; align-items:center; gap:.8rem;

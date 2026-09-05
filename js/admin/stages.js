@@ -296,6 +296,10 @@ async function saveSeance(id, el) {
       imageUrl: el.querySelector('.stg-img').value.trim()
     });
     await loadStages();
+    /* La liste vient d'être redessinée : on retrouve la fiche pour la
+       marquer. Le message de statut, lui, est en bas de l'écran — mais deux
+       signaux valent mieux qu'un quand la fiche fait un écran de haut. */
+    document.querySelector(`.noel-item[data-id="${CSS.escape(id)}"]`)?.classList.add('is-saved');
     showStatus('Séance enregistrée.');
   } catch (err) {
     showStatus("Erreur lors de l'enregistrement : " + err.message, true);
