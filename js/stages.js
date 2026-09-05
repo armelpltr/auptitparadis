@@ -220,8 +220,9 @@ function renderParticipants() {
                value="${escapeHTML(p.prenom)}" required>
       </div>
       <div class="form-field">
-        <label for="part-nom-${i}">Nom <span class="form-optional">(facultatif)</span></label>
-        <input type="text" id="part-nom-${i}" class="part-nom" maxlength="40" value="${escapeHTML(p.nom)}">
+        <label for="part-nom-${i}">Nom</label>
+        <input type="text" id="part-nom-${i}" class="part-nom" maxlength="40"
+               value="${escapeHTML(p.nom)}" required>
       </div>
       <div class="form-field participant-age">
         <label for="part-age-${i}">Âge</label>
@@ -295,8 +296,8 @@ async function envoyerInscription(e) {
     .map(p => ({ prenom: p.prenom.trim(), nom: p.nom.trim(), age: p.age.trim() }))
     .filter(p => p.prenom || p.nom || p.age);
 
-  if (!propres.length || propres.some(p => p.prenom.length < 2)) {
-    afficherErreur('Indiquez au moins le prénom de chaque participant.');
+  if (!propres.length || propres.some(p => p.prenom.length < 2 || p.nom.length < 2)) {
+    afficherErreur('Indiquez le prénom et le nom de chaque participant.');
     return;
   }
 

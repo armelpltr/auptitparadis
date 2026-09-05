@@ -126,7 +126,7 @@ function construireParticipants(liste, seance) {
 
   return liste.map(p => {
     const prenom = texte(p?.prenom, { min: 2, max: 40, champ: 'Le prénom du participant' });
-    const nom    = texte(p?.nom ?? '', { max: 40, champ: 'Le nom du participant' });
+    const nom    = texte(p?.nom, { min: 2, max: 40, champ: 'Le nom du participant' });
     const age    = ageParticipant(p?.age);
 
     /* Les bornes d'âge de la séance sont indicatives à l'inscription, mais
