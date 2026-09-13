@@ -337,9 +337,49 @@ button.back-to-site{ background:none; border:none; cursor:pointer; font-family:i
    ou descend quand on clique sur une flèche. */
 .realisations-list{ margin-bottom:.9rem; }
 .realisation-row{
-  display:grid; grid-template-columns:auto 1fr auto; gap:.9rem; align-items:center;
+  display:grid; grid-template-columns:auto auto 1fr auto; gap:.9rem; align-items:center;
   padding:.6rem; margin-bottom:.6rem;
   border:1.5px solid var(--sand); border-radius:8px;
+  background:var(--white);
+}
+/* Poignée de déplacement. Le glissement ne fonctionne qu'à la souris : les
+   flèches restent le chemin au clavier et au doigt. */
+.realisation-poignee{
+  cursor:grab; user-select:none; color:var(--ink-soft); opacity:.5;
+  font-size:1.1rem; line-height:1; padding:0 .1rem;
+}
+.realisation-poignee:active{ cursor:grabbing; }
+.realisation-row:hover .realisation-poignee{ opacity:1; }
+.realisation-row.est-tiree{ opacity:.4; border-style:dashed; }
+
+/* Zone de dépôt groupé */
+.depot-photos{
+  display:flex; flex-direction:column; align-items:center; gap:.35rem;
+  padding:1.6rem 1.2rem; text-align:center;
+  border:2px dashed var(--sand); border-radius:10px;
+  color:var(--ink-soft); font-size:.9rem;
+  transition:border-color .2s, background .2s, color .2s;
+}
+.depot-photos svg{
+  width:26px; height:26px; fill:none; stroke:currentColor;
+  stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; opacity:.6;
+}
+.depot-photos strong{ font-size:.98rem; color:var(--ink); }
+.depot-photos.is-depot{
+  border-color:var(--gold); background:rgba(200,133,58,.07); color:var(--gold-deep);
+}
+.depot-photos.is-depot svg{ opacity:1; }
+
+/* Bouton qui doit se lire comme un lien, au fil d'une phrase. */
+.lien-bouton{
+  background:none; border:none; padding:0; font:inherit; cursor:pointer;
+  color:var(--gold-deep); text-decoration:underline;
+}
+.lien-bouton:hover{ color:var(--ink); }
+
+/* Le bloc d'import accepte aussi le dépôt d'un fichier. */
+.image-upload.is-depot{
+  outline:2px dashed var(--gold); outline-offset:4px; border-radius:6px;
 }
 /* `realisation-legende` et non `rea-legende` : le panel charge aussi la
    feuille du site, où cette dernière classe désigne le bandeau posé sur la
@@ -353,6 +393,8 @@ button.back-to-site{ background:none; border:none; cursor:pointer; font-family:i
 @media (max-width: 640px){
   .realisation-row{ grid-template-columns:1fr; }
   .realisation-actions{ justify-content:flex-end; }
+  /* Pas de glissement au doigt : la poignée ne promettrait rien. */
+  .realisation-poignee{ display:none; }
 }
 
 /* ---------- Liste des horaires ---------- */

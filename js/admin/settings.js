@@ -5,7 +5,9 @@
 import { db } from "../firebase-config.js";
 import { doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 import { ICONS, ICON_LABELS, IB_ICONS, SVG_X } from "./icons.js";
-import { createImageUploader } from "./uploader.js";
+import {
+  createImageUploader, importerPhotos, brancherDepot, FORMATS_ACCEPTES
+} from "./uploader.js";
 import {
   confirmDialog, showSuccess, showStatus, escapeAttr, val, setVal, deepMerge
 } from "./ui.js";
@@ -191,12 +193,18 @@ function releverRatio(row, champUrl) {
   sonde.src = url;
 }
 
+/* Ligne en cours de déplacement. Une seule à la fois, d'où la variable de
+   module plutôt qu'un passage par le dataTransfer : on a besoin de l'élément
+   lui-même, pas d'un identifiant à retrouver. */
+let ligneTiree = null;
+
 function addRealisationRow({ url = '', legende = '', ratio = null } = {}) {
   const list = document.getElementById('realisationsList');
   const row = document.createElement('div');
   row.className = 'realisation-row';
   if (ratio) row.dataset.ratio = ratio;
   row.innerHTML = `
+    <span class="realisation-poignee" title="Glisser pour déplacer" aria-hidden="true">⠿</span>
     <div class="rea-image-mount"></div>
     <input type="text" class="realisation-legende" placeholder="Légende (facultative)" value="${escapeAttr(legende)}">
     <div class="realisation-actions">
@@ -228,6 +236,27 @@ function addRealisationRow({ url = '', legende = '', ratio = null } = {}) {
   // Portée sur les actions de la ligne : l'uploader a lui aussi un
   // `.row-remove`, qui ne retire que la photo et doit garder son rôle.
   row.querySelector('.realisation-actions .row-remove').addEventListener('click', () => row.remove());
+
+  /* Glisser-déposer pour réordonner. `draggable` n'est posé qu'au moment de
+     saisir la poignée : porté en permanence par la ligne, il empêcherait de
+     sélectionner le texte d'une légende à la souris. */
+  const poignee = row.querySelector('.realisation-poignee');
+  poignee.addEventListener('mousedown', () => { row.draggable = true; });
+  poignee.addEventListener('mouseup',   () => { row.draggable = false; });
+
+  row.addEventListener('dragstart', e => {
+    ligneTiree = row;
+    row.classList.add('est-tiree');
+    e.dataTransfer.effectAllowed = 'move';
+    // Firefox n'amorce pas un glissement qui ne transporte rien.
+    e.dataTransfer.setData('text/plain', 'realisation');
+  });
+
+  row.addEventListener('dragend', () => {
+    row.draggable = false;
+    row.classList.remove('est-tiree');
+    ligneTiree = null;
+  });
 
   list.appendChild(row);
 }
@@ -529,7 +558,56 @@ export function initSettings() {
 
   document.getElementById('addPresseArticle').addEventListener('click', () => addPresseArticleRow());
   document.getElementById('addPresseAvis').addEventListener('click', () => addPresseAvisRow());
-  document.getElementById('addRealisation').addEventListener('click', () => addRealisationRow());
+
+  /* ---- Réalisations : import groupé, par dépôt ou par sélection ---- */
+  const depot = document.getElementById('realisationsDepot');
+  const listeRea = document.getElementById('realisationsList');
+
+  /* Sélecteur masqué, partagé avec le bouton : les deux chemins d'import
+     aboutissent à la même fonction, donc au même comportement. */
+  const choixPhotos = document.createElement('input');
+  choixPhotos.type = 'file';
+  choixPhotos.accept = FORMATS_ACCEPTES.join(',');
+  choixPhotos.multiple = true;
+  choixPhotos.hidden = true;
+  depot.appendChild(choixPhotos);
+
+  async function importerRealisations(fichiers) {
+    // Une ligne par photo, ajoutée au fil des envois : le résultat reste
+    // acquis même si l'un d'eux échoue en cours de lot.
+    await importerPhotos(fichiers, 'realisations', url => addRealisationRow({ url }));
+    markDirty();
+  }
+
+  document.getElementById('addRealisation').addEventListener('click', () => choixPhotos.click());
+
+  choixPhotos.addEventListener('change', () => {
+    const fichiers = Array.from(choixPhotos.files || []);
+    choixPhotos.value = '';   // permet de re-choisir les mêmes fichiers
+    if (fichiers.length) importerRealisations(fichiers);
+  });
+
+  brancherDepot(depot, importerRealisations);
+
+  /* ---- Réalisations : réordonnancement à la souris ---- */
+  /* La ligne survolée cède sa place selon le côté où on la coupe : au-dessus
+     de sa moitié on s'insère avant, en dessous après. Rien n'est enregistré
+     ici — c'est l'ordre du DOM que `collectRealisations` relit. */
+  listeRea.addEventListener('dragover', e => {
+    if (!ligneTiree) return;
+    e.preventDefault();
+    const cible = e.target.closest('.realisation-row');
+    if (!cible || cible === ligneTiree) return;
+    const cadre = cible.getBoundingClientRect();
+    const apresLaMoitie = (e.clientY - cadre.top) > cadre.height / 2;
+    cible[apresLaMoitie ? 'after' : 'before'](ligneTiree);
+  });
+
+  listeRea.addEventListener('drop', e => {
+    if (!ligneTiree) return;
+    e.preventDefault();
+    markDirty();
+  });
 
   // Capture : attrape aussi les champs créés après coup (fiches, produits, uploads)
   const panel = document.getElementById('panel-settings');
@@ -539,7 +617,9 @@ export function initSettings() {
     // Ajout/suppression de fiche, de produit ou de ligne d'horaire, et
     // réordonnancement des réalisations — qui ne change aucun champ, donc
     // n'émet ni 'input' ni 'change'.
-    if (e.target.closest('#addSpecBtn, #addHourRow, #addPresseArticle, #addPresseAvis, #addRealisation, .add-spec-produit, .row-remove, .realisation-actions .icon-btn')) markDirty();
+    // `#addRealisation` n'y figure pas : il ouvre un sélecteur de fichiers,
+    // qu'on peut annuler. C'est l'import réussi qui marque la modification.
+    if (e.target.closest('#addSpecBtn, #addHourRow, #addPresseArticle, #addPresseAvis, .add-spec-produit, .row-remove, .realisation-actions .icon-btn')) markDirty();
   });
 
   // Dernier filet si l'onglet est fermé ou la page rechargée
