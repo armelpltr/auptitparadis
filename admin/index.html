@@ -227,10 +227,20 @@
       </div>
 
       <div class="admin-card">
-        <h2>Sections de la page</h2>
-        <p class="admin-card-hint">Elles s'affichent entre "Nos spécialités" et "Notre histoire". Réordonne-les avec les flèches ↑ ↓.</p>
-        <div id="blocksList" class="blocks-list"></div>
-        <button type="button" class="btn btn-ghost btn-small" id="addBlockBtn">+ Ajouter une section</button>
+        <h2>Nos réalisations</h2>
+        <p class="admin-card-hint">
+          Photos de commandes spéciales — pièces montées, gâteaux d'anniversaire,
+          buffets. Les six premières s'affichent sur l'accueil, les suivantes
+          derrière un bouton « Voir plus » : l'ordre compte, réglez-le avec les
+          flèches. La rubrique n'apparaît sur le site, menu compris, qu'à partir
+          d'une photo publiée.
+        </p>
+        <div class="form-row">
+          <label for="set-realisations-intro">Texte d'introduction</label>
+          <textarea id="set-realisations-intro" rows="3"></textarea>
+        </div>
+        <div id="realisationsList" class="realisations-list"></div>
+        <button type="button" class="btn btn-ghost btn-small" id="addRealisation">+ Ajouter une photo</button>
       </div>
 
       <div class="admin-card">
@@ -632,44 +642,6 @@
         <div id="invitesList" class="team-list"></div>
       </div>
     </section>
-
-      <!-- Sélecteur de modèle -->
-      <div class="modal-overlay" id="templatePicker" hidden>
-        <div class="modal">
-          <h2>Choisir un type de section</h2>
-          <div class="template-grid">
-            <button class="template-card" data-type="banner">
-              <strong>Bannière</strong>
-              <span>Annonce courte, fermeture exceptionnelle, promo…</span>
-            </button>
-            <button class="template-card" data-type="cards">
-              <strong>Grille de cartes</strong>
-              <span>2 à 6 fiches avec icône, titre et texte</span>
-            </button>
-            <button class="template-card" data-type="text-image">
-              <strong>Texte + image</strong>
-              <span>Un texte et une photo, côte à côte</span>
-            </button>
-            <button class="template-card" data-type="gallery">
-              <strong>Galerie photo</strong>
-              <span>Une série de photos en grille</span>
-            </button>
-          </div>
-          <button type="button" class="btn btn-ghost" id="cancelTemplatePicker">Annuler</button>
-        </div>
-      </div>
-
-      <!-- Formulaire d'édition de bloc -->
-      <div class="modal-overlay" id="blockEditor" hidden>
-        <div class="modal modal-wide">
-          <h2 id="blockEditorTitle">Modifier la section</h2>
-          <div id="blockEditorFields"></div>
-          <div class="modal-actions">
-            <button type="button" class="btn btn-ghost" id="cancelBlockEditor">Annuler</button>
-            <button type="button" class="btn btn-primary" id="saveBlockBtn">Enregistrer la section</button>
-          </div>
-        </div>
-      </div>
 
   </main>
 </div>

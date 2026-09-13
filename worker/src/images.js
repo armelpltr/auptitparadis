@@ -40,7 +40,7 @@ const FORMATS = {
   'image/avif': 'avif'
 };
 
-/* Les dossiers viennent du panel (`produits`, `blocks`, `images`…). Bornés
+/* Les dossiers viennent du panel (`produits`, `realisations`, `images`…). Bornés
    à un alphabet strict : ils composent une clé d'objet, et une valeur
    d'appelant n'a rien à faire telle quelle dans un chemin. */
 function dossierSur(v) {

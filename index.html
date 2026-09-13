@@ -57,6 +57,9 @@
       <nav class="main-nav" aria-label="Navigation principale">
         <ul>
           <li><a href="#specialites">Nos spécialités</a></li>
+          <!-- Révélé par site-data.js dès qu'une photo est publiée : sans
+               photo, la section n'existe pas et le lien tomberait à vide. -->
+          <li data-nav-realisations hidden><a href="#realisations">Réalisations</a></li>
           <li><a href="#histoire">Notre histoire</a></li>
           <li><a href="#horaires">Horaires &amp; accès</a></li>
           <li><a href="#ateliers">Ateliers</a></li>
@@ -72,6 +75,7 @@
   <nav class="mobile-nav" id="mobile-nav" aria-label="Navigation mobile" aria-hidden="true">
     <ul>
       <li><a href="#specialites">Nos spécialités</a></li>
+      <li data-nav-realisations hidden><a href="#realisations">Réalisations</a></li>
       <li><a href="#histoire">Notre histoire</a></li>
       <li><a href="#horaires">Horaires &amp; accès</a></li>
       <li><a href="#ateliers">Ateliers</a></li>
@@ -188,6 +192,34 @@
     <svg viewBox="0 0 1200 80" preserveAspectRatio="none"><path d="M0,40 C100,40 200,10 400,45 C600,80 700,15 900,40 C1050,62 1150,38 1200,40" /></svg>
   </div>
 
+  <!-- ===================== NOS RÉALISATIONS ===================== -->
+  <!-- Galerie des commandes spéciales, alimentée depuis le panel
+       (`settings/site` → `realisations`). Rien n'est écrit en dur ici :
+       contrairement aux spécialités ou à la presse, une galerie n'a pas de
+       contenu de repli qui vaille — une photo de gâteau ne s'invente pas.
+       D'où la section masquée au départ, révélée par site-data.js dès
+       qu'une photo est publiée, avec son séparateur et son lien de menu. -->
+  <section class="realisations" id="realisations" hidden>
+    <div class="section-inner">
+      <p class="eyebrow">Sur commande</p>
+      <h2>Nos réalisations</h2>
+      <p class="realisations-intro" id="realisationsIntro" data-dynamic>
+        Pièces montées, gâteaux d'anniversaire, desserts de baptême ou de
+        mariage : voici ce qui sort du laboratoire quand on nous laisse carte
+        blanche. Une idée en tête ? Passez nous en parler.
+      </p>
+
+      <div class="rea-mosaique" id="realisationsGrille"></div>
+
+      <button type="button" class="btn btn-ghost realisations-plus" id="realisationsPlus"
+              aria-controls="realisationsGrille" aria-expanded="false" hidden></button>
+    </div>
+  </section>
+
+  <div class="divider" aria-hidden="true" hidden>
+    <svg viewBox="0 0 1200 80" preserveAspectRatio="none"><path d="M0,40 C100,40 200,10 400,45 C600,80 700,15 900,40 C1050,62 1150,38 1200,40" /></svg>
+  </div>
+
   <!-- ===================== ATELIERS (aperçu) ===================== -->
   <!-- Vitrine des ateliers sur l'accueil : la présentation et les
        prochaines dates, lues dans Firestore comme sur stages.html.
@@ -252,9 +284,6 @@
   <div class="divider" aria-hidden="true">
     <svg viewBox="0 0 1200 80" preserveAspectRatio="none"><path d="M0,40 C100,40 200,10 400,45 C600,80 700,15 900,40 C1050,62 1150,38 1200,40" /></svg>
   </div>
-
-  <!-- ===================== SECTIONS DYNAMIQUES (gérées depuis l'admin) ===================== -->
-  <div id="dynamicSections"></div>
 
   <!-- ===================== HISTOIRE ===================== -->
   <section class="histoire" id="histoire">

@@ -4,7 +4,7 @@
 
 import { db } from "../firebase-config.js";
 import { doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
-import { ICONS, ICON_LABELS, SVG_X } from "./icons.js";
+import { ICONS, ICON_LABELS, IB_ICONS, SVG_X } from "./icons.js";
 import { createImageUploader } from "./uploader.js";
 import {
   confirmDialog, showSuccess, showStatus, escapeAttr, val, setVal, deepMerge
@@ -30,6 +30,12 @@ const DEFAULTS = {
       extrait: ''
     }],
     avis: []
+  },
+  /* Galerie des commandes spéciales. Pas de photo par défaut : une galerie
+     d'exemples serait prise pour du travail de la maison. */
+  realisations: {
+    intro: "Pièces montées, gâteaux d'anniversaire, desserts de baptême ou de mariage : voici ce qui sort du laboratoire quand on nous laisse carte blanche. Une idée en tête ? Passez nous en parler.",
+    photos: []
   },
   histoire: {
     title: "On se lève avant vous. Depuis longtemps.",
@@ -160,6 +166,94 @@ function renderPresse(p) {
   (p.avis || []).forEach(addPresseAvisRow);
 }
 
+/* ---------- Nos réalisations ---------- */
+/* Une ligne par photo, dans l'ordre où elles paraîtront sur le site. La
+   légende est facultative : laissée vide, la photo s'affiche seule. */
+
+/* Les proportions de la photo, relevées une fois ici et enregistrées avec
+   elle. Le site en a besoin AVANT que l'image n'arrive : sans elles, la
+   mosaïque se réorganise à mesure des chargements et le bouton « Voir plus »
+   se déplace sous le doigt du visiteur. Le panel est le seul endroit où on
+   les connaisse sans coûter une requête au visiteur. */
+function releverRatio(row, champUrl) {
+  const url = champUrl.value.trim();
+  if (!url) { delete row.dataset.ratio; return; }
+
+  const sonde = new Image();
+  sonde.addEventListener('load', () => {
+    // Une autre photo a pu arriver entre-temps : on ne lui colle pas les
+    // proportions de celle-ci.
+    if (champUrl.value.trim() !== url) return;
+    if (sonde.naturalWidth && sonde.naturalHeight) {
+      row.dataset.ratio = (sonde.naturalWidth / sonde.naturalHeight).toFixed(4);
+    }
+  });
+  sonde.src = url;
+}
+
+function addRealisationRow({ url = '', legende = '', ratio = null } = {}) {
+  const list = document.getElementById('realisationsList');
+  const row = document.createElement('div');
+  row.className = 'realisation-row';
+  if (ratio) row.dataset.ratio = ratio;
+  row.innerHTML = `
+    <div class="rea-image-mount"></div>
+    <input type="text" class="realisation-legende" placeholder="Légende (facultative)" value="${escapeAttr(legende)}">
+    <div class="realisation-actions">
+      <button type="button" class="icon-btn" data-action="up" title="Monter">${IB_ICONS.up}</button>
+      <button type="button" class="icon-btn" data-action="down" title="Descendre">${IB_ICONS.down}</button>
+      <button type="button" class="row-remove" title="Retirer cette photo">${SVG_X}</button>
+    </div>`;
+
+  row.querySelector('.rea-image-mount').appendChild(
+    createImageUploader({ className: 'rea-url', value: url, folder: 'realisations', compact: true })
+  );
+
+  const champUrl = row.querySelector('.rea-url');
+  champUrl.addEventListener('input', () => releverRatio(row, champUrl));
+  // Photo déjà enregistrée avant que les proportions ne soient relevées :
+  // on les rattrape à l'ouverture, sans rien demander à l'utilisateur.
+  if (!ratio && url) releverRatio(row, champUrl);
+
+  /* Réordonner, c'est déplacer la ligne — pas de champ « position » à tenir
+     à jour, et l'ordre lu à l'enregistrement est celui qu'on voit. */
+  row.querySelector('[data-action="up"]').addEventListener('click', () => {
+    const precedente = row.previousElementSibling;
+    if (precedente) precedente.before(row);
+  });
+  row.querySelector('[data-action="down"]').addEventListener('click', () => {
+    const suivante = row.nextElementSibling;
+    if (suivante) suivante.after(row);
+  });
+  // Portée sur les actions de la ligne : l'uploader a lui aussi un
+  // `.row-remove`, qui ne retire que la photo et doit garder son rôle.
+  row.querySelector('.realisation-actions .row-remove').addEventListener('click', () => row.remove());
+
+  list.appendChild(row);
+}
+
+function collectRealisations() {
+  const photos = Array.from(document.querySelectorAll('#realisationsList .realisation-row'))
+    .map(row => {
+      const photo = {
+        url:     row.querySelector('.rea-url').value.trim(),
+        legende: row.querySelector('.realisation-legende').value.trim()
+      };
+      const ratio = Number(row.dataset.ratio);
+      if (Number.isFinite(ratio) && ratio > 0) photo.ratio = ratio;
+      return photo;
+    })
+    // Une ligne dont la photo a été retirée n'a rien à publier.
+    .filter(p => p.url);
+
+  return { intro: val('set-realisations-intro'), photos };
+}
+
+function renderRealisations(r) {
+  document.getElementById('realisationsList').innerHTML = '';
+  (r.photos || []).forEach(addRealisationRow);
+}
+
 /* ---------- Spécialités et leurs produits vedettes ---------- */
 function addProduitRowForIndex(i, nom = '', description = '', imageUrl = '', tag = '') {
   const list = document.getElementById(`spec-produits-${i}`);
@@ -257,8 +351,11 @@ export async function loadSettings() {
   setVal('set-histoire-text1', DEFAULTS.histoire.text1);
   setVal('set-histoire-text2', DEFAULTS.histoire.text2);
 
+  setVal('set-realisations-intro', DEFAULTS.realisations.intro);
+
   specState = DEFAULTS.specialites.map(s => ({ ...s, produits: [] }));
   renderPresse(DEFAULTS.presse);
+  renderRealisations(DEFAULTS.realisations);
 
   const container = document.getElementById('hoursRowsContainer');
   container.innerHTML = '';
@@ -282,6 +379,11 @@ export async function loadSettings() {
 
     // Présent mais vide = tout a été retiré volontairement, on le respecte.
     if (s.presse) renderPresse(s.presse);
+
+    if (s.realisations) {
+      if (s.realisations.intro) setVal('set-realisations-intro', s.realisations.intro);
+      renderRealisations(s.realisations);
+    }
 
     if (s.histoire) {
       if (s.histoire.title)    setVal('set-histoire-title',    s.histoire.title);
@@ -349,6 +451,10 @@ const SETTINGS_SECTIONS = {
   presse: {
     label: '« Ils parlent de nous »',
     collect: () => ({ presse: collectPresse() })
+  },
+  realisations: {
+    label: '« Nos réalisations »',
+    collect: () => ({ realisations: collectRealisations() })
   },
   histoire: {
     label: '« Notre histoire »',
@@ -423,14 +529,17 @@ export function initSettings() {
 
   document.getElementById('addPresseArticle').addEventListener('click', () => addPresseArticleRow());
   document.getElementById('addPresseAvis').addEventListener('click', () => addPresseAvisRow());
+  document.getElementById('addRealisation').addEventListener('click', () => addRealisationRow());
 
   // Capture : attrape aussi les champs créés après coup (fiches, produits, uploads)
   const panel = document.getElementById('panel-settings');
   panel.addEventListener('input', markDirty, true);
   panel.addEventListener('change', markDirty, true);
   panel.addEventListener('click', (e) => {
-    // Ajout/suppression de fiche, de produit ou de ligne d'horaire
-    if (e.target.closest('#addSpecBtn, #addHourRow, #addPresseArticle, #addPresseAvis, .add-spec-produit, .row-remove')) markDirty();
+    // Ajout/suppression de fiche, de produit ou de ligne d'horaire, et
+    // réordonnancement des réalisations — qui ne change aucun champ, donc
+    // n'émet ni 'input' ni 'change'.
+    if (e.target.closest('#addSpecBtn, #addHourRow, #addPresseArticle, #addPresseAvis, #addRealisation, .add-spec-produit, .row-remove, .realisation-actions .icon-btn')) markDirty();
   });
 
   // Dernier filet si l'onglet est fermé ou la page rechargée

@@ -19,10 +19,6 @@ export const ICON_LABELS = {
   snacking: 'Snacking'
 };
 
-export const BLOCK_LABELS = {
-  banner: 'Bannière', cards: 'Grille de cartes', 'text-image': 'Texte + image', gallery: 'Galerie photo'
-};
-
 export const SVG_X = '<svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M2 2l8 8M10 2l-8 8"/></svg>';
 
 const _ibSvg = (inner) => `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${inner}</svg>`;

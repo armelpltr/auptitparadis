@@ -198,11 +198,6 @@ service cloud.firestore {
       allow update, delete: if isOwner();
     }
 
-    match /blocks/{blockId} {
-      allow read:  if true;
-      allow write: if membreVerifie() && myRole() != 'comptoir';
-    }
-
     // Catalogue des commandes de Noël (bûches, coffrets). Le site public le
     // lit pour afficher les produits ; il porte des prix, donc il suit les
     // commandes et non le contenu.

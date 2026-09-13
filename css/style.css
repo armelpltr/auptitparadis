@@ -148,10 +148,17 @@ p{ margin:0 0 1em; color:var(--ink-soft); }
   100%{ box-shadow:0 0 0 0 rgba(63,145,66,0); }
 }
 @media (prefers-reduced-motion: reduce){ .open-badge.is-open .open-dot{ animation:none; } }
-.main-nav ul{ display:flex; align-items:center; gap:2.4rem; }
+/* L'écart se resserre avec la fenêtre. Six entrées ne tiennent pas à
+   2,4 rem d'intervalle : la barre débordait, et comme un élément de flex
+   se laisse comprimer sous sa largeur de contenu, c'étaient les libellés
+   eux-mêmes qui se coupaient en deux lignes. */
+.main-nav ul{ display:flex; align-items:center; gap:clamp(.9rem, 1.5vw, 1.35rem); }
 .main-nav a{
   font-size:.74rem; font-weight:700; letter-spacing:.14em; text-transform:uppercase;
   color:var(--ink-soft); position:relative; padding:.4em 0;
+  /* Un libellé ne se coupe jamais : il tient sur une ligne ou la barre
+     passe au menu déroulant, il n'y a pas d'entre-deux acceptable. */
+  white-space:nowrap;
   transition:color .22s var(--ease);
 }
 .main-nav a::after{
@@ -285,6 +292,7 @@ p{ margin:0 0 1em; color:var(--ink-soft); }
 .hero       + .divider{ background:linear-gradient(to bottom, var(--cream), var(--sand)); }
 .presse     + .divider{ background:linear-gradient(to bottom, var(--sand),  var(--cream)); }
 .specialites + .divider{ background:linear-gradient(to bottom, var(--sand),  var(--cream)); }
+.realisations + .divider{ background:linear-gradient(to bottom, var(--sand),  var(--cream)); }
 .histoire    + .divider{ background:linear-gradient(to bottom, var(--sand),  var(--sea-pale)); }
 .horaires    + .divider{ background:linear-gradient(to bottom, var(--white), var(--sea-pale)); }
 
@@ -341,6 +349,111 @@ p{ margin:0 0 1em; color:var(--ink-soft); }
 .card p{ font-size:.96rem; margin-bottom:0; }
 
 /* ---------- Histoire ---------- */
+/* =========================================================
+   Nos réalisations — mosaïque des commandes spéciales
+   Colonnes CSS et non grille : c'est la seule mise en page qui ne
+   recadre rien. Une pièce montée reste verticale, un buffet reste
+   large — pour des photos que la boutique choisit une par une, la
+   proportion d'origine fait partie de ce qu'on montre.
+   ========================================================= */
+.realisations{ background:var(--sand); }
+.realisations h2{ font-size:clamp(2rem, 4vw, 2.6rem); }
+.realisations-intro{ max-width:62ch; }
+
+.rea-mosaique{ columns:3; column-gap:1.1rem; margin-top:2.5rem; }
+@media (max-width:900px){ .rea-mosaique{ columns:2; } }
+@media (max-width:520px){ .rea-mosaique{ columns:1; } }
+
+/* Au-delà des six premières, on attend que le visiteur le demande : la
+   page d'accueil garde la même longueur avec dix photos ou avec cent. */
+.rea-mosaique:not(.is-deplie) .rea-item:nth-child(n+7){ display:none; }
+
+/* Un <button> et non une <figure> : la photo s'ouvre en grand, donc elle
+   s'active aussi au clavier. D'où les remises à zéro qui suivent. */
+.rea-item{
+  display:block; width:100%; position:relative;
+  padding:0; border:0; margin:0 0 1.1rem;
+  font:inherit; text-align:left; color:inherit;
+  background:var(--cream); border-radius:12px; overflow:hidden;
+  cursor:zoom-in; break-inside:avoid;
+  box-shadow:0 10px 24px -16px rgba(33,28,23,.45);
+}
+/* `object-fit` alors que la hauteur est libre : il ne sert que le jour où
+   le ratio enregistré ne correspond plus à la photo. Sans lui, l'image
+   s'étirerait ; avec lui, elle se recadre — un défaut qui ne se voit pas. */
+.rea-item img{
+  width:100%; height:auto; display:block; object-fit:cover;
+  transition:transform .5s var(--ease);
+}
+.rea-item:hover img{ transform:scale(1.05); }
+
+/* Pas de légende, pas de bandeau : une photo sans texte reste une photo,
+   pas un cadre vide. */
+.rea-legende{
+  position:absolute; inset:auto 0 0 0;
+  padding:2.4rem .9rem .8rem;
+  background:linear-gradient(to top, rgba(33,28,23,.82), rgba(33,28,23,0));
+  color:var(--white); font-size:.88rem; font-weight:500; line-height:1.4;
+  opacity:0; transform:translateY(6px);
+  transition:opacity .3s var(--ease), transform .3s var(--ease);
+}
+.rea-item:hover .rea-legende,
+.rea-item:focus-visible .rea-legende{ opacity:1; transform:none; }
+/* Au doigt, il n'y a pas de survol : la légende reste lisible. */
+@media (hover:none){ .rea-legende{ opacity:1; transform:none; } }
+
+/* `.btn` pose un `display`, qui l'emporte sur le `display:none` que le
+   navigateur applique à [hidden] : sans cette règle, le bouton s'afficherait
+   même quand il n'y a rien de plus à montrer. Même raison pour les flèches
+   de la visionneuse, plus bas. */
+.realisations-plus{ margin-top:1.6rem; }
+.realisations-plus[hidden]{ display:none; }
+
+/* ---- Photo en grand ---- */
+.rea-visionneuse{
+  position:fixed; inset:0; z-index:300;
+  background:rgba(20,16,12,.93);
+  display:flex; align-items:center; justify-content:center;
+  padding:clamp(1rem, 4vw, 3rem);
+  animation:reaFondu .18s ease;
+}
+.rea-visionneuse[hidden]{ display:none; }
+@keyframes reaFondu{ from{ opacity:0; } to{ opacity:1; } }
+
+.rea-visionneuse figure{
+  margin:0; display:flex; flex-direction:column; align-items:center; gap:.9rem;
+  max-width:100%; max-height:100%;
+}
+.rea-visionneuse img{
+  max-width:100%; max-height:80vh; width:auto; height:auto;
+  border-radius:8px; box-shadow:0 30px 60px -30px #000;
+}
+.rea-visionneuse figcaption{
+  color:var(--cream); font-size:.95rem; text-align:center; max-width:60ch;
+}
+.rea-visionneuse figcaption:empty{ display:none; }
+
+.rea-btn{
+  position:absolute; width:48px; height:48px; border-radius:50%;
+  border:1px solid rgba(251,246,238,.3); background:rgba(20,16,12,.55);
+  color:var(--cream); cursor:pointer;
+  display:flex; align-items:center; justify-content:center;
+  transition:background .2s var(--ease);
+}
+.rea-btn[hidden]{ display:none; }
+.rea-btn:hover{ background:rgba(251,246,238,.2); }
+.rea-btn svg{
+  width:22px; height:22px; fill:none; stroke:currentColor;
+  stroke-width:2; stroke-linecap:round; stroke-linejoin:round;
+}
+.rea-prec{ left:clamp(.6rem, 2vw, 1.6rem);  top:50%; transform:translateY(-50%); }
+.rea-suiv{ right:clamp(.6rem, 2vw, 1.6rem); top:50%; transform:translateY(-50%); }
+.rea-fermer{ top:clamp(.6rem, 2vw, 1.4rem); right:clamp(.6rem, 2vw, 1.4rem); }
+@media (max-width:560px){
+  .rea-btn{ width:40px; height:40px; }
+  .rea-visionneuse img{ max-height:70vh; }
+}
+
 .histoire{ background:var(--sand); }
 .histoire-grid{ display:grid; grid-template-columns:.85fr 1.15fr; gap:3.5rem; align-items:center; }
 .histoire-frame{
@@ -792,17 +905,29 @@ p{ margin:0 0 1em; color:var(--ink-soft); }
   .footer-wave svg{ height:54px; }
 }
 
-@media (max-width: 720px){
+/* Le détail du badge (« ouvre mardi à 7h00 ») est la première chose qu'on
+   sacrifie quand la barre se remplit : l'état ouvert/fermé, lui, reste.
+   Sans cela, il ne reste pas la place des six entrées du menu. */
+@media (max-width: 1280px){
+  .open-badge .open-detail{ display:none; }
+}
+
+/* Seuil du menu déroulant. Il était à 720px du temps où la barre portait
+   cinq entrées ; « Réalisations » en fait une sixième, et en dessous de
+   cette largeur les libellés se marchent dessus. */
+@media (max-width: 980px){
   .nav-right-group .main-nav{ display:none; }
   .nav-toggle{ display:flex; }
+}
+
+@media (max-width: 720px){
   /* La pastille de défilement est en absolu en bas du hero, dont le contenu
      est centré : sur un écran court elle passait par-dessus les deux boutons.
      On lui réserve sa place en remontant le contenu. */
   .hero{ padding-bottom:7rem; }
   .scroll-cue{ bottom:1.6rem; }
-  /* Badge compact : le détail (« ferme à 13h30 ») passerait sur deux lignes */
+  /* Badge compact. Son détail a déjà disparu plus haut, dès 1280px. */
   .open-badge{ margin-right:.7rem; font-size:.72rem; padding:.3em .65em; }
-  .open-badge .open-detail{ display:none; }
   /* Place pour la barre d'action fixe */
   .mobile-actions{ display:flex; }
   body{ padding-bottom:70px; }
@@ -1023,14 +1148,11 @@ p{ margin:0 0 1em; color:var(--ink-soft); }
 .theme-noel .specialites,
 .theme-noel .avis,
 .theme-noel .contact,
-.theme-noel .block-cards,
-.theme-noel .block-gallery,
 .theme-noel .page-legale,
-.theme-noel .commande-head,
-.theme-noel .block-text-image:nth-of-type(even){ background:rgba(251,246,238,.8); }
+.theme-noel .commande-head{ background:rgba(251,246,238,.8); }
 .theme-noel .histoire,
 .theme-noel .presse,
-.theme-noel .block-text-image,
+.theme-noel .realisations,
 .theme-noel .commande-body,
 .theme-noel .commande-closed{ background:rgba(241,230,211,.78); }
 .theme-noel .horaires{ background:rgba(231,238,236,.82); }
@@ -1104,53 +1226,6 @@ p{ margin:0 0 1em; color:var(--ink-soft); }
   .noel-countdown{ font-size:.82rem; padding:.35em .9em; }
   /* Le bonnet est déjà dimensionné en pourcentage du logo : il suit tout
      seul quand celui-ci se rabat sur 90vw. Rien à reprendre ici. */
-}
-
-/* =========================================================
-   Sections dynamiques (générées depuis l'admin)
-   ========================================================= */
-
-/* --- Bannière / annonce --- */
-.block-banner{
-  padding:1.4rem 1.5rem; text-align:center;
-  display:flex; align-items:center; justify-content:center; gap:1.2rem; flex-wrap:wrap;
-}
-.block-banner.style-info{ background:var(--sand); color:var(--ink); }
-.block-banner.style-highlight{ background:var(--gold); color:var(--white); }
-.block-banner p{ margin:0; font-weight:600; color:inherit; }
-.block-banner .btn{ flex-shrink:0; }
-.block-banner.style-highlight .btn-primary{ background:var(--ink); }
-.block-banner.style-highlight .btn-primary:hover{ background:var(--gold-deep); }
-
-/* --- Grille de cartes (réutilise .cards/.card) --- */
-.block-cards{ background:var(--cream); }
-
-/* --- Texte + image --- */
-.block-text-image{ background:var(--sand); }
-.block-text-image:nth-of-type(even){ background:var(--cream); }
-.text-image-grid{ display:grid; grid-template-columns:1fr 1fr; gap:3.5rem; align-items:center; }
-.text-image-grid.img-right .text-image-visual{ order:2; }
-.text-image-frame{
-  background:var(--white); border-radius:18px; overflow:hidden;
-  box-shadow:0 20px 40px -22px rgba(33,28,23,.3);
-}
-.text-image-frame img{ width:100%; height:100%; object-fit:cover; display:block; }
-
-/* --- Galerie --- */
-.block-gallery{ background:var(--cream); }
-.gallery-grid{ display:grid; grid-template-columns:repeat(3, 1fr); gap:1.2rem; margin-top:2rem; }
-.gallery-grid img{
-  width:100%; aspect-ratio:1; object-fit:cover; border-radius:10px;
-  box-shadow:0 10px 24px -14px rgba(33,28,23,.3); transition:transform .3s var(--ease);
-}
-.gallery-grid img:hover{ transform:scale(1.03); }
-
-@media (max-width: 900px){
-  .text-image-grid{ grid-template-columns:1fr; }
-  .text-image-grid.img-right .text-image-visual{ order:-1; }
-}
-@media (max-width: 600px){
-  .gallery-grid{ grid-template-columns:repeat(2, 1fr); }
 }
 
 @media (max-width: 480px){

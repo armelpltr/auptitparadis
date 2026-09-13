@@ -12,7 +12,6 @@ import { auth } from "./firebase-config.js";
 import { initAuth } from "./admin/auth.js";
 import { initTabs, appliquerRole } from "./admin/tabs.js";
 import { initSettings, loadSettings } from "./admin/settings.js";
-import { initBlocks, loadBlocks } from "./admin/blocks.js";
 import { initTeam, loadTeam, ROLE_LABELS } from "./admin/team.js";
 import { initNoel, loadNoel } from "./admin/noel.js";
 import { initStages, loadStages } from "./admin/stages.js";
@@ -20,7 +19,6 @@ import { initOrders, loadOrders, appliquerRoleOrders, entrerModeComptoir, modeJo
 
 initTabs();
 initSettings();
-initBlocks();
 initTeam();
 initNoel();
 initStages();
@@ -66,7 +64,6 @@ initAuth((role, prenom) => {
   appliquerRole(role);
 
   loadSettings();
-  loadBlocks();
 
   if (role === 'superadmin' || role === 'admin') {
     loadTeam();

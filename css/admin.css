@@ -331,6 +331,30 @@ button.back-to-site{ background:none; border:none; cursor:pointer; font-family:i
 /* Champs sur une ligne ramenes a la hauteur du textarea */
 .produit-row > input, .produit-row > select, .produit-row > .row-remove{ margin-top:.15rem; }
 
+/* ---------- Nos réalisations ---------- */
+/* Une ligne par photo : vignette, légende, et les commandes d'ordre. La
+   ligne est encadrée parce qu'elle se déplace — on doit voir ce qui monte
+   ou descend quand on clique sur une flèche. */
+.realisations-list{ margin-bottom:.9rem; }
+.realisation-row{
+  display:grid; grid-template-columns:auto 1fr auto; gap:.9rem; align-items:center;
+  padding:.6rem; margin-bottom:.6rem;
+  border:1.5px solid var(--sand); border-radius:8px;
+}
+/* `realisation-legende` et non `rea-legende` : le panel charge aussi la
+   feuille du site, où cette dernière classe désigne le bandeau posé sur la
+   photo — absolu et transparent au repos. Le champ de saisie disparaissait. */
+.realisation-row .realisation-legende{
+  font-family:var(--font-body); font-size:.9rem; padding:.55em .7em; min-width:0;
+  border:1.5px solid var(--sand); border-radius:var(--radius);
+  background:var(--cream); color:var(--ink);
+}
+.realisation-actions{ display:flex; align-items:center; gap:.4rem; }
+@media (max-width: 640px){
+  .realisation-row{ grid-template-columns:1fr; }
+  .realisation-actions{ justify-content:flex-end; }
+}
+
 /* ---------- Liste des horaires ---------- */
 .hour-row{ display:grid; grid-template-columns:1fr 1fr auto; gap:.8rem; margin-bottom:.7rem; align-items:center; }
 .hour-row input{
@@ -343,18 +367,7 @@ button.back-to-site{ background:none; border:none; cursor:pointer; font-family:i
 }
 .row-remove:hover{ background:#fbe4e0; color:#a13a25; border-color:#fbe4e0; }
 
-/* ---------- Liste des sections ---------- */
-.blocks-list{ display:flex; flex-direction:column; gap:.8rem; margin-bottom:1.4rem; }
-.block-row{
-  display:flex; align-items:center; gap:1rem; padding:.9rem 1.1rem; border:1.5px solid var(--sand); border-radius:8px;
-}
-.block-row.is-hidden{ opacity:.5; }
-.block-row .block-type-tag{
-  font-size:.72rem; text-transform:uppercase; letter-spacing:.06em; font-weight:700; color:var(--gold-deep);
-  background:var(--sand); padding:.3em .6em; border-radius:4px; flex-shrink:0;
-}
-.block-row .block-row-title{ flex:1; font-weight:600; font-size:.94rem; }
-.block-row-actions{ display:flex; gap:.4rem; flex-shrink:0; }
+/* ---------- Boutons d'action en ligne ---------- */
 .icon-btn{
   width:32px; height:32px; border-radius:6px; border:1.5px solid var(--sand); background:var(--white);
   cursor:pointer; color:var(--ink-soft);
@@ -376,28 +389,13 @@ button.back-to-site{ background:none; border:none; cursor:pointer; font-family:i
   background:var(--white); border-radius:12px; padding:2rem; max-width:520px; width:100%;
   max-height:88vh; overflow-y:auto;
 }
-.modal-wide{ max-width:640px; }
 .modal h2{ font-size:1.2rem; margin-bottom:1.2rem; }
 .modal-actions{ display:flex; justify-content:flex-end; gap:.8rem; margin-top:1.4rem; }
-
-.template-grid{ display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-bottom:1.6rem; }
-.template-card{
-  text-align:left; background:var(--cream); border:1.5px solid var(--sand); border-radius:8px; padding:1.1rem;
-  cursor:pointer; display:flex; flex-direction:column; gap:.3rem;
-}
-.template-card:hover{ border-color:var(--gold); background:var(--white); }
-.template-card strong{ font-family:var(--font-display); font-size:1.05rem; color:var(--ink); }
-.template-card span{ font-size:.85rem; color:var(--ink-soft); }
 
 .card-item-edit{
   border:1.5px solid var(--sand); border-radius:8px; padding:1rem; margin-bottom:1rem; position:relative;
 }
 .card-item-edit .row-remove{ position:absolute; top:.7rem; right:.7rem; }
-.gallery-row{ display:grid; grid-template-columns:1fr auto; gap:.8rem; margin-bottom:.7rem; align-items:center; }
-.gallery-thumbs{ display:flex; gap:.7rem; flex-wrap:wrap; margin-top:.6rem; }
-.gallery-thumb{ position:relative; width:72px; height:72px; }
-.gallery-thumb img{ width:100%; height:100%; object-fit:cover; border-radius:6px; }
-.gallery-thumb .row-remove{ position:absolute; top:-8px; right:-8px; width:24px; height:24px; font-size:.75rem; }
 
 /* ---------- Modal confirmation ---------- */
 .confirm-overlay{
@@ -772,9 +770,6 @@ button.back-to-site{ background:none; border:none; cursor:pointer; font-family:i
   .image-upload--compact{ gap:.7rem; }
   .image-upload--compact .image-upload-preview{ width:56px; height:56px; }
   .image-upload--compact .btn{ flex:1; }
-
-  .gallery-row{ grid-template-columns:1fr; }
-  .gallery-row > .row-remove{ width:100%; border-radius:6px; }
 
   .upload-modal{ padding:1.8rem 1.6rem 1.5rem; max-width:300px; }
   .upload-visual{ width:100px; height:100px; }
