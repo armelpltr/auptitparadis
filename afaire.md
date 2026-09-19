@@ -75,6 +75,12 @@ trois fois. Toute modification du texte (`messageCommande()` dans
 
 ## Confort et contenu
 
+- [ ] **Remplir « Notre équipe ».** La rubrique existe depuis la
+      réorganisation du menu, mais elle reste invisible — section et lien de
+      menu compris — tant qu'aucune fiche n'est publiée. Panel, onglet
+      Réglages, carte « Notre équipe » : un nom suffit, la photo est
+      facultative (l'initiale tient sa place).
+
 - [ ] **Photos réelles des ateliers.** Les trois en place (`assets/ateliers/`)
       sont des illustrations libres de droits, choisies faute de mieux. Une
       photo prise pendant le premier atelier les remplace depuis le panel.

@@ -56,13 +56,17 @@
 
       <nav class="main-nav" aria-label="Navigation principale">
         <ul>
-          <li><a href="#specialites">Nos spécialités</a></li>
-          <!-- Révélé par site-data.js dès qu'une photo est publiée : sans
-               photo, la section n'existe pas et le lien tomberait à vide. -->
+          <!-- Les liens marqués `data-nav-…` sont révélés par site-data.js
+               quand le panel a publié de quoi remplir la section : sans avis,
+               sans article, sans photo ni fiche d'équipe, la section n'existe
+               pas et le lien tomberait à vide. -->
+          <li data-nav-avis hidden><a href="#avis">Ils parlent de nous</a></li>
+          <li data-nav-actualites><a href="#actualites">Actualités</a></li>
           <li data-nav-realisations hidden><a href="#realisations">Réalisations</a></li>
           <li><a href="#histoire">Notre histoire</a></li>
+          <li data-nav-equipe hidden><a href="#equipe">Notre équipe</a></li>
+          <li><a href="#ateliers">Nos ateliers</a></li>
           <li><a href="#horaires">Horaires &amp; accès</a></li>
-          <li><a href="#ateliers">Ateliers</a></li>
           <li><a href="commander.html" class="nav-cta">Commander</a></li>
         </ul>
       </nav>
@@ -74,11 +78,13 @@
 
   <nav class="mobile-nav" id="mobile-nav" aria-label="Navigation mobile" aria-hidden="true">
     <ul>
-      <li><a href="#specialites">Nos spécialités</a></li>
+      <li data-nav-avis hidden><a href="#avis">Ils parlent de nous</a></li>
+      <li data-nav-actualites><a href="#actualites">Actualités</a></li>
       <li data-nav-realisations hidden><a href="#realisations">Réalisations</a></li>
       <li><a href="#histoire">Notre histoire</a></li>
+      <li data-nav-equipe hidden><a href="#equipe">Notre équipe</a></li>
+      <li><a href="#ateliers">Nos ateliers</a></li>
       <li><a href="#horaires">Horaires &amp; accès</a></li>
-      <li><a href="#ateliers">Ateliers</a></li>
       <li><a href="commander.html" class="nav-cta">Commander</a></li>
     </ul>
   </nav>
@@ -87,9 +93,8 @@
 </header>
 
 <main id="main">
-
   <!-- ===================== HERO ===================== -->
-  <section class="hero">
+  <section class="hero" data-fond="cream">
     <svg class="hero-wave" viewBox="0 0 1200 360" preserveAspectRatio="none" aria-hidden="true">
       <path class="wave-path" d="M0,260 C90,230 150,300 230,270 C300,245 320,160 400,140 C470,123 500,190 560,170 C630,148 650,70 730,55 C800,42 840,110 910,95 C980,80 1010,30 1090,25 C1140,22 1170,40 1200,35" />
     </svg>
@@ -122,12 +127,30 @@
   </div>
 
   <!-- ===================== ILS PARLENT DE NOUS ===================== -->
-  <!-- Articles de presse et avis Google choisis un par un depuis le panel.
-       Le contenu ci-dessous sert de repli si Firestore est indisponible. -->
-  <section class="presse" id="presse">
+  <!-- Avis recopiés un par un depuis le panel. Aucun repli écrit en dur :
+       un avis inventé serait une pratique commerciale trompeuse. Sans avis
+       publié, la section, son séparateur et son lien de menu restent
+       masqués — comme pour les réalisations. -->
+  <section class="temoignages" id="avis" data-fond="sand" hidden>
     <div class="section-inner">
       <p class="eyebrow">On en parle</p>
       <h2>Ils parlent de nous</h2>
+
+      <div class="presse-avis" id="presseAvis"></div>
+    </div>
+  </section>
+
+  <div class="divider" aria-hidden="true" hidden>
+    <svg viewBox="0 0 1200 80" preserveAspectRatio="none"><path d="M0,40 C100,40 200,10 400,45 C600,80 700,15 900,40 C1050,62 1150,38 1200,40" /></svg>
+  </div>
+
+  <!-- ===================== ACTUALITÉS ===================== -->
+  <!-- Articles de presse choisis un par un depuis le panel. Le contenu
+       ci-dessous sert de repli si Firestore est indisponible. -->
+  <section class="actualites" id="actualites" data-fond="cream">
+    <div class="section-inner">
+      <p class="eyebrow">Dans la presse</p>
+      <h2>Actualités</h2>
 
       <div class="presse-articles" id="presseArticles">
         <a class="presse-article" href="https://actu.fr/normandie/luc-sur-mer_14384/son-metier-navait-rien-a-voir-fabrice-reprend-une-boulangerie-patisserie-sur-la-cote-de-nacre_64229309.html" target="_blank" rel="noopener">
@@ -140,8 +163,6 @@
           </div>
         </a>
       </div>
-
-      <div class="presse-avis" id="presseAvis"></div>
     </div>
   </section>
 
@@ -149,8 +170,36 @@
     <svg viewBox="0 0 1200 80" preserveAspectRatio="none"><path d="M0,40 C100,40 200,10 400,45 C600,80 700,15 900,40 C1050,62 1150,38 1200,40" /></svg>
   </div>
 
+  <!-- ===================== NOS RÉALISATIONS ===================== -->
+  <!-- Galerie des commandes spéciales, alimentée depuis le panel
+       (`settings/site` → `realisations`). Rien n'est écrit en dur ici :
+       contrairement aux spécialités ou à la presse, une galerie n'a pas de
+       contenu de repli qui vaille — une photo de gâteau ne s'invente pas.
+       D'où la section masquée au départ, révélée par site-data.js dès
+       qu'une photo est publiée, avec son séparateur et son lien de menu. -->
+  <section class="realisations" id="realisations" data-fond="sand" hidden>
+    <div class="section-inner">
+      <p class="eyebrow">Sur commande</p>
+      <h2>Nos réalisations</h2>
+      <p class="realisations-intro" id="realisationsIntro" data-dynamic>
+        Pièces montées, gâteaux d'anniversaire, desserts de baptême ou de
+        mariage : voici ce qui sort du laboratoire quand on nous laisse carte
+        blanche. Une idée en tête ? Passez nous en parler.
+      </p>
+
+      <div class="rea-mosaique" id="realisationsGrille"></div>
+
+      <button type="button" class="btn btn-ghost realisations-plus" id="realisationsPlus"
+              aria-controls="realisationsGrille" aria-expanded="false" hidden></button>
+    </div>
+  </section>
+
+  <div class="divider" aria-hidden="true" hidden>
+    <svg viewBox="0 0 1200 80" preserveAspectRatio="none"><path d="M0,40 C100,40 200,10 400,45 C600,80 700,15 900,40 C1050,62 1150,38 1200,40" /></svg>
+  </div>
+
   <!-- ===================== SPÉCIALITÉS ===================== -->
-  <section class="specialites" id="specialites">
+  <section class="specialites" id="specialites" data-fond="cream">
     <div class="section-inner">
       <p class="eyebrow">Nos produits, depuis l'aube</p>
       <h2>Nos spécialités</h2>
@@ -192,27 +241,39 @@
     <svg viewBox="0 0 1200 80" preserveAspectRatio="none"><path d="M0,40 C100,40 200,10 400,45 C600,80 700,15 900,40 C1050,62 1150,38 1200,40" /></svg>
   </div>
 
-  <!-- ===================== NOS RÉALISATIONS ===================== -->
-  <!-- Galerie des commandes spéciales, alimentée depuis le panel
-       (`settings/site` → `realisations`). Rien n'est écrit en dur ici :
-       contrairement aux spécialités ou à la presse, une galerie n'a pas de
-       contenu de repli qui vaille — une photo de gâteau ne s'invente pas.
-       D'où la section masquée au départ, révélée par site-data.js dès
-       qu'une photo est publiée, avec son séparateur et son lien de menu. -->
-  <section class="realisations" id="realisations" hidden>
+  <!-- ===================== HISTOIRE ===================== -->
+  <section class="histoire" id="histoire" data-fond="sand">
+    <div class="section-inner histoire-grid">
+      <div class="histoire-visual" aria-hidden="true">
+        <div class="histoire-frame">
+          <img src="assets/histoire.jpg" alt="" id="histoireImage">
+        </div>
+      </div>
+      <div class="histoire-text">
+        <p class="eyebrow">Notre histoire</p>
+        <h2 id="histoireTitle" data-dynamic>On se lève avant vous. Depuis longtemps.</h2>
+        <p id="histoireText1" data-dynamic>Au P'tit Paradis, les journées commencent dans le noir. Pendant que Luc&#8209;sur&#8209;Mer dort encore, notre équipe pétrit, façonne, enfourne. Pas parce qu'on y est obligés — parce qu'un pain fait à la main et cuit à l'heure, c'est une chose qui a encore du sens.</p>
+        <p id="histoireText2" data-dynamic>On accueille les habitués qui savent qu'on les reconnaît, et les vacanciers qui reviennent chaque été parce qu'ils n'ont pas trouvé mieux ailleurs. C'est peu, et c'est tout.</p>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider" aria-hidden="true">
+    <svg viewBox="0 0 1200 80" preserveAspectRatio="none"><path d="M0,40 C100,40 200,10 400,45 C600,80 700,15 900,40 C1050,62 1150,38 1200,40" /></svg>
+  </div>
+
+  <!-- ===================== NOTRE ÉQUIPE ===================== -->
+  <!-- Le personnel, présenté depuis le panel (`settings/site` → `equipe`).
+       Rien n'est écrit en dur ici : une équipe d'exemple serait prise pour
+       la vraie. Section, séparateur et lien de menu n'apparaissent qu'à
+       partir d'une fiche publiée. -->
+  <section class="equipe" id="equipe" data-fond="white" hidden>
     <div class="section-inner">
-      <p class="eyebrow">Sur commande</p>
-      <h2>Nos réalisations</h2>
-      <p class="realisations-intro" id="realisationsIntro" data-dynamic>
-        Pièces montées, gâteaux d'anniversaire, desserts de baptême ou de
-        mariage : voici ce qui sort du laboratoire quand on nous laisse carte
-        blanche. Une idée en tête ? Passez nous en parler.
-      </p>
+      <p class="eyebrow">Derrière le comptoir</p>
+      <h2>Notre équipe</h2>
+      <p class="equipe-intro" id="equipeIntro" data-dynamic hidden></p>
 
-      <div class="rea-mosaique" id="realisationsGrille"></div>
-
-      <button type="button" class="btn btn-ghost realisations-plus" id="realisationsPlus"
-              aria-controls="realisationsGrille" aria-expanded="false" hidden></button>
+      <div class="equipe-grille" id="equipeGrille"></div>
     </div>
   </section>
 
@@ -225,7 +286,7 @@
        prochaines dates, lues dans Firestore comme sur stages.html.
        L'inscription, elle, reste sur sa page — c'est là que vivent le
        formulaire et la vérification anti-robot. -->
-  <section class="accueil-ateliers" id="ateliers">
+  <section class="accueil-ateliers" id="ateliers" data-fond="cream">
     <div class="section-inner">
       <p class="eyebrow">Pendant les vacances</p>
       <h2>Les mains dans la farine</h2>
@@ -285,29 +346,8 @@
     <svg viewBox="0 0 1200 80" preserveAspectRatio="none"><path d="M0,40 C100,40 200,10 400,45 C600,80 700,15 900,40 C1050,62 1150,38 1200,40" /></svg>
   </div>
 
-  <!-- ===================== HISTOIRE ===================== -->
-  <section class="histoire" id="histoire">
-    <div class="section-inner histoire-grid">
-      <div class="histoire-visual" aria-hidden="true">
-        <div class="histoire-frame">
-          <img src="assets/histoire.jpg" alt="" id="histoireImage">
-        </div>
-      </div>
-      <div class="histoire-text">
-        <p class="eyebrow">Notre histoire</p>
-        <h2 id="histoireTitle" data-dynamic>On se lève avant vous. Depuis longtemps.</h2>
-        <p id="histoireText1" data-dynamic>Au P'tit Paradis, les journées commencent dans le noir. Pendant que Luc&#8209;sur&#8209;Mer dort encore, notre équipe pétrit, façonne, enfourne. Pas parce qu'on y est obligés — parce qu'un pain fait à la main et cuit à l'heure, c'est une chose qui a encore du sens.</p>
-        <p id="histoireText2" data-dynamic>On accueille les habitués qui savent qu'on les reconnaît, et les vacanciers qui reviennent chaque été parce qu'ils n'ont pas trouvé mieux ailleurs. C'est peu, et c'est tout.</p>
-      </div>
-    </div>
-  </section>
-
-  <div class="divider" aria-hidden="true">
-    <svg viewBox="0 0 1200 80" preserveAspectRatio="none"><path d="M0,40 C100,40 200,10 400,45 C600,80 700,15 900,40 C1050,62 1150,38 1200,40" /></svg>
-  </div>
-
   <!-- ===================== HORAIRES & ACCÈS ===================== -->
-  <section class="horaires" id="horaires">
+  <section class="horaires" id="horaires" data-fond="sea-pale">
     <div class="section-inner horaires-grid">
 
       <div class="horaires-col">
@@ -412,11 +452,14 @@
       <nav class="footer-col footer-nav" aria-label="Navigation secondaire">
         <p class="footer-section-label">Le site</p>
         <ul>
+          <li data-nav-avis hidden><a href="#avis">Ils parlent de nous</a></li>
+          <li data-nav-actualites><a href="#actualites">Actualités</a></li>
+          <li data-nav-realisations hidden><a href="#realisations">Réalisations</a></li>
           <li><a href="#specialites">Nos spécialités</a></li>
           <li><a href="#histoire">Notre histoire</a></li>
+          <li data-nav-equipe hidden><a href="#equipe">Notre équipe</a></li>
+          <li><a href="stages.html">Nos ateliers</a></li>
           <li><a href="#horaires">Horaires &amp; accès</a></li>
-          <li><a href="#avis">Vos avis</a></li>
-          <li><a href="stages.html">Ateliers</a></li>
           <li><a href="commander.html">Commander</a></li>
         </ul>
       </nav>

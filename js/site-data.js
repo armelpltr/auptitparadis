@@ -121,9 +121,15 @@ function applySettings(s) {
     }
   }
 
-  if (s.presse) applyPresse(s.presse);
+  // Présent mais vide = tout a été retiré depuis le panel, on le respecte.
+  // Absent = réglage jamais écrit, le repli du HTML reste en place.
+  if (s.presse) {
+    applyTemoignages(s.presse);
+    applyActualites(s.presse);
+  }
 
   applyRealisations(s.realisations);
+  applyEquipe(s.equipe);
 
   if (s.histoire) {
     setText('histoireTitle', s.histoire.title);
@@ -205,9 +211,31 @@ function applySettings(s) {
   setText('contactIntro', s.contactIntro);
 }
 
-/* ---------- « Ils parlent de nous » ---------- */
-/* Articles de presse et avis Google, choisis un par un depuis le panel.
-   Rien n'est récupéré automatiquement : la sélection est éditoriale. */
+/* ---------- « Ils parlent de nous » et « Actualités » ---------- */
+/* Les avis d'un côté, les articles de presse de l'autre : deux sections sur
+   le site, un seul réglage dans Firestore (`presse.avis` et
+   `presse.articles`). La séparation est éditoriale, pas une migration — les
+   articles déjà publiés n'ont pas eu à changer de place.
+   Rien n'est récupéré automatiquement : la sélection est faite à la main
+   depuis le panel. */
+
+/* Une rubrique facultative se retire avec la vague qui la suit : le dégradé
+   de celle-ci part d'une couleur qui ne serait plus à l'écran. */
+function afficherSection(id, remplie) {
+  const section = document.getElementById(id);
+  if (!section) return;              // page qui ne porte pas cette section
+  section.hidden = !remplie;
+  const separateur = section.nextElementSibling;
+  if (separateur && separateur.classList.contains('divider')) separateur.hidden = !remplie;
+}
+
+/* Un lien de menu vers une section vide ne mène nulle part : les liens des
+   rubriques facultatives naissent masqués dans le HTML et c'est le contenu
+   publié qui les révèle. Réglé à part de la section elle-même : les pages
+   secondaires portent le menu sans porter les sections. */
+function montrerLienNav(cle, visible) {
+  document.querySelectorAll(`[data-nav-${cle}]`).forEach(el => { el.hidden = !visible; });
+}
 
 const LIEN_EXTERNE_SVG =
   '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 17 7M9 7h8v8"/></svg>';
@@ -252,24 +280,70 @@ function renderAvis(av) {
     </figure>`;
 }
 
-function applyPresse(p) {
-  const section  = document.getElementById('presse');
-  const articles = document.getElementById('presseArticles');
-  const avis     = document.getElementById('presseAvis');
-  if (!section || !articles || !avis) return;
+function applyTemoignages(p) {
+  const liste = (Array.isArray(p.avis) ? p.avis : []).filter(a => a.texte);
+  montrerLienNav('avis', liste.length > 0);
 
-  const listeArticles = (Array.isArray(p.articles) ? p.articles : []).filter(a => a.titre);
-  const listeAvis     = (Array.isArray(p.avis)     ? p.avis     : []).filter(a => a.texte);
+  const grille = document.getElementById('presseAvis');
+  if (!grille) return;               // page sans la rubrique
+  grille.innerHTML = liste.map(renderAvis).join('');
+  afficherSection('avis', liste.length > 0);
+}
 
-  articles.innerHTML = listeArticles.map(renderArticlePresse).join('');
-  avis.innerHTML     = listeAvis.map(renderAvis).join('');
+function applyActualites(p) {
+  const liste = (Array.isArray(p.articles) ? p.articles : []).filter(a => a.titre);
+  montrerLienNav('actualites', liste.length > 0);
 
-  // Plus rien à montrer : la section disparaît, et le séparateur qui la suit
-  // avec elle — son dégradé partirait sinon d'une couleur devenue absente.
-  const vide = !listeArticles.length && !listeAvis.length;
-  section.hidden = vide;
-  const separateur = section.nextElementSibling;
-  if (separateur && separateur.classList.contains('divider')) separateur.hidden = vide;
+  const grille = document.getElementById('presseArticles');
+  if (!grille) return;
+  grille.innerHTML = liste.map(renderArticlePresse).join('');
+  afficherSection('actualites', liste.length > 0);
+}
+
+/* ---------- Notre équipe ---------- */
+/* Le personnel, présenté depuis le panel. Aucun repli écrit en dur : une
+   équipe d'exemple serait prise pour la vraie, donc sans fiche publiée la
+   rubrique n'existe pas. */
+
+/* Sans photo, l'initiale du nom tient la place du portrait : la grille garde
+   son rythme même si tout le monde n'a pas encore été photographié. */
+function initiale(nom) {
+  const premiere = String(nom || '').trim().charAt(0);
+  return premiere ? premiere.toUpperCase() : '·';
+}
+
+function renderMembre(m) {
+  const photo = safeUrl(m.photoUrl);
+  const nom   = String(m.nom || '').trim();
+  const portrait = photo
+    ? `<img class="equipe-photo" src="${escapeHTML(photo)}" alt="${escapeHTML(nom)}" loading="lazy">`
+    : `<span class="equipe-monogramme" aria-hidden="true">${escapeHTML(initiale(nom))}</span>`;
+  return `
+    <article class="equipe-membre">
+      ${portrait}
+      <h3>${escapeHTML(nom)}</h3>
+      ${m.role ? `<p class="equipe-role">${escapeHTML(m.role)}</p>` : ''}
+      ${m.mot  ? `<p class="equipe-mot">${escapeHTML(m.mot)}</p>`   : ''}
+    </article>`;
+}
+
+function applyEquipe(e) {
+  const membres = (Array.isArray(e && e.membres) ? e.membres : []).filter(m => m && m.nom);
+  montrerLienNav('equipe', membres.length > 0);
+
+  const grille = document.getElementById('equipeGrille');
+  if (!grille) return;               // page sans la rubrique
+  grille.innerHTML = membres.map(renderMembre).join('');
+
+  // Texte d'introduction facultatif : sans lui, pas de paragraphe vide.
+  const intro = document.getElementById('equipeIntro');
+  const texte = String((e && e.intro) || '').trim();
+  if (intro) {
+    intro.textContent = texte;
+    intro.hidden = !texte;
+  }
+
+  afficherSection('equipe', membres.length > 0);
 }
 
 /* ---------- Nos réalisations ---------- */
@@ -304,25 +378,23 @@ function renderRealisation(photo, index) {
 }
 
 function applyRealisations(r) {
+  photosRealisations = (Array.isArray(r && r.photos) ? r.photos : [])
+    .filter(p => p && safeUrl(p.url));
+  montrerLienNav('realisations', photosRealisations.length > 0);
+
   const section = document.getElementById('realisations');
   const grille  = document.getElementById('realisationsGrille');
   if (!section || !grille) return;   // page sans galerie (commander, légales…)
 
   if (r && r.intro) setText('realisationsIntro', r.intro);
 
-  photosRealisations = (Array.isArray(r && r.photos) ? r.photos : [])
-    .filter(p => p && safeUrl(p.url));
-
-  // Aucune photo : la section, son séparateur et son lien de menu restent
-  // masqués. Mieux vaut pas de rubrique du tout qu'une rubrique vide.
+  // Aucune photo : la section et son séparateur restent masqués. Mieux vaut
+  // pas de rubrique du tout qu'une rubrique vide.
   if (!photosRealisations.length) return;
 
   grille.innerHTML = photosRealisations.map(renderRealisation).join('');
 
-  section.hidden = false;
-  const separateur = section.nextElementSibling;
-  if (separateur && separateur.classList.contains('divider')) separateur.hidden = false;
-  document.querySelectorAll('[data-nav-realisations]').forEach(el => { el.hidden = false; });
+  afficherSection('realisations', true);
 
   const reste = photosRealisations.length - REA_VISIBLES;
   const plus = document.getElementById('realisationsPlus');
@@ -430,6 +502,48 @@ function fermerVisionneuse() {
   declencheur = null;
 }
 
+/* ---------- Dégradés des vagues ---------- */
+/* Chaque vague descend de la couleur de la section qu'elle quitte vers celle
+   de la section qu'elle rejoint. La feuille de style décrit l'enchaînement
+   complet, mais quatre rubriques peuvent manquer (pas d'avis, pas d'article,
+   pas de photo, pas de fiche d'équipe) : l'ordre réel ne se connaît qu'ici,
+   une fois le contenu appliqué. */
+const FONDS_SECTION = {
+  cream:      'var(--cream)',
+  sand:       'var(--sand)',
+  white:      'var(--white)',
+  'sea-pale': 'var(--sea-pale)'
+};
+
+/* La couleur vient d'un attribut du HTML, donc d'une liste fermée : on ne
+   recopie pas sa valeur telle quelle dans une propriété CSS. */
+function fondDe(section) {
+  return section ? FONDS_SECTION[section.dataset.fond] || null : null;
+}
+
+function sectionVisible(depart, sens) {
+  for (let el = depart[sens]; el; el = el[sens]) {
+    if (el.tagName === 'SECTION' && !el.hidden) return el;
+  }
+  return null;
+}
+
+function harmoniserVagues() {
+  document.querySelectorAll('#main > .divider').forEach(vague => {
+    if (vague.hidden) return;
+    const avant = fondDe(sectionVisible(vague, 'previousElementSibling'));
+    const apres = fondDe(sectionVisible(vague, 'nextElementSibling'));
+    // Une extrémité manque (haut de page, pied de page, autre gabarit) : le
+    // dégradé écrit dans la feuille de style reste le meilleur choix.
+    if (!avant || !apres) return;
+    // Une vague retournée retourne aussi son dégradé.
+    const [haut, bas] = vague.classList.contains('divider-flip')
+      ? [apres, avant]
+      : [avant, apres];
+    vague.style.background = `linear-gradient(to bottom, ${haut}, ${bas})`;
+  });
+}
+
 /* ---------- Utilitaires de rendu ---------- */
 function escapeHTML(str) {
   return String(str ?? '').replace(/[&<>"']/g, c => ({
@@ -478,5 +592,8 @@ async function applyNoelTheme() {
     showLoadError();
   } finally {
     revealDynamic();
+    // Les rubriques facultatives ont pris leur état définitif : les vagues
+    // peuvent s'accorder à ce qui reste visible.
+    harmoniserVagues();
   }
 })();

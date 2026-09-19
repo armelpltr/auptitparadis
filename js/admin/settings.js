@@ -1,5 +1,6 @@
 // ============================================================
-// ONGLET RÉGLAGES — accroche, spécialités, histoire, horaires, contact
+// ONGLET RÉGLAGES — accroche, avis, actualités, réalisations, spécialités,
+// histoire, équipe, horaires, contact
 // ============================================================
 
 import { db } from "../firebase-config.js";
@@ -38,6 +39,14 @@ const DEFAULTS = {
   realisations: {
     intro: "Pièces montées, gâteaux d'anniversaire, desserts de baptême ou de mariage : voici ce qui sort du laboratoire quand on nous laisse carte blanche. Une idée en tête ? Passez nous en parler.",
     photos: []
+  },
+  /* Les deux listes vivent toujours dans `presse` : sur le site, les avis
+     tiennent la rubrique « Ils parlent de nous » et les articles celle des
+     « Actualités ». La séparation est éditoriale, pas une migration — rien
+     n'a eu à bouger dans Firestore. */
+  equipe: {
+    intro: "Derrière le comptoir comme au fournil, les visages que vous croisez chaque matin.",
+    membres: []
   },
   histoire: {
     title: "On se lève avant vous. Depuis longtemps.",
@@ -283,6 +292,65 @@ function renderRealisations(r) {
   (r.photos || []).forEach(addRealisationRow);
 }
 
+/* ---------- Notre équipe ---------- */
+/* Une ligne par personne, dans l'ordre où elles paraîtront. Seul le nom est
+   obligatoire : une fiche sans nom n'a rien à présenter, et c'est ce qui sert
+   de filtre à l'enregistrement. */
+function addEquipeMembreRow({ nom = '', role = '', mot = '', photoUrl = '' } = {}) {
+  const list = document.getElementById('equipeList');
+  const row = document.createElement('div');
+  row.className = 'card-item-edit equipe-edit';
+  row.innerHTML = `
+    <div class="equipe-actions">
+      <button type="button" class="icon-btn" data-action="up" title="Monter">${IB_ICONS.up}</button>
+      <button type="button" class="icon-btn" data-action="down" title="Descendre">${IB_ICONS.down}</button>
+      <button type="button" class="row-remove" title="Retirer cette personne">${SVG_X}</button>
+    </div>
+    <div class="form-row-grid">
+      <div class="form-row"><label>Nom affiché</label><input type="text" class="eq-nom" placeholder="Fabrice" value="${escapeAttr(nom)}"></div>
+      <div class="form-row"><label>Rôle</label><input type="text" class="eq-role" placeholder="Boulanger" value="${escapeAttr(role)}"></div>
+    </div>
+    <div class="form-row"><label>Photo</label><div class="eq-photo-mount"></div></div>
+    <div class="form-row"><label>Quelques mots (facultatif)</label><textarea class="eq-mot" rows="2">${escapeAttr(mot)}</textarea></div>
+  `;
+
+  row.querySelector('.eq-photo-mount').appendChild(
+    createImageUploader({ className: 'eq-photo', value: photoUrl, folder: 'equipe' })
+  );
+
+  /* Réordonner, c'est déplacer la ligne : pas de champ « position » à tenir à
+     jour, et l'ordre lu à l'enregistrement est celui qu'on voit. */
+  row.querySelector('[data-action="up"]').addEventListener('click', () => {
+    const precedente = row.previousElementSibling;
+    if (precedente) precedente.before(row);
+  });
+  row.querySelector('[data-action="down"]').addEventListener('click', () => {
+    const suivante = row.nextElementSibling;
+    if (suivante) suivante.after(row);
+  });
+  // Portée sur les actions de la fiche : l'uploader a lui aussi un
+  // `.row-remove`, qui ne retire que la photo et doit garder son rôle.
+  row.querySelector('.equipe-actions .row-remove').addEventListener('click', () => row.remove());
+
+  list.appendChild(row);
+}
+
+function collectEquipe() {
+  const membres = Array.from(document.querySelectorAll('#equipeList .equipe-edit')).map(r => ({
+    nom:      r.querySelector('.eq-nom').value.trim(),
+    role:     r.querySelector('.eq-role').value.trim(),
+    mot:      r.querySelector('.eq-mot').value.trim(),
+    photoUrl: r.querySelector('.eq-photo').value.trim()
+  })).filter(m => m.nom);
+
+  return { intro: val('set-equipe-intro'), membres };
+}
+
+function renderEquipe(e) {
+  document.getElementById('equipeList').innerHTML = '';
+  (e.membres || []).forEach(addEquipeMembreRow);
+}
+
 /* ---------- Spécialités et leurs produits vedettes ---------- */
 function addProduitRowForIndex(i, nom = '', description = '', imageUrl = '', tag = '') {
   const list = document.getElementById(`spec-produits-${i}`);
@@ -381,10 +449,12 @@ export async function loadSettings() {
   setVal('set-histoire-text2', DEFAULTS.histoire.text2);
 
   setVal('set-realisations-intro', DEFAULTS.realisations.intro);
+  setVal('set-equipe-intro', DEFAULTS.equipe.intro);
 
   specState = DEFAULTS.specialites.map(s => ({ ...s, produits: [] }));
   renderPresse(DEFAULTS.presse);
   renderRealisations(DEFAULTS.realisations);
+  renderEquipe(DEFAULTS.equipe);
 
   const container = document.getElementById('hoursRowsContainer');
   container.innerHTML = '';
@@ -412,6 +482,11 @@ export async function loadSettings() {
     if (s.realisations) {
       if (s.realisations.intro) setVal('set-realisations-intro', s.realisations.intro);
       renderRealisations(s.realisations);
+    }
+
+    if (s.equipe) {
+      if (s.equipe.intro) setVal('set-equipe-intro', s.equipe.intro);
+      renderEquipe(s.equipe);
     }
 
     if (s.histoire) {
@@ -484,6 +559,10 @@ const SETTINGS_SECTIONS = {
   realisations: {
     label: '« Nos réalisations »',
     collect: () => ({ realisations: collectRealisations() })
+  },
+  equipe: {
+    label: '« Notre équipe »',
+    collect: () => ({ equipe: collectEquipe() })
   },
   histoire: {
     label: '« Notre histoire »',
@@ -558,6 +637,7 @@ export function initSettings() {
 
   document.getElementById('addPresseArticle').addEventListener('click', () => addPresseArticleRow());
   document.getElementById('addPresseAvis').addEventListener('click', () => addPresseAvisRow());
+  document.getElementById('addEquipeMembre').addEventListener('click', () => addEquipeMembreRow());
 
   /* ---- Réalisations : import groupé, par dépôt ou par sélection ---- */
   const depot = document.getElementById('realisationsDepot');
@@ -619,7 +699,7 @@ export function initSettings() {
     // n'émet ni 'input' ni 'change'.
     // `#addRealisation` n'y figure pas : il ouvre un sélecteur de fichiers,
     // qu'on peut annuler. C'est l'import réussi qui marque la modification.
-    if (e.target.closest('#addSpecBtn, #addHourRow, #addPresseArticle, #addPresseAvis, .add-spec-produit, .row-remove, .realisation-actions .icon-btn')) markDirty();
+    if (e.target.closest('#addSpecBtn, #addHourRow, #addPresseArticle, #addPresseAvis, #addEquipeMembre, .add-spec-produit, .row-remove, .realisation-actions .icon-btn, .equipe-actions .icon-btn')) markDirty();
   });
 
   // Dernier filet si l'onglet est fermé ou la page rechargée

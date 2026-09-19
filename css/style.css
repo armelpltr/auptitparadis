@@ -101,8 +101,10 @@ p{ margin:0 0 1em; color:var(--ink-soft); }
 }
 .site-header.is-scrolled .scroll-progress{ opacity:1; }
 
+/* Plus large que le contenu (1140px) : le menu à huit entrées ne tenait pas
+   sans écraser le logo. */
 .header-inner{
-  max-width:var(--max-w); margin:0 auto; padding:1.1rem 1.5rem;
+  max-width:min(96vw, 1320px); margin:0 auto; padding:1.1rem 1.5rem;
   display:flex; align-items:center; justify-content:space-between;
   transition:padding .4s var(--ease);
 }
@@ -152,9 +154,9 @@ p{ margin:0 0 1em; color:var(--ink-soft); }
    2,4 rem d'intervalle : la barre débordait, et comme un élément de flex
    se laisse comprimer sous sa largeur de contenu, c'étaient les libellés
    eux-mêmes qui se coupaient en deux lignes. */
-.main-nav ul{ display:flex; align-items:center; gap:clamp(.9rem, 1.5vw, 1.35rem); }
+.main-nav ul{ display:flex; align-items:center; gap:clamp(.7rem, 1.1vw, 1rem); }
 .main-nav a{
-  font-size:.74rem; font-weight:700; letter-spacing:.14em; text-transform:uppercase;
+  font-size:.74rem; font-weight:700; letter-spacing:.1em; text-transform:uppercase;
   color:var(--ink-soft); position:relative; padding:.4em 0;
   /* Un libellé ne se coupe jamais : il tient sur une ligne ou la barre
      passe au menu déroulant, il n'y a pas d'entre-deux acceptable. */
@@ -288,12 +290,18 @@ p{ margin:0 0 1em; color:var(--ink-soft); }
 .divider-flip{ transform:scaleY(-1); }
 .divider-flip svg{ animation-duration:5.5s; animation-delay:-2s; }
 
-/* Dégradés inter-sections — couleurs inversées pour les .divider-flip */
-.hero       + .divider{ background:linear-gradient(to bottom, var(--cream), var(--sand)); }
-.presse     + .divider{ background:linear-gradient(to bottom, var(--sand),  var(--cream)); }
-.specialites + .divider{ background:linear-gradient(to bottom, var(--sand),  var(--cream)); }
+/* Dégradés inter-sections — couleurs inversées pour les .divider-flip.
+   Ces valeurs décrivent l'enchaînement complet des sections ; quand l'une
+   d'elles est vide et disparaît, site-data.js recalcule le dégradé de la
+   vague concernée à partir des sections réellement visibles (attribut
+   data-fond). */
+.hero        + .divider{ background:linear-gradient(to bottom, var(--cream), var(--sand)); }
+.temoignages + .divider{ background:linear-gradient(to bottom, var(--sand),  var(--cream)); }
+.actualites  + .divider{ background:linear-gradient(to bottom, var(--cream), var(--sand)); }
 .realisations + .divider{ background:linear-gradient(to bottom, var(--sand),  var(--cream)); }
-.histoire    + .divider{ background:linear-gradient(to bottom, var(--sand),  var(--sea-pale)); }
+.specialites + .divider{ background:linear-gradient(to bottom, var(--sand),  var(--cream)); }
+.histoire    + .divider{ background:linear-gradient(to bottom, var(--sand),  var(--white)); }
+.equipe      + .divider{ background:linear-gradient(to bottom, var(--white), var(--cream)); }
 .horaires    + .divider{ background:linear-gradient(to bottom, var(--white), var(--sea-pale)); }
 
 @keyframes wave-breathe{
@@ -308,7 +316,8 @@ p{ margin:0 0 1em; color:var(--ink-soft); }
 /* ---------- Spécialités ---------- */
 .specialites{ background:var(--cream); }
 .specialites .section-inner{ max-width:min(96vw, 1560px); }
-.specialites h2, .histoire h2, .horaires h2, .contact h2{ font-size:clamp(2rem, 4vw, 2.6rem); }
+.specialites h2, .histoire h2, .horaires h2, .contact h2,
+.equipe h2{ font-size:clamp(2rem, 4vw, 2.6rem); }
 .cards{ display:grid; grid-template-columns:repeat(3, 1fr); gap:2rem; margin-top:2.5rem; }
 /* Une colonne de grille ne descend pas sous la largeur min-content de son
    contenu : sans ça, la photo d'un produit élargit la carte au-delà de l'écran
@@ -601,13 +610,6 @@ p{ margin:0 0 1em; color:var(--ink-soft); }
   color:var(--gold-deep); text-decoration:underline; text-underline-offset:3px;
 }
 
-/* ---------- Avis Google (widget Featurable) ---------- */
-.avis{ background:var(--cream); }
-.avis .section-inner{ padding-top:4rem; padding-bottom:4rem; }
-/* Le widget s'injecte après coup : on réserve la place pour éviter que la
-   page ne saute quand il arrive. */
-.avis [data-featurable-async]{ min-height:260px; margin-top:2rem; }
-
 /* ---------- Footer ---------- */
 .site-footer{
   position:relative;
@@ -812,10 +814,13 @@ p{ margin:0 0 1em; color:var(--ink-soft); }
 .table-legale td{ color:var(--ink-soft); }
 
 /* =========================================================
-   Ils parlent de nous (presse + avis choisis à la main)
+   Ils parlent de nous (avis choisis à la main) et Actualités
+   (articles de presse) — deux sections, un même jeu de cartes
    ========================================================= */
-.presse{ background:var(--sand); }
-.presse .section-inner{ padding-top:4.5rem; padding-bottom:4.5rem; }
+.temoignages{ background:var(--sand); }
+.actualites{ background:var(--cream); }
+.temoignages .section-inner,
+.actualites .section-inner{ padding-top:4.5rem; padding-bottom:4.5rem; }
 
 /* --- Articles de presse --- */
 .presse-articles{
@@ -895,6 +900,39 @@ p{ margin:0 0 1em; color:var(--ink-soft); }
 .avis-source{ font-weight:400; color:var(--ink-soft); }
 
 /* =========================================================
+   Notre équipe
+   ========================================================= */
+.equipe{ background:var(--white); }
+.equipe .section-inner{ padding-top:4.5rem; padding-bottom:4.5rem; }
+.equipe-intro{ max-width:62ch; }
+.equipe-intro[hidden]{ display:none; }
+.equipe-grille{
+  display:grid; grid-template-columns:repeat(auto-fit, minmax(210px, 1fr));
+  gap:2.6rem 1.8rem; margin-top:2.6rem;
+}
+.equipe-membre{ text-align:center; }
+/* Même gabarit pour la photo et le monogramme : la grille ne bouge pas
+   selon que la fiche a une photo ou non. */
+.equipe-photo,
+.equipe-monogramme{
+  width:158px; height:158px; border-radius:50%;
+  margin:0 auto 1rem; object-fit:cover;
+  box-shadow:0 16px 34px -24px rgba(33,28,23,.6);
+}
+.equipe-monogramme{
+  display:grid; place-items:center;
+  background:var(--sand); color:var(--gold-deep);
+  font-family:var(--font-display); font-size:2.8rem; line-height:1;
+  user-select:none;
+}
+.equipe-membre h3{ font-size:1.16rem; margin:0 0 .15em; }
+.equipe-role{
+  font-size:.72rem; font-weight:700; letter-spacing:.14em; text-transform:uppercase;
+  color:var(--gold-deep); margin:0 0 .7em;
+}
+.equipe-mot{ font-size:.93rem; margin:0; }
+
+/* =========================================================
    Responsive
    ========================================================= */
 @media (max-width: 900px){
@@ -907,20 +945,28 @@ p{ margin:0 0 1em; color:var(--ink-soft); }
 
 /* Le détail du badge (« ouvre mardi à 7h00 ») est la première chose qu'on
    sacrifie quand la barre se remplit : l'état ouvert/fermé, lui, reste.
-   Sans cela, il ne reste pas la place des six entrées du menu. */
-@media (max-width: 1280px){
+   Le seuil suit le nombre d'entrées : à huit, il ne reste la place du détail
+   qu'au-delà de 1340px. */
+@media (max-width: 1340px){
   .open-badge .open-detail{ display:none; }
 }
 
 /* Seuil du menu déroulant. Il était à 720px du temps où la barre portait
-   cinq entrées ; « Réalisations » en fait une sixième, et en dessous de
-   cette largeur les libellés se marchent dessus. */
-@media (max-width: 980px){
+   cinq entrées, puis à 980px avec « Réalisations » en sixième. Elle en
+   compte huit depuis « Ils parlent de nous », « Actualités » et « Notre
+   équipe » : mesure faite, elles tiennent jusqu'à 1241px et pas en dessous. */
+@media (max-width: 1240px){
   .nav-right-group .main-nav{ display:none; }
   .nav-toggle{ display:flex; }
 }
 
 @media (max-width: 720px){
+  /* Deux fiches d'équipe par ligne plutôt qu'une : à 158px de photo, la
+     colonne unique laissait la moitié de l'écran vide. */
+  .equipe-grille{ grid-template-columns:repeat(2, 1fr); gap:2rem 1.2rem; }
+  .equipe-photo, .equipe-monogramme{ width:128px; height:128px; }
+  .equipe-monogramme{ font-size:2.2rem; }
+
   /* La pastille de défilement est en absolu en bas du hero, dont le contenu
      est centré : sur un écran court elle passait par-dessus les deux boutons.
      On lui réserve sa place en remontant le contenu. */
@@ -936,7 +982,8 @@ p{ margin:0 0 1em; color:var(--ink-soft); }
   .cards > .card:last-child:nth-child(3n+1){ grid-column:auto; }
   /* Presse et avis : une colonne, cartes un peu plus serrées */
   .presse-articles, .presse-avis{ grid-template-columns:1fr; gap:1.1rem; }
-  .presse .section-inner{ padding-top:3.4rem; padding-bottom:3.4rem; }
+  .temoignages .section-inner,
+  .actualites .section-inner{ padding-top:3.4rem; padding-bottom:3.4rem; }
   .presse-article-corps, .avis-carte{ padding:1.25rem 1.3rem; }
 
   /* Les tableaux légaux ne rétrécissent pas indéfiniment : ils défilent
@@ -1146,16 +1193,17 @@ p{ margin:0 0 1em; color:var(--ink-soft); }
   background:radial-gradient(circle at 50% 18%, rgba(241,230,211,.72) 0%, rgba(251,246,238,.5) 55%);
 }
 .theme-noel .specialites,
-.theme-noel .avis,
+.theme-noel .actualites,
 .theme-noel .contact,
 .theme-noel .page-legale,
 .theme-noel .commande-head{ background:rgba(251,246,238,.8); }
 .theme-noel .histoire,
-.theme-noel .presse,
+.theme-noel .temoignages,
 .theme-noel .realisations,
 .theme-noel .commande-body,
 .theme-noel .commande-closed{ background:rgba(241,230,211,.78); }
 .theme-noel .horaires{ background:rgba(231,238,236,.82); }
+.theme-noel .equipe{ background:rgba(255,255,255,.78); }
 
 /* ---- Bonnet sur le grand logo du hero ---- */
 /* Le conteneur épouse l'image, ce qui permet de placer le bonnet en
@@ -1795,7 +1843,7 @@ p{ margin:0 0 1em; color:var(--ink-soft); }
    ========================================================= */
 
 .accueil-ateliers{ background:var(--cream); }
-.accueil-ateliers + .divider{ background:linear-gradient(to bottom, var(--cream), var(--sand)); }
+.accueil-ateliers + .divider{ background:linear-gradient(to bottom, var(--cream), var(--sea-pale)); }
 .accueil-ateliers h2{ font-size:clamp(2rem, 4vw, 2.6rem); }
 .accueil-ateliers .ateliers-intro{ max-width:660px; }
 .accueil-ateliers .stage-atouts{ max-width:1000px; }

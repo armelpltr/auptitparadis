@@ -439,6 +439,15 @@ button.back-to-site{ background:none; border:none; cursor:pointer; font-family:i
 }
 .card-item-edit .row-remove{ position:absolute; top:.7rem; right:.7rem; }
 
+/* Fiches d'équipe : l'ordre compte (qui vient en premier), d'où les flèches
+   à côté du bouton de retrait. La barre reste dans le flux plutôt qu'en
+   absolu : trois boutons dans le coin recouvriraient le champ « Rôle ». */
+.equipe-actions{
+  display:flex; justify-content:flex-end; align-items:center; gap:.4rem;
+  margin-bottom:.5rem;
+}
+.equipe-actions .row-remove{ position:static; }
+
 /* ---------- Modal confirmation ---------- */
 .confirm-overlay{
   position:fixed; inset:0; background:rgba(33,28,23,.55); z-index:500;

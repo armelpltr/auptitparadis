@@ -207,23 +207,25 @@
 
       <div class="admin-card">
         <h2>Ils parlent de nous</h2>
-        <p class="admin-card-hint">Section affichée juste au-dessus de « Nos spécialités ». Elle n'apparaît sur le site que si elle contient au moins un article ou un avis.</p>
-
-        <h3 class="admin-subtitle">Articles de presse</h3>
-        <div id="presseArticlesList"></div>
-        <button type="button" class="btn btn-ghost btn-small" id="addPresseArticle">+ Ajouter un article</button>
-
-        <h3 class="admin-subtitle">Avis Google</h3>
-        <p class="admin-card-hint">Copiez-collez un avis réel depuis votre fiche Google. N'inventez rien : un faux avis est une pratique commerciale trompeuse.</p>
+        <p class="admin-card-hint">
+          Les avis de vos clients, première rubrique de l'accueil. Copiez-collez
+          un avis réel depuis votre fiche Google. N'inventez rien : un faux avis
+          est une pratique commerciale trompeuse. Sans avis, la rubrique
+          n'apparaît pas sur le site, menu compris.
+        </p>
         <div id="presseAvisList"></div>
         <button type="button" class="btn btn-ghost btn-small" id="addPresseAvis">+ Ajouter un avis</button>
       </div>
 
       <div class="admin-card">
-        <h2>Nos spécialités</h2>
-        <p class="admin-card-hint">Fiches affichées juste sous l'accueil — 3 par ligne sur le site.</p>
-        <div id="specList"></div>
-        <button type="button" class="btn btn-ghost btn-small" id="addSpecBtn">+ Ajouter une fiche</button>
+        <h2>Actualités</h2>
+        <p class="admin-card-hint">
+          Les articles de presse parus sur la boulangerie, affichés juste après
+          les avis. Sans article, la rubrique n'apparaît pas sur le site, menu
+          compris.
+        </p>
+        <div id="presseArticlesList"></div>
+        <button type="button" class="btn btn-ghost btn-small" id="addPresseArticle">+ Ajouter un article</button>
       </div>
 
       <div class="admin-card">
@@ -249,6 +251,17 @@
       </div>
 
       <div class="admin-card">
+        <h2>Nos spécialités</h2>
+        <p class="admin-card-hint">
+          Fiches produits — 3 par ligne sur le site. La rubrique ne figure plus
+          dans le menu, mais elle reste sur l'accueil : le bouton « Voir nos
+          produits » du haut de page y mène.
+        </p>
+        <div id="specList"></div>
+        <button type="button" class="btn btn-ghost btn-small" id="addSpecBtn">+ Ajouter une fiche</button>
+      </div>
+
+      <div class="admin-card">
         <h2>Notre histoire</h2>
         <div class="form-row"><label>Titre</label><input type="text" id="set-histoire-title"></div>
         <div class="form-row"><label>Paragraphe 1</label><textarea id="set-histoire-text1" rows="3"></textarea></div>
@@ -257,6 +270,22 @@
           <label>Photo</label>
           <div id="histoireImageMount"></div>
         </div>
+      </div>
+
+      <div class="admin-card">
+        <h2>Notre équipe</h2>
+        <p class="admin-card-hint">
+          Les personnes présentées sur l'accueil, dans l'ordre d'affichage —
+          réglez-le avec les flèches. Sans photo, l'initiale du nom tient la
+          place du portrait. La rubrique n'apparaît sur le site, menu compris,
+          qu'à partir d'une fiche publiée.
+        </p>
+        <div class="form-row">
+          <label for="set-equipe-intro">Texte d'introduction</label>
+          <textarea id="set-equipe-intro" rows="3"></textarea>
+        </div>
+        <div id="equipeList"></div>
+        <button type="button" class="btn btn-ghost btn-small" id="addEquipeMembre">+ Ajouter une personne</button>
       </div>
 
       <div class="admin-card">
