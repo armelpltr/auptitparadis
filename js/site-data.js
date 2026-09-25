@@ -387,11 +387,11 @@ function renderMembre(m) {
     </button>`;
 }
 
-/* Aperçu de la mise en page avant que la vraie équipe soit saisie :
-   seulement avec `?apercu-equipe` dans l'adresse, jamais pour un visiteur
-   ordinaire — une équipe inventée serait prise pour la vraie. */
+/* Fiches d'exemple, affichées tant qu'aucun membre n'est saisi dans
+   `settings/site` → `equipe`. Choix délibéré de la boutique, en attendant
+   la vraie équipe : dès qu'une fiche réelle est publiée, elles disparaissent. */
 const EQUIPE_EXEMPLE = {
-  intro: "Aperçu avec des fiches d'exemple — visible seulement à cette adresse.",
+  intro: 'Derrière le comptoir comme au fournil, les visages que vous croisez chaque matin.',
   membres: [
     { nom: 'Marc',    metier: 'patrons',    role: 'Patron',             mot: "On a repris la maison pour ne jamais tricher sur le pain.", prefere: "Le pain à l'ancre", depuis: '2023' },
     { nom: 'Claire',  metier: 'patrons',    role: 'Patronne',           mot: 'Chaque matin, je goûte tout avant vous.', prefere: 'Le flan vanille', depuis: '2023' },
@@ -405,7 +405,8 @@ const EQUIPE_EXEMPLE = {
 };
 
 function applyEquipe(e) {
-  if (new URLSearchParams(location.search).has('apercu-equipe')) e = EQUIPE_EXEMPLE;
+  const reelle = (Array.isArray(e && e.membres) ? e.membres : []).some(m => m && m.nom);
+  if (!reelle) e = EQUIPE_EXEMPLE;
   const membres = (Array.isArray(e && e.membres) ? e.membres : [])
     .filter(m => m && m.nom)
     // Regroupées par métier ; à métier égal, l'ordre du panel est gardé.
