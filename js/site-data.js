@@ -387,7 +387,25 @@ function renderMembre(m) {
     </button>`;
 }
 
+/* Aperçu de la mise en page avant que la vraie équipe soit saisie :
+   seulement avec `?apercu-equipe` dans l'adresse, jamais pour un visiteur
+   ordinaire — une équipe inventée serait prise pour la vraie. */
+const EQUIPE_EXEMPLE = {
+  intro: "Aperçu avec des fiches d'exemple — visible seulement à cette adresse.",
+  membres: [
+    { nom: 'Marc',    metier: 'patrons',    role: 'Patron',             mot: "On a repris la maison pour ne jamais tricher sur le pain.", prefere: "Le pain à l'ancre", depuis: '2023' },
+    { nom: 'Claire',  metier: 'patrons',    role: 'Patronne',           mot: 'Chaque matin, je goûte tout avant vous.', prefere: 'Le flan vanille', depuis: '2023' },
+    { nom: 'Thomas',  metier: 'boulangers', role: 'Chef boulanger',     mot: 'Mon réveil sonne à 2 h 45. Ça vaut le coup.', prefere: 'La tradition', depuis: '2019' },
+    { nom: 'Mehdi',   metier: 'boulangers', role: 'Boulanger',          mot: "Le levain, c'est un animal qu'on nourrit.", prefere: 'La miche de campagne', depuis: '2021' },
+    { nom: 'Julie',   metier: 'patissiers', role: 'Cheffe pâtissière',  mot: 'Pas trop sucré, toujours de saison.', prefere: 'Les galets', depuis: '2020' },
+    { nom: 'Antoine', metier: 'patissiers', role: 'Pâtissier',          mot: "Mon croissant, je le veux feuilleté jusqu'au cœur.", prefere: 'Le croissant', depuis: '2022' },
+    { nom: 'Sarah',   metier: 'vente',      role: 'Vendeuse',           mot: 'Je connais le pain préféré de la moitié de Luc.', prefere: 'La baguette bien cuite', depuis: '2021' },
+    { nom: 'Inès',    metier: 'vente',      role: 'Vendeuse' }
+  ]
+};
+
 function applyEquipe(e) {
+  if (new URLSearchParams(location.search).has('apercu-equipe')) e = EQUIPE_EXEMPLE;
   const membres = (Array.isArray(e && e.membres) ? e.membres : [])
     .filter(m => m && m.nom)
     // Regroupées par métier ; à métier égal, l'ordre du panel est gardé.
