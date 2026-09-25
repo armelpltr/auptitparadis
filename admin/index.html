@@ -187,152 +187,14 @@
     <p class="admin-status" id="adminStatus" hidden></p>
 
     <nav class="admin-tabs">
-      <button type="button" class="admin-tab is-active" data-tab="settings">Réglages du site</button>
-      <button type="button" class="admin-tab" data-tab="orders">Commandes</button>
+      <button type="button" class="admin-tab is-active" data-tab="orders">Commandes</button>
       <button type="button" class="admin-tab" data-tab="noel">Catalogue Noël</button>
       <button type="button" class="admin-tab" data-tab="stages">Ateliers</button>
       <button type="button" class="admin-tab" data-tab="team">Équipe</button>
     </nav>
 
-    <!-- ===================== ONGLET RÉGLAGES ===================== -->
-    <section class="admin-panel is-active" id="panel-settings">
-
-      <div class="admin-card">
-        <h2>Accroche (page d'accueil)</h2>
-        <div class="form-row">
-          <label for="set-tagline">Phrase sous le logo</label>
-          <input type="text" id="set-tagline">
-        </div>
-      </div>
-
-      <div class="admin-card">
-        <h2>Ils parlent de nous</h2>
-        <p class="admin-card-hint">
-          Les avis de vos clients, première rubrique de l'accueil. Copiez-collez
-          un avis réel depuis votre fiche Google. N'inventez rien : un faux avis
-          est une pratique commerciale trompeuse. Sans avis, la rubrique
-          n'apparaît pas sur le site, menu compris.
-        </p>
-        <div id="presseAvisList"></div>
-        <button type="button" class="btn btn-ghost btn-small" id="addPresseAvis">+ Ajouter un avis</button>
-      </div>
-
-      <div class="admin-card">
-        <h2>Actualités</h2>
-        <p class="admin-card-hint">
-          Les articles de presse parus sur la boulangerie, affichés juste après
-          les avis. Sans article, la rubrique n'apparaît pas sur le site, menu
-          compris.
-        </p>
-        <div id="presseArticlesList"></div>
-        <button type="button" class="btn btn-ghost btn-small" id="addPresseArticle">+ Ajouter un article</button>
-      </div>
-
-      <div class="admin-card">
-        <h2>Nos réalisations</h2>
-        <p class="admin-card-hint">
-          Photos de commandes spéciales — pièces montées, gâteaux d'anniversaire,
-          buffets. Les six premières s'affichent sur l'accueil, les suivantes
-          derrière un bouton « Voir plus » : l'ordre compte, réglez-le avec les
-          flèches. La rubrique n'apparaît sur le site, menu compris, qu'à partir
-          d'une photo publiée.
-        </p>
-        <div class="form-row">
-          <label for="set-realisations-intro">Texte d'introduction</label>
-          <textarea id="set-realisations-intro" rows="3"></textarea>
-        </div>
-        <div id="realisationsList" class="realisations-list"></div>
-
-        <div class="depot-photos" id="realisationsDepot">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V4m0 0L7.5 8.5M12 4l4.5 4.5"/><path d="M3.5 15v3a2 2 0 0 0 2 2h13a2 2 0 0 0 2-2v-3"/></svg>
-          <strong>Glissez vos photos ici</strong>
-          <span>plusieurs à la fois, ou <button type="button" class="lien-bouton" id="addRealisation">choisissez-les sur votre ordinateur</button></span>
-        </div>
-      </div>
-
-      <div class="admin-card">
-        <h2>Nos spécialités</h2>
-        <p class="admin-card-hint">
-          Fiches produits — 3 par ligne sur le site. La rubrique ne figure plus
-          dans le menu, mais elle reste sur l'accueil : le bouton « Voir nos
-          produits » du haut de page y mène.
-        </p>
-        <div id="specList"></div>
-        <button type="button" class="btn btn-ghost btn-small" id="addSpecBtn">+ Ajouter une fiche</button>
-      </div>
-
-      <div class="admin-card">
-        <h2>Notre histoire</h2>
-        <div class="form-row"><label>Titre</label><input type="text" id="set-histoire-title"></div>
-        <div class="form-row"><label>Paragraphe 1</label><textarea id="set-histoire-text1" rows="3"></textarea></div>
-        <div class="form-row"><label>Paragraphe 2</label><textarea id="set-histoire-text2" rows="3"></textarea></div>
-        <div class="form-row">
-          <label>Photo</label>
-          <div id="histoireImageMount"></div>
-        </div>
-      </div>
-
-      <div class="admin-card">
-        <h2>Notre équipe</h2>
-        <p class="admin-card-hint">
-          Les personnes présentées sur l'accueil, dans l'ordre d'affichage —
-          réglez-le avec les flèches. Sans photo, l'initiale du nom tient la
-          place du portrait. La rubrique n'apparaît sur le site, menu compris,
-          qu'à partir d'une fiche publiée.
-        </p>
-        <div class="form-row">
-          <label for="set-equipe-intro">Texte d'introduction</label>
-          <textarea id="set-equipe-intro" rows="3"></textarea>
-        </div>
-        <div id="equipeList"></div>
-        <button type="button" class="btn btn-ghost btn-small" id="addEquipeMembre">+ Ajouter une personne</button>
-      </div>
-
-      <div class="admin-card">
-        <h2>Horaires</h2>
-        <div id="hoursRowsContainer"></div>
-        <button type="button" class="btn btn-ghost btn-small" id="addHourRow">+ Ajouter une ligne</button>
-      </div>
-
-      <div class="admin-card">
-        <h2>Adresse &amp; contact</h2>
-        <div class="form-row-grid">
-          <div class="form-row"><label>Adresse — ligne 1</label><input type="text" id="set-address1" placeholder="12 rue de la Mer"></div>
-          <div class="form-row"><label>Adresse — ligne 2</label><input type="text" id="set-address2" placeholder="14530 Luc-sur-Mer"></div>
-        </div>
-        <div class="form-row-grid">
-          <div class="form-row"><label>Téléphone (numéro, ex. 0231000000)</label><input type="text" id="set-phone"></div>
-          <div class="form-row"><label>Téléphone affiché (ex. 02 31 00 00 00)</label><input type="text" id="set-phoneDisplay"></div>
-        </div>
-        <div class="form-row"><label>E-mail</label><input type="email" id="set-email"></div>
-        <div class="form-row-grid">
-          <div class="form-row"><label>Lien Instagram</label><input type="url" id="set-instagram" placeholder="https://instagram.com/..."></div>
-          <div class="form-row"><label>Lien Facebook</label><input type="url" id="set-facebook" placeholder="https://facebook.com/..."></div>
-        </div>
-        <div class="form-row">
-          <label>URL de la carte Google Maps (lien d'intégration)</label>
-          <input type="text" id="set-mapUrl" placeholder="https://www.google.com/maps?q=...&output=embed">
-          <p class="field-hint">Google Maps → rechercher l'adresse → Partager → Intégrer une carte → copier le lien dans la balise <code>src</code>.</p>
-        </div>
-      </div>
-
-      <div class="admin-card">
-        <h2>Identité sur les tickets imprimés</h2>
-        <p class="field-hint">Ces deux champs n'apparaissent que sur les tickets sortis de l'imprimante de caisse, jamais sur le site.</p>
-        <div class="form-row-grid">
-          <div class="form-row"><label>Raison sociale</label><input type="text" id="set-raisonSociale" placeholder="PARADIS DE LUC"></div>
-          <div class="form-row"><label>SIRET</label><input type="text" id="set-siret" placeholder="14 chiffres"></div>
-        </div>
-      </div>
-
-      <div class="save-bar" id="saveBar">
-        <span class="save-bar-status" id="saveBarStatus">Tout est enregistré</span>
-        <button type="button" class="btn btn-primary" id="saveSettingsBtn">Enregistrer les réglages</button>
-      </div>
-    </section>
-
     <!-- ===================== ONGLET COMMANDES ===================== -->
-    <section class="admin-panel" id="panel-orders">
+    <section class="admin-panel is-active" id="panel-orders">
 
       <div class="admin-card">
         <div class="admin-card-entete">
@@ -645,8 +507,7 @@
         <div class="form-row">
           <label for="inviteRole">Rôle</label>
           <select id="inviteRole">
-            <option value="editor" selected>Réglages du site — contenu seulement</option>
-            <option value="comptoir">Comptoir — mode jour J seulement</option>
+            <option value="comptoir" selected>Comptoir — mode jour J seulement</option>
             <option value="admin">Administrateur — site, commandes et accès</option>
             <!-- Masqué à qui n'est pas déjà super-administrateur, cf. team.js -->
             <option value="superadmin" hidden>Super-administrateur — tout</option>

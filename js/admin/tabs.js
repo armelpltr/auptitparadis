@@ -2,9 +2,9 @@
 // ONGLETS — bascule entre les panneaux du panel
 // ============================================================
 
-/* Onglets ouverts à chaque rôle. Le rôle « réglages du site » ne voit ni
-   les commandes — qui portent les coordonnées de clients — ni le catalogue
-   de Noël, ni les accès.
+/* Onglets ouverts à chaque rôle. Le contenu du site (textes, avis, photos)
+   ne se règle plus depuis le panel : il est écrit directement dans
+   `settings/site`. Un ancien compte « editor » n'a donc plus d'onglet.
    Le comptoir n'apparaît pas ici : il ne passe jamais par ce système
    d'onglets, admin.js l'aiguille directement vers le mode jour J plein
    écran (cf. entrerModeComptoir dans orders.js) sans jamais afficher la
@@ -13,9 +13,8 @@
    réellement les lectures et les écritures. Masquer les onglets évite
    surtout d'afficher des pages qui échoueraient. */
 const ONGLETS_PAR_ROLE = {
-  superadmin: ['settings', 'orders', 'noel', 'stages', 'team'],
-  admin:      ['settings', 'orders', 'noel', 'stages', 'team'],
-  editor:     ['settings']
+  superadmin: ['orders', 'noel', 'stages', 'team'],
+  admin:      ['orders', 'noel', 'stages', 'team']
 };
 
 export function initTabs() {
@@ -31,7 +30,7 @@ export function initTabs() {
 
 /** Masque les onglets fermés au rôle, et bascule sur le premier ouvert. */
 export function appliquerRole(role) {
-  const permis = ONGLETS_PAR_ROLE[role] || ONGLETS_PAR_ROLE.editor;
+  const permis = ONGLETS_PAR_ROLE[role] || [];
   let actifVisible = false;
 
   document.querySelectorAll('.admin-tab').forEach(tab => {

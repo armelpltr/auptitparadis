@@ -186,14 +186,6 @@ button.back-to-site{ background:none; border:none; cursor:pointer; font-family:i
   font-size:.9rem; font-weight:600; color:var(--ink); margin-bottom:1.2rem;
 }
 
-.spec-edit{
-  background:var(--cream); border-radius:10px;
-  padding:1rem 1.2rem; margin-top:.8rem;
-}
-.spec-edit:first-child{ margin-top:0; }
-.spec-edit-header{ display:flex; align-items:center; justify-content:space-between; margin-bottom:.9em; }
-.spec-edit-header h3{ font-size:.9rem; margin:0; color:var(--gold-deep); font-weight:700; letter-spacing:.02em; }
-
 .btn-small{ padding:.6em 1.3em; font-size:.88rem; }
 
 /* ---------- Connexion Google ---------- */
@@ -282,26 +274,6 @@ button.back-to-site{ background:none; border:none; cursor:pointer; font-family:i
   background:var(--white); color:var(--ink-soft);
 }
 
-/* ---------- Barre d'enregistrement ---------- */
-/* sticky : reste visible en bas de l'ecran quel que soit le defilement,
-   pour qu'une modification en attente ne passe jamais inapercue. */
-.save-bar{
-  position:sticky; bottom:0; z-index:50;
-  display:flex; align-items:center; justify-content:space-between; gap:1.2rem;
-  margin-top:1.6rem; padding:1rem 1.4rem;
-  background:var(--white); border:1.5px solid var(--sand); border-radius:12px;
-  box-shadow:0 -6px 24px -12px rgba(33,28,23,.35);
-  transition:border-color .25s var(--ease), background .25s var(--ease);
-}
-.save-bar-status{ font-size:.9rem; color:var(--ink-soft); }
-.save-bar .btn{ min-width:200px; }
-.save-bar .btn[disabled]{ opacity:.6; cursor:progress; }
-
-/* Etat "modifications non enregistrees" */
-.save-bar.is-dirty{ border-color:var(--gold); background:#fdf4e8; }
-.save-bar.is-dirty .save-bar-status{ color:var(--gold-deep); font-weight:600; }
-.save-bar.is-dirty .save-bar-status::before{ content:'⚠ '; }
-
 /* ---------- Import de photos ---------- */
 .image-upload{ display:flex; align-items:center; gap:1rem; flex-wrap:wrap; }
 .image-upload-preview{
@@ -318,90 +290,9 @@ button.back-to-site{ background:none; border:none; cursor:pointer; font-family:i
 .image-upload--compact .btn{ padding:.45em .8em; font-size:.8rem; }
 .image-upload--compact .row-remove{ width:26px; height:26px; }
 
-/* ---------- Produits vedettes ---------- */
-.produits-list{ margin-bottom:.7rem; }
-/* La description est un textarea : on aligne en haut pour que les autres
-   champs restent en tete de ligne quand il s'agrandit. */
-.produit-row{ display:grid; grid-template-columns:1fr 1.8fr 1.5fr .9fr auto; gap:.6rem; margin-bottom:.9rem; align-items:start; }
-.produit-row input, .produit-row select, .produit-row textarea{
-  font-family:var(--font-body); font-size:.88rem; padding:.55em .7em;
-  border:1.5px solid var(--sand); border-radius:var(--radius); background:var(--cream); color:var(--ink);
-}
-.produit-row textarea{ resize:vertical; min-height:5.2em; line-height:1.45; }
-/* Champs sur une ligne ramenes a la hauteur du textarea */
-.produit-row > input, .produit-row > select, .produit-row > .row-remove{ margin-top:.15rem; }
-
-/* ---------- Nos réalisations ---------- */
-/* Une ligne par photo : vignette, légende, et les commandes d'ordre. La
-   ligne est encadrée parce qu'elle se déplace — on doit voir ce qui monte
-   ou descend quand on clique sur une flèche. */
-.realisations-list{ margin-bottom:.9rem; }
-.realisation-row{
-  display:grid; grid-template-columns:auto auto 1fr auto; gap:.9rem; align-items:center;
-  padding:.6rem; margin-bottom:.6rem;
-  border:1.5px solid var(--sand); border-radius:8px;
-  background:var(--white);
-}
-/* Poignée de déplacement. Le glissement ne fonctionne qu'à la souris : les
-   flèches restent le chemin au clavier et au doigt. */
-.realisation-poignee{
-  cursor:grab; user-select:none; color:var(--ink-soft); opacity:.5;
-  font-size:1.1rem; line-height:1; padding:0 .1rem;
-}
-.realisation-poignee:active{ cursor:grabbing; }
-.realisation-row:hover .realisation-poignee{ opacity:1; }
-.realisation-row.est-tiree{ opacity:.4; border-style:dashed; }
-
-/* Zone de dépôt groupé */
-.depot-photos{
-  display:flex; flex-direction:column; align-items:center; gap:.35rem;
-  padding:1.6rem 1.2rem; text-align:center;
-  border:2px dashed var(--sand); border-radius:10px;
-  color:var(--ink-soft); font-size:.9rem;
-  transition:border-color .2s, background .2s, color .2s;
-}
-.depot-photos svg{
-  width:26px; height:26px; fill:none; stroke:currentColor;
-  stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; opacity:.6;
-}
-.depot-photos strong{ font-size:.98rem; color:var(--ink); }
-.depot-photos.is-depot{
-  border-color:var(--gold); background:rgba(200,133,58,.07); color:var(--gold-deep);
-}
-.depot-photos.is-depot svg{ opacity:1; }
-
-/* Bouton qui doit se lire comme un lien, au fil d'une phrase. */
-.lien-bouton{
-  background:none; border:none; padding:0; font:inherit; cursor:pointer;
-  color:var(--gold-deep); text-decoration:underline;
-}
-.lien-bouton:hover{ color:var(--ink); }
-
 /* Le bloc d'import accepte aussi le dépôt d'un fichier. */
 .image-upload.is-depot{
   outline:2px dashed var(--gold); outline-offset:4px; border-radius:6px;
-}
-/* `realisation-legende` et non `rea-legende` : le panel charge aussi la
-   feuille du site, où cette dernière classe désigne le bandeau posé sur la
-   photo — absolu et transparent au repos. Le champ de saisie disparaissait. */
-.realisation-row .realisation-legende{
-  font-family:var(--font-body); font-size:.9rem; padding:.55em .7em; min-width:0;
-  border:1.5px solid var(--sand); border-radius:var(--radius);
-  background:var(--cream); color:var(--ink);
-}
-.realisation-actions{ display:flex; align-items:center; gap:.4rem; }
-@media (max-width: 640px){
-  .realisation-row{ grid-template-columns:1fr; }
-  .realisation-actions{ justify-content:flex-end; }
-  /* Pas de glissement au doigt : la poignée ne promettrait rien. */
-  .realisation-poignee{ display:none; }
-}
-
-/* ---------- Liste des horaires ---------- */
-.hour-row{ display:grid; grid-template-columns:1fr 1fr auto; gap:.8rem; margin-bottom:.7rem; align-items:center; }
-.hour-row input{
-  font-family:var(--font-body); font-size:.92rem; padding:.6em .8em;
-  border:1.5px solid var(--sand); border-radius:var(--radius); background:var(--cream); color:var(--ink);
 }
 .row-remove{
   width:34px; height:34px; border-radius:50%; border:1.5px solid var(--sand); background:var(--white);
@@ -433,20 +324,6 @@ button.back-to-site{ background:none; border:none; cursor:pointer; font-family:i
 }
 .modal h2{ font-size:1.2rem; margin-bottom:1.2rem; }
 .modal-actions{ display:flex; justify-content:flex-end; gap:.8rem; margin-top:1.4rem; }
-
-.card-item-edit{
-  border:1.5px solid var(--sand); border-radius:8px; padding:1rem; margin-bottom:1rem; position:relative;
-}
-.card-item-edit .row-remove{ position:absolute; top:.7rem; right:.7rem; }
-
-/* Fiches d'équipe : l'ordre compte (qui vient en premier), d'où les flèches
-   à côté du bouton de retrait. La barre reste dans le flux plutôt qu'en
-   absolu : trois boutons dans le coin recouvriraient le champ « Rôle ». */
-.equipe-actions{
-  display:flex; justify-content:flex-end; align-items:center; gap:.4rem;
-  margin-bottom:.5rem;
-}
-.equipe-actions .row-remove{ position:static; }
 
 /* ---------- Modal confirmation ---------- */
 .confirm-overlay{
@@ -812,12 +689,6 @@ button.back-to-site{ background:none; border:none; cursor:pointer; font-family:i
   #printOverlay .confirm-actions{ flex-direction:column-reverse; }
   #printOverlay .confirm-actions .btn{ width:100%; }
 
-  .hour-row{ grid-template-columns:1fr 1fr; }
-  .hour-row > .row-remove{ grid-column:span 2; width:100%; border-radius:6px; }
-
-  /* Produits vedettes : une colonne, l'uploader passe en pleine largeur */
-  .produit-row{ grid-template-columns:1fr; gap:.5rem; padding-bottom:.9rem; border-bottom:1px solid var(--sand); }
-  .produit-row > .row-remove{ width:100%; border-radius:6px; }
   .image-upload--compact{ gap:.7rem; }
   .image-upload--compact .image-upload-preview{ width:56px; height:56px; }
   .image-upload--compact .btn{ flex:1; }
@@ -828,9 +699,6 @@ button.back-to-site{ background:none; border:none; cursor:pointer; font-family:i
   .upload-thumb{ inset:10px; width:80px; height:80px; }
   .upload-percent{ font-size:1.35rem; }
   .upload-actions .btn{ width:100%; }
-
-  .save-bar{ flex-direction:column; align-items:stretch; gap:.8rem; text-align:center; padding:1rem; }
-  .save-bar .btn{ width:100%; min-width:0; }
 
   .team-row{ flex-direction:column; align-items:stretch; gap:.7rem; }
   .team-row .btn{ width:100%; }

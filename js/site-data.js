@@ -13,9 +13,8 @@ import {
 /* ---------- Icônes des fiches spécialités ---------- */
 /* Servies en <img> : Tabler (MIT) via jsDelivr, sauf le sandwich qui vient
    de game-icons et qui est hébergé dans le repo.
-   Les clés doivent rester les mêmes que `ICONS` dans js/admin/icons.js :
-   c'est ce que le panel propose dans son sélecteur, et ce qu'on relit ici
-   dans `item.icon`. */
+   Les clés sont les valeurs possibles de `item.icon` dans
+   `settings/site` → `specialites`. */
 const TABLER = s => `https://cdn.jsdelivr.net/npm/@tabler/icons@2.47.0/icons/${s}.svg`;
 const ICON_URLS = {
   bread:    TABLER('baguette'),

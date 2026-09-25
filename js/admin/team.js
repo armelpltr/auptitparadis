@@ -9,10 +9,10 @@ import {
 import { confirmDialog, showStatus, escapeAttr, val, fmtDate } from "./ui.js";
 import { WORKER_URL } from "./config.js";
 
-/* Quatre rôles :
+/* Trois rôles (l'ancien « editor », réservé au contenu du site, n'a plus
+   d'onglet depuis que ce contenu ne se règle plus dans le panel) :
      superadmin — tout, et seul à pouvoir toucher aux autres superadmins
-     admin      — tout le site, les commandes et les accès
-     editor     — le contenu du site seulement, ni commandes ni accès
+     admin      — commandes, catalogue, ateliers et accès
      comptoir   — le mode jour J seulement : chercher une commande et
                   avancer son statut au comptoir, rien d'autre
    Un admin gère l'équipe, mais ne peut ni promouvoir quelqu'un
@@ -21,7 +21,6 @@ import { WORKER_URL } from "./config.js";
 export const ROLE_LABELS = {
   superadmin: 'Super-administrateur',
   admin:      'Administrateur',
-  editor:     'Réglages du site',
   comptoir:   'Comptoir (jour J)'
 };
 
@@ -151,8 +150,7 @@ function applyRoleToUI(isOwner, isSuper) {
 
 const CONSEQUENCES = {
   superadmin: 'Cette personne pourra tout faire, y compris gérer les autres super-administrateurs.',
-  admin:      'Cette personne pourra gérer le site, les commandes et les accès de l\'équipe.',
-  editor:     'Cette personne pourra modifier le contenu du site, mais ni voir les commandes ni gérer les accès.',
+  admin:      'Cette personne pourra gérer les commandes, le catalogue, les ateliers et les accès de l\'équipe.',
   comptoir:   'Cette personne n\'aura accès qu\'au mode jour J : chercher une commande et faire avancer son statut au comptoir. Rien d\'autre ne lui sera visible.'
 };
 
@@ -246,7 +244,7 @@ export function initTeam() {
       const expiresAt = new Date(Date.now() + INVITE_VALIDITE_JOURS * 86400000);
       await setDoc(doc(db, 'invites', token), {
         email,
-        role: val('inviteRole') || 'editor',
+        role: val('inviteRole') || 'comptoir',
         createdAt: new Date(),
         createdBy: auth.currentUser.email,
         expiresAt
