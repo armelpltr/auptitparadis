@@ -286,7 +286,32 @@ function applyTemoignages(p) {
 
   const grille = document.getElementById('presseAvis');
   if (!grille) return;               // page sans la rubrique
-  grille.innerHTML = liste.map(renderAvis).join('');
+  const cartes = liste.map(renderAvis).join('');
+
+  // En dessous de trois avis, un bandeau qui défile tournerait à vide :
+  // les cartes restent posées côte à côte.
+  if (liste.length < 3) {
+    grille.classList.remove('avis-defile');
+    grille.innerHTML = cartes;
+  } else {
+    // La piste porte deux fois la liste : quand la première moitié est
+    // sortie, la seconde est exactement à sa place et l'animation repart
+    // de zéro sans saut. La copie est cachée aux lecteurs d'écran et au
+    // clavier — ils lisent chaque avis une seule fois.
+    grille.classList.add('avis-defile');
+    grille.innerHTML = `
+      <div class="avis-piste" style="--avis-duree:${liste.length * 9}s">
+        <div class="avis-serie">${cartes}</div>
+        <div class="avis-serie" aria-hidden="true" inert>${cartes}</div>
+      </div>
+      <button type="button" class="avis-pause" aria-pressed="false">Mettre en pause</button>`;
+    const bouton = grille.querySelector('.avis-pause');
+    bouton.addEventListener('click', () => {
+      const enPause = grille.classList.toggle('en-pause');
+      bouton.setAttribute('aria-pressed', String(enPause));
+      bouton.textContent = enPause ? 'Reprendre le défilement' : 'Mettre en pause';
+    });
+  }
   afficherSection('avis', liste.length > 0);
 }
 

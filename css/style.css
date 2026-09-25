@@ -895,6 +895,51 @@ p{ margin:0 0 1em; color:var(--ink-soft); }
 }
 .avis-source{ font-weight:400; color:var(--ink-soft); }
 
+/* --- Bandeau défilant (à partir de trois avis) ---
+   La piste contient deux fois la même série : décalée de -50 %, la copie
+   occupe pile la place de l'original et la boucle ne se voit pas. Chaque
+   série porte sa gouttière à droite pour que les deux moitiés aient la
+   même largeur. Les bords s'effacent en fondu plutôt que de couper net. */
+.presse-avis.avis-defile{
+  display:block; position:relative;
+  overflow:hidden;
+  -webkit-mask-image:linear-gradient(to right, transparent, #000 6%, #000 94%, transparent);
+          mask-image:linear-gradient(to right, transparent, #000 6%, #000 94%, transparent);
+  padding:.6rem 0 2.8rem;
+}
+.avis-piste{
+  display:flex; width:max-content;
+  animation:avis-defile var(--avis-duree, 80s) linear infinite;
+}
+.avis-serie{ display:flex; gap:1.4rem; padding-right:1.4rem; }
+.avis-defile .avis-carte{ width:320px; flex:0 0 auto; }
+/* Survol et focus arrêtent la lecture : on lit un avis sans le poursuivre */
+.avis-defile:hover .avis-piste,
+.avis-defile:focus-within .avis-piste,
+.avis-defile.en-pause .avis-piste{ animation-play-state:paused; }
+@keyframes avis-defile{
+  from{ transform:translateX(0); }
+  to{   transform:translateX(-50%); }
+}
+/* Tout ce qui bouge seul plus de cinq secondes doit pouvoir s'arrêter */
+.avis-pause{
+  position:absolute; left:50%; bottom:0; transform:translateX(-50%);
+  background:none; border:0; padding:.3rem .6rem; cursor:pointer;
+  font:inherit; font-size:.8rem; font-weight:600; color:var(--gold-deep);
+  text-decoration:underline; text-underline-offset:.2em;
+}
+/* Mouvement réduit : pas d'animation, la série se parcourt au doigt ou à
+   la molette, et la copie n'a plus de raison d'être. */
+@media (prefers-reduced-motion: reduce){
+  .presse-avis.avis-defile{
+    overflow-x:auto; scroll-snap-type:x mandatory; padding-bottom:1rem;
+    -webkit-mask-image:none; mask-image:none;
+  }
+  .avis-piste{ animation:none; }
+  .avis-serie[aria-hidden="true"], .avis-pause{ display:none; }
+  .avis-defile .avis-carte{ scroll-snap-align:start; }
+}
+
 /* =========================================================
    Notre équipe
    ========================================================= */
@@ -981,6 +1026,13 @@ p{ margin:0 0 1em; color:var(--ink-soft); }
   .temoignages .section-inner,
   .actualites .section-inner{ padding-top:3.4rem; padding-bottom:3.4rem; }
   .presse-article-corps, .avis-carte{ padding:1.25rem 1.3rem; }
+  /* Bandeau : une carte et le début de la suivante, pour montrer que ça continue */
+  .avis-defile .avis-carte{ width:min(270px, 78vw); }
+  .avis-serie{ gap:1.1rem; padding-right:1.1rem; }
+  .presse-avis.avis-defile{
+    -webkit-mask-image:linear-gradient(to right, transparent, #000 4%, #000 96%, transparent);
+            mask-image:linear-gradient(to right, transparent, #000 4%, #000 96%, transparent);
+  }
 
   /* Les tableaux légaux ne rétrécissent pas indéfiniment : ils défilent
      dans leur propre boîte plutôt que d'élargir toute la page. */
