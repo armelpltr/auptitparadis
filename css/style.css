@@ -880,18 +880,40 @@ p{ margin:0 0 1em; color:var(--ink-soft); }
 /* Vide tant qu'aucun avis n'est sélectionné : pas de marge fantôme */
 .presse-avis:empty{ display:none; }
 
+/* Chaque avis est une bulle de conversation : le texte dans la bulle, qui
+   parle dessous. La bulle prend la hauteur de son texte — dans le bandeau,
+   les cartes s'alignent en haut au lieu de s'étirer sur la plus longue. */
 .avis-carte{
-  margin:0; background:var(--white); border-radius:12px; padding:1.5rem 1.6rem;
-  box-shadow:0 14px 30px -24px rgba(33,28,23,.5);
-  display:flex; flex-direction:column; gap:.8rem;
+  margin:0; display:flex; flex-direction:column; gap:.7rem;
+  align-self:flex-start;
 }
-.avis-etoiles{ color:var(--gold); font-size:1rem; letter-spacing:.12em; }
-.avis-carte blockquote{
-  margin:0; font-size:.96rem; line-height:1.6; color:var(--ink-soft);
+.avis-bulle{
+  position:relative; background:var(--white);
+  border-radius:18px 18px 18px 4px; padding:1.2rem 1.4rem 1.3rem;
+  box-shadow:0 14px 30px -24px rgba(33,28,23,.5);
+}
+/* Guillemet ouvrant en filigrane, dans le coin haut droit de la bulle */
+.avis-bulle::before{
+  content:"“"; position:absolute; top:.1rem; right:1rem;
+  font-family:var(--font-display); font-weight:700; font-size:4.6rem; line-height:1;
+  color:var(--gold-pale); pointer-events:none;
+}
+.avis-etoiles{ position:relative; color:var(--gold); font-size:1rem; letter-spacing:.12em; }
+.avis-bulle blockquote{
+  position:relative; margin:.5rem 0 0; font-size:.94rem; line-height:1.6; color:var(--ink-soft);
   overflow-wrap:anywhere;
+  /* Au-delà de six lignes, la bulle deviendrait une colonne : on coupe */
+  display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:6; overflow:hidden;
 }
 .avis-carte figcaption{
-  margin-top:auto; font-size:.85rem; font-weight:600; color:var(--ink);
+  display:flex; align-items:center; gap:.6rem; padding-left:.2rem;
+  font-size:.85rem; font-weight:600; color:var(--ink);
+}
+.avis-initiale{
+  flex:none; width:2rem; height:2rem; border-radius:50%;
+  display:grid; place-items:center;
+  background:var(--sea); color:var(--white);
+  font-family:var(--font-display); font-weight:600; font-size:.9rem;
 }
 .avis-source{ font-weight:400; color:var(--ink-soft); }
 
@@ -911,7 +933,7 @@ p{ margin:0 0 1em; color:var(--ink-soft); }
   display:flex; width:max-content;
   animation:avis-defile var(--avis-duree, 80s) linear infinite;
 }
-.avis-serie{ display:flex; gap:1.4rem; padding-right:1.4rem; }
+.avis-serie{ display:flex; align-items:flex-start; gap:1.4rem; padding-right:1.4rem; }
 .avis-defile .avis-carte{ width:320px; flex:0 0 auto; }
 /* Survol et focus arrêtent la lecture : on lit un avis sans le poursuivre */
 .avis-defile:hover .avis-piste,
@@ -1025,7 +1047,7 @@ p{ margin:0 0 1em; color:var(--ink-soft); }
   .presse-articles, .presse-avis{ grid-template-columns:1fr; gap:1.1rem; }
   .temoignages .section-inner,
   .actualites .section-inner{ padding-top:3.4rem; padding-bottom:3.4rem; }
-  .presse-article-corps, .avis-carte{ padding:1.25rem 1.3rem; }
+  .presse-article-corps, .avis-bulle{ padding:1.25rem 1.3rem; }
   /* Bandeau : une carte et le début de la suivante, pour montrer que ça continue */
   .avis-defile .avis-carte{ width:min(270px, 78vw); }
   .avis-serie{ gap:1.1rem; padding-right:1.1rem; }

@@ -270,13 +270,19 @@ function renderArticlePresse(a) {
 }
 
 function renderAvis(av) {
+  const auteur = av.auteur || 'Client';
   return `
     <figure class="avis-carte">
-      <div class="avis-etoiles" aria-label="${escapeHTML(Math.round(Number(av.note) || 0))} sur 5">${etoiles(av.note)}</div>
-      <blockquote>${escapeHTML(av.texte || '')}</blockquote>
-      <figcaption>${escapeHTML(av.auteur || 'Client')}${
-        av.date ? ` <span class="avis-source">· ${escapeHTML(av.date)}</span>` : ''
-      }</figcaption>
+      <div class="avis-bulle">
+        <div class="avis-etoiles" aria-label="${escapeHTML(Math.round(Number(av.note) || 0))} sur 5">${etoiles(av.note)}</div>
+        <blockquote>${escapeHTML(av.texte || '')}</blockquote>
+      </div>
+      <figcaption>
+        <span class="avis-initiale" aria-hidden="true">${escapeHTML(auteur.trim().charAt(0).toUpperCase())}</span>
+        <span>${escapeHTML(auteur)}${
+          av.date ? ` <span class="avis-source">· ${escapeHTML(av.date)}</span>` : ''
+        }</span>
+      </figcaption>
     </figure>`;
 }
 
