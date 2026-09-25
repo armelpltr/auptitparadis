@@ -400,7 +400,7 @@ const EQUIPE_EXEMPLE = {
     { nom: 'Julie',   metier: 'patissiers', role: 'Cheffe pâtissière',  mot: 'Pas trop sucré, toujours de saison.', prefere: 'Les galets', depuis: '2020' },
     { nom: 'Antoine', metier: 'patissiers', role: 'Pâtissier',          mot: "Mon croissant, je le veux feuilleté jusqu'au cœur.", prefere: 'Le croissant', depuis: '2022' },
     { nom: 'Sarah',   metier: 'vente',      role: 'Vendeuse',           mot: 'Je connais le pain préféré de la moitié de Luc.', prefere: 'La baguette bien cuite', depuis: '2021' },
-    { nom: 'Inès',    metier: 'vente',      role: 'Vendeuse' }
+    { nom: 'Inès',    metier: 'vente',      role: 'Vendeuse',           mot: 'Un bonjour, un prénom, et votre commande est déjà prête.', prefere: 'Le pain au chocolat', depuis: '2023' }
   ]
 };
 
