@@ -335,28 +335,81 @@ function initiale(nom) {
   return premiere ? premiere.toUpperCase() : '·';
 }
 
+/* Quatre métiers, dans l'ordre où la journée les voit arriver — les
+   patrons en tête. La clé vient de la base : elle ne finit dans une classe
+   CSS qu'après être passée par cette liste. */
+const METIERS = {
+  patrons:    'Patron',
+  boulangers: 'Boulangerie',
+  patissiers: 'Pâtisserie',
+  vente:      'Vente'
+};
+const ORDRE_METIERS = Object.keys(METIERS);
+
+/* Une carte par personne : le portrait au recto ; au dos, sa phrase, son
+   produit préféré et depuis quand elle est là. La carte se retourne au
+   survol, au focus clavier ou au toucher. Sans rien à mettre au dos, elle
+   reste une simple fiche qui ne se retourne pas. */
 function renderMembre(m) {
   const photo = safeUrl(m.photoUrl);
   const nom   = String(m.nom || '').trim();
+  const metier = METIERS[m.metier] ? m.metier : '';
   const portrait = photo
-    ? `<img class="equipe-photo" src="${escapeHTML(photo)}" alt="${escapeHTML(nom)}" loading="lazy">`
+    ? `<img class="equipe-photo" src="${escapeHTML(photo)}" alt="" loading="lazy">`
     : `<span class="equipe-monogramme" aria-hidden="true">${escapeHTML(initiale(nom))}</span>`;
-  return `
-    <article class="equipe-membre">
+  const recto = `
+    <div class="equipe-face equipe-recto">
       ${portrait}
       <h3>${escapeHTML(nom)}</h3>
       ${m.role ? `<p class="equipe-role">${escapeHTML(m.role)}</p>` : ''}
-      ${m.mot  ? `<p class="equipe-mot">${escapeHTML(m.mot)}</p>`   : ''}
-    </article>`;
+      ${metier ? `<span class="equipe-metier">${METIERS[metier]}</span>` : ''}
+    </div>`;
+
+  const dos = [
+    m.mot     ? `<p class="equipe-mot">« ${escapeHTML(m.mot)} »</p>` : '',
+    m.prefere ? `<dt>Son préféré</dt><dd>${escapeHTML(m.prefere)}</dd>` : '',
+    m.depuis  ? `<dt>Ici depuis</dt><dd>${escapeHTML(m.depuis)}</dd>` : ''
+  ];
+  const classe = `equipe-carte${metier ? ' metier-' + metier : ''}`;
+  if (!dos.some(Boolean)) {
+    return `<article class="${classe}"><div class="equipe-interieur">${recto}</div></article>`;
+  }
+  const details = dos.slice(1).join('');
+  return `
+    <button type="button" class="${classe} equipe-retournable" aria-pressed="false">
+      <span class="equipe-interieur">
+        ${recto}
+        <span class="equipe-face equipe-verso">
+          ${dos[0]}
+          ${details ? `<dl>${details}</dl>` : ''}
+        </span>
+      </span>
+    </button>`;
 }
 
 function applyEquipe(e) {
-  const membres = (Array.isArray(e && e.membres) ? e.membres : []).filter(m => m && m.nom);
+  const membres = (Array.isArray(e && e.membres) ? e.membres : [])
+    .filter(m => m && m.nom)
+    // Regroupées par métier ; à métier égal, l'ordre du panel est gardé.
+    .map((m, i) => [m, i])
+    .sort(([a, i], [b, j]) => {
+      const ra = ORDRE_METIERS.indexOf(a.metier), rb = ORDRE_METIERS.indexOf(b.metier);
+      return ((ra < 0 ? 99 : ra) - (rb < 0 ? 99 : rb)) || i - j;
+    })
+    .map(([m]) => m);
   montrerLienNav('equipe', membres.length > 0);
 
   const grille = document.getElementById('equipeGrille');
   if (!grille) return;               // page sans la rubrique
   grille.innerHTML = membres.map(renderMembre).join('');
+  // Au doigt, pas de survol : un toucher retourne la carte, un second la
+  // remet à l'endroit.
+  grille.onclick = ev => {
+    const carte = ev.target.closest('.equipe-retournable');
+    if (!carte) return;
+    const tournee = carte.classList.toggle('est-tournee');
+    carte.setAttribute('aria-pressed', String(tournee));
+  };
 
   // Texte d'introduction facultatif : sans lui, pas de paragraphe vide.
   const intro = document.getElementById('equipeIntro');

@@ -977,30 +977,94 @@ p{ margin:0 0 1em; color:var(--ink-soft); }
 .equipe-intro{ max-width:62ch; }
 .equipe-intro[hidden]{ display:none; }
 .equipe-grille{
-  display:grid; grid-template-columns:repeat(auto-fit, minmax(210px, 1fr));
-  gap:2.6rem 1.8rem; margin-top:2.6rem;
+  display:grid; grid-template-columns:repeat(auto-fill, minmax(210px, 1fr));
+  gap:1.4rem; margin-top:2.6rem;
 }
-.equipe-membre{ text-align:center; }
+
+/* Une teinte par métier, tirée de la palette : elle colore la pastille du
+   recto et tout le verso. */
+.equipe-carte{ --metier:var(--gold-deep); }
+.equipe-carte.metier-patrons{    --metier:var(--ink); }
+.equipe-carte.metier-boulangers{ --metier:var(--gold); }
+.equipe-carte.metier-patissiers{ --metier:#b0626a; }
+.equipe-carte.metier-vente{      --metier:var(--sea); }
+
+/* Un <button> quand la carte se retourne : elle s'active au clavier et au
+   doigt. D'où les remises à zéro. */
+.equipe-carte{
+  display:block; width:100%; height:290px; padding:0; margin:0;
+  border:0; background:none; font:inherit; color:inherit; text-align:center;
+  perspective:1000px;
+}
+.equipe-retournable{ cursor:pointer; }
+.equipe-interieur{
+  position:relative; display:block; height:100%;
+  transform-style:preserve-3d;
+  transition:transform .6s var(--ease);
+}
+.equipe-retournable.est-tournee .equipe-interieur,
+.equipe-retournable:focus-visible .equipe-interieur{ transform:rotateY(180deg); }
+/* Survol seulement là où il existe : au doigt, un survol « collé » après
+   le toucher empêcherait la carte de revenir à l'endroit. */
+@media (hover:hover){
+  .equipe-retournable:hover .equipe-interieur{ transform:rotateY(180deg); }
+}
+
+.equipe-face{
+  position:absolute; inset:0; border-radius:14px;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  padding:1.4rem 1.2rem;
+  -webkit-backface-visibility:hidden; backface-visibility:hidden;
+}
+.equipe-recto{ background:var(--cream); box-shadow:0 14px 30px -24px rgba(33,28,23,.5); }
+.equipe-verso{
+  background:var(--metier); color:var(--white);
+  transform:rotateY(180deg); gap:.6rem;
+}
+
 /* Même gabarit pour la photo et le monogramme : la grille ne bouge pas
    selon que la fiche a une photo ou non. */
 .equipe-photo,
 .equipe-monogramme{
-  width:158px; height:158px; border-radius:50%;
-  margin:0 auto 1rem; object-fit:cover;
+  width:112px; height:112px; border-radius:50%;
+  margin:0 0 .9rem; object-fit:cover; flex:none;
   box-shadow:0 16px 34px -24px rgba(33,28,23,.6);
 }
 .equipe-monogramme{
   display:grid; place-items:center;
-  background:var(--sand); color:var(--gold-deep);
-  font-family:var(--font-display); font-size:2.8rem; line-height:1;
+  background:color-mix(in srgb, var(--metier) 16%, var(--white));
+  color:var(--metier);
+  font-family:var(--font-display); font-size:2.4rem; line-height:1;
   user-select:none;
 }
-.equipe-membre h3{ font-size:1.16rem; margin:0 0 .15em; }
-.equipe-role{
-  font-size:.72rem; font-weight:700; letter-spacing:.14em; text-transform:uppercase;
-  color:var(--gold-deep); margin:0 0 .7em;
+.equipe-carte h3{ font-size:1.16rem; margin:0 0 .15em; }
+.equipe-role{ font-size:.88rem; color:var(--ink-soft); margin:0 0 .6em; }
+.equipe-metier{
+  display:inline-flex; align-items:center; gap:.4rem;
+  font-size:.7rem; font-weight:700; letter-spacing:.14em; text-transform:uppercase;
+  color:var(--metier);
 }
-.equipe-mot{ font-size:.93rem; margin:0; }
+.equipe-metier::before{
+  content:""; width:7px; height:7px; border-radius:50%; background:currentColor;
+}
+
+.equipe-verso .equipe-mot{
+  margin:0; color:inherit;
+  font-family:var(--font-display); font-size:1.05rem; line-height:1.35;
+  /* Une phrase, pas un paragraphe : au-delà, la carte déborderait */
+  display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:5; overflow:hidden;
+}
+.equipe-verso dl{ margin:0; }
+.equipe-verso dt{
+  font-size:.66rem; font-weight:700; letter-spacing:.14em; text-transform:uppercase;
+  opacity:.8; margin-top:.5rem;
+}
+.equipe-verso dd{ margin:0; font-weight:500; font-size:.95rem; }
+
+/* Mouvement réduit : la carte change de face sans pivoter */
+@media (prefers-reduced-motion: reduce){
+  .equipe-interieur{ transition:none; }
+}
 
 /* =========================================================
    Responsive
@@ -1031,11 +1095,15 @@ p{ margin:0 0 1em; color:var(--ink-soft); }
 }
 
 @media (max-width: 720px){
-  /* Deux fiches d'équipe par ligne plutôt qu'une : à 158px de photo, la
-     colonne unique laissait la moitié de l'écran vide. */
-  .equipe-grille{ grid-template-columns:repeat(2, 1fr); gap:2rem 1.2rem; }
-  .equipe-photo, .equipe-monogramme{ width:128px; height:128px; }
-  .equipe-monogramme{ font-size:2.2rem; }
+  /* Deux cartes d'équipe par ligne plutôt qu'une : une carte seule sur la
+     largeur laissait un grand vide autour du portrait. */
+  .equipe-grille{ grid-template-columns:repeat(2, minmax(0, 1fr)); gap:.9rem; }
+  .equipe-carte{ height:250px; }
+  .equipe-face{ padding:1rem .8rem; }
+  .equipe-photo, .equipe-monogramme{ width:84px; height:84px; margin-bottom:.7rem; }
+  .equipe-monogramme{ font-size:1.9rem; }
+  .equipe-carte h3{ font-size:1.02rem; }
+  .equipe-verso .equipe-mot{ font-size:.92rem; -webkit-line-clamp:4; }
 
   /* La pastille de défilement est en absolu en bas du hero, dont le contenu
      est centré : sur un écran court elle passait par-dessus les deux boutons.
