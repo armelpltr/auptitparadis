@@ -356,9 +356,6 @@ p{ margin:0 0 1em; color:var(--ink-soft); }
 @media (max-width:900px){ .rea-mosaique{ columns:2; } }
 @media (max-width:520px){ .rea-mosaique{ columns:1; } }
 
-/* Au-delà des six premières, on attend que le visiteur le demande : la
-   page d'accueil garde la même longueur avec dix photos ou avec cent. */
-.rea-mosaique:not(.is-deplie) .rea-item:nth-child(n+7){ display:none; }
 
 /* Un <button> et non une <figure> : la photo s'ouvre en grand, donc elle
    s'active aussi au clavier. D'où les remises à zéro qui suivent. */
@@ -394,12 +391,43 @@ p{ margin:0 0 1em; color:var(--ink-soft); }
 /* Au doigt, il n'y a pas de survol : la légende reste lisible. */
 @media (hover:none){ .rea-legende{ opacity:1; transform:none; } }
 
-/* `.btn` pose un `display`, qui l'emporte sur le `display:none` que le
-   navigateur applique à [hidden] : sans cette règle, le bouton s'afficherait
-   même quand il n'y a rien de plus à montrer. Même raison pour les flèches
-   de la visionneuse, plus bas. */
-.realisations-plus{ margin-top:1.6rem; }
-.realisations-plus[hidden]{ display:none; }
+/* ---- Deux rangées qui défilent (à partir de quatre photos) ----
+   Hauteur fixe, largeur donnée par le ratio de chaque photo : une pièce
+   montée reste verticale, un buffet reste large, et rien n'est recadré.
+   Chaque piste porte deux fois sa série, décalée de -50 % pour boucler
+   sans saut ; la gouttière est portée à droite de chaque série pour que
+   les deux moitiés aient exactement la même largeur. */
+.rea-mosaique.rea-defile{ columns:auto; display:flex; flex-direction:column; gap:1rem; }
+.rea-rangee{
+  overflow:hidden; padding-block:.4rem 1rem;
+  -webkit-mask-image:linear-gradient(to right, transparent, #000 5%, #000 95%, transparent);
+          mask-image:linear-gradient(to right, transparent, #000 5%, #000 95%, transparent);
+}
+.rea-piste{
+  display:flex; width:max-content;
+  animation:rea-gauche var(--rea-duree, 60s) linear infinite;
+}
+/* La seconde rangée va un peu moins vite : les deux ne se recalent jamais */
+.rea-piste.vers-droite{ animation-name:rea-droite; animation-duration:calc(var(--rea-duree, 60s) * 1.1); }
+.rea-serie{ display:flex; gap:1rem; padding-right:1rem; }
+.rea-defile .rea-item{ width:auto; height:220px; margin:0; flex:none; }
+.rea-defile .rea-item img{ width:auto; height:100%; }
+/* Survol ou focus d'une rangée : elle s'arrête, on peut viser une photo */
+.rea-rangee:hover .rea-piste,
+.rea-rangee:focus-within .rea-piste{ animation-play-state:paused; }
+@keyframes rea-gauche{ from{ transform:translateX(0); } to{ transform:translateX(-50%); } }
+@keyframes rea-droite{ from{ transform:translateX(-50%); } to{ transform:translateX(0); } }
+/* Mouvement réduit : rien ne bouge seul, chaque rangée se parcourt au
+   doigt ou à la molette, et la copie n'a plus de raison d'être. */
+@media (prefers-reduced-motion: reduce){
+  .rea-rangee{ overflow-x:auto; -webkit-mask-image:none; mask-image:none; }
+  .rea-piste{ animation:none; }
+  .rea-serie[aria-hidden="true"]{ display:none; }
+}
+
+/* Les flèches de la visionneuse posent un `display`, qui l'emporte sur le
+   `display:none` que le navigateur applique à [hidden] : d'où la règle
+   [hidden] explicite, plus bas. */
 
 /* ---- Photo en grand ---- */
 .rea-visionneuse{
@@ -1029,6 +1057,10 @@ p{ margin:0 0 1em; color:var(--ink-soft); }
   /* Bandeau : une carte et le début de la suivante, pour montrer que ça continue */
   .avis-defile .avis-carte{ width:min(270px, 78vw); }
   .avis-serie{ gap:1.1rem; padding-right:1.1rem; }
+  /* Réalisations : rangées plus basses, deux photos et demie à l'écran */
+  .rea-defile .rea-item{ height:150px; }
+  .rea-serie{ gap:.7rem; padding-right:.7rem; }
+  .rea-mosaique.rea-defile{ gap:.4rem; }
   .presse-avis.avis-defile{
     -webkit-mask-image:linear-gradient(to right, transparent, #000 4%, #000 96%, transparent);
             mask-image:linear-gradient(to right, transparent, #000 4%, #000 96%, transparent);

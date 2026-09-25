@@ -372,10 +372,11 @@ function applyEquipe(e) {
 
 /* ---------- Nos réalisations ---------- */
 /* Galerie des commandes spéciales, choisies une par une depuis le panel.
-   Six photos d'abord, le reste derrière un bouton : la page d'accueil garde
-   la même longueur que la boutique en publie dix ou cent. */
+   À partir de quatre photos, deux rangées défilent en sens contraire : la
+   section garde la même hauteur que la boutique en publie dix ou cent.
+   En dessous, une simple mosaïque. */
 
-const REA_VISIBLES = 6;
+const REA_DEFILE_MIN = 4;
 
 /* Le ratio est relevé par le panel au moment de l'import et voyage avec la
    photo. Il sert ici à réserver la place AVANT que l'image n'arrive : sans
@@ -416,25 +417,33 @@ function applyRealisations(r) {
   // pas de rubrique du tout qu'une rubrique vide.
   if (!photosRealisations.length) return;
 
-  grille.innerHTML = photosRealisations.map(renderRealisation).join('');
+  if (photosRealisations.length < REA_DEFILE_MIN) {
+    grille.classList.remove('rea-defile');
+    grille.innerHTML = photosRealisations.map(renderRealisation).join('');
+  } else {
+    // Deux rangées qui glissent en sens contraire, une photo sur deux dans
+    // chacune. Chaque piste porte deux fois sa série pour boucler sans
+    // saut. La copie reste cliquable — elle est à l'écran la moitié du
+    // temps — mais sort du clavier et des lecteurs d'écran.
+    const rangee = (reste, sens) => {
+      const liste = photosRealisations
+        .map((p, i) => [p, i])
+        .filter(([, i]) => i % 2 === reste);
+      const serie = liste.map(([p, i]) => renderRealisation(p, i)).join('');
+      const copie = serie.replace(/<button /g, '<button tabindex="-1" ');
+      return `
+        <div class="rea-rangee">
+          <div class="rea-piste ${sens}" style="--rea-duree:${liste.length * 9}s">
+            <div class="rea-serie">${serie}</div>
+            <div class="rea-serie" aria-hidden="true">${copie}</div>
+          </div>
+        </div>`;
+    };
+    grille.classList.add('rea-defile');
+    grille.innerHTML = rangee(0, 'vers-gauche') + rangee(1, 'vers-droite');
+  }
 
   afficherSection('realisations', true);
-
-  const reste = photosRealisations.length - REA_VISIBLES;
-  const plus = document.getElementById('realisationsPlus');
-  if (plus && reste > 0) {
-    const libelleDeplier = `Voir ${reste} photo${reste > 1 ? 's' : ''} de plus`;
-    plus.textContent = libelleDeplier;
-    plus.hidden = false;
-    plus.addEventListener('click', () => {
-      const deplie = grille.classList.toggle('is-deplie');
-      plus.setAttribute('aria-expanded', String(deplie));
-      plus.textContent = deplie ? 'Voir moins' : libelleDeplier;
-      // Replier depuis le bas de la liste laisserait le visiteur devant une
-      // section qui vient de raccourcir sous lui.
-      if (!deplie) section.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    });
-  }
 
   grille.addEventListener('click', e => {
     const item = e.target.closest('.rea-item');
