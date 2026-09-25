@@ -258,19 +258,6 @@ p{ margin:0 0 1em; color:var(--ink-soft); }
 .hero-social svg .solid{ fill:currentColor; stroke:none; }
 .hero-social:hover{ background:var(--ink); color:var(--cream); transform:translateY(-2px); }
 
-.scroll-cue{
-  position:absolute; bottom:2rem; left:50%; transform:translateX(-50%);
-  width:26px; height:42px; border:2px solid var(--ink-soft); border-radius:20px;
-}
-.scroll-cue span{
-  position:absolute; top:6px; left:50%; width:4px; height:8px; margin-left:-2px;
-  background:var(--gold); border-radius:2px; animation:scrollcue 1.8s ease-in-out infinite;
-}
-@keyframes scrollcue{ 0%{ opacity:1; top:6px; } 70%{ opacity:0; top:22px; } 100%{ opacity:0; top:6px; } }
-/* Écran très court (téléphone en paysage, petit mobile) : il n'y a plus de
-   place sous les boutons, et l'invitation à défiler n'apprend rien de plus. */
-@media (max-height: 700px){ .scroll-cue{ display:none; } }
-
 /* ---------- Dividers (motif vague récurrent) ---------- */
 .divider{
   line-height:0; color:var(--gold-pale);
@@ -1026,7 +1013,6 @@ p{ margin:0 0 1em; color:var(--ink-soft); }
      est centré : sur un écran court elle passait par-dessus les deux boutons.
      On lui réserve sa place en remontant le contenu. */
   .hero{ padding-bottom:7rem; }
-  .scroll-cue{ bottom:1.6rem; }
   /* Badge compact. Son détail a déjà disparu plus haut, dès 1280px. */
   .open-badge{ margin-right:.7rem; font-size:.72rem; padding:.3em .65em; }
   /* Place pour la barre d'action fixe */
