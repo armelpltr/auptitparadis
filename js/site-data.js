@@ -309,14 +309,7 @@ function applyTemoignages(p) {
       <div class="avis-piste" style="--avis-duree:${liste.length * 9}s">
         <div class="avis-serie">${cartes}</div>
         <div class="avis-serie" aria-hidden="true" inert>${cartes}</div>
-      </div>
-      <button type="button" class="avis-pause" aria-pressed="false">Mettre en pause</button>`;
-    const bouton = grille.querySelector('.avis-pause');
-    bouton.addEventListener('click', () => {
-      const enPause = grille.classList.toggle('en-pause');
-      bouton.setAttribute('aria-pressed', String(enPause));
-      bouton.textContent = enPause ? 'Reprendre le défilement' : 'Mettre en pause';
-    });
+      </div>`;
   }
   afficherSection('avis', liste.length > 0);
 }

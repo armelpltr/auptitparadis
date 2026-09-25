@@ -927,7 +927,7 @@ p{ margin:0 0 1em; color:var(--ink-soft); }
   overflow:hidden;
   -webkit-mask-image:linear-gradient(to right, transparent, #000 6%, #000 94%, transparent);
           mask-image:linear-gradient(to right, transparent, #000 6%, #000 94%, transparent);
-  padding:.6rem 0 2.8rem;
+  padding:.6rem 0 1.6rem;
 }
 .avis-piste{
   display:flex; width:max-content;
@@ -937,18 +937,10 @@ p{ margin:0 0 1em; color:var(--ink-soft); }
 .avis-defile .avis-carte{ width:320px; flex:0 0 auto; }
 /* Survol et focus arrêtent la lecture : on lit un avis sans le poursuivre */
 .avis-defile:hover .avis-piste,
-.avis-defile:focus-within .avis-piste,
-.avis-defile.en-pause .avis-piste{ animation-play-state:paused; }
+.avis-defile:focus-within .avis-piste{ animation-play-state:paused; }
 @keyframes avis-defile{
   from{ transform:translateX(0); }
   to{   transform:translateX(-50%); }
-}
-/* Tout ce qui bouge seul plus de cinq secondes doit pouvoir s'arrêter */
-.avis-pause{
-  position:absolute; left:50%; bottom:0; transform:translateX(-50%);
-  background:none; border:0; padding:.3rem .6rem; cursor:pointer;
-  font:inherit; font-size:.8rem; font-weight:600; color:var(--gold-deep);
-  text-decoration:underline; text-underline-offset:.2em;
 }
 /* Mouvement réduit : pas d'animation, la série se parcourt au doigt ou à
    la molette, et la copie n'a plus de raison d'être. */
@@ -958,7 +950,7 @@ p{ margin:0 0 1em; color:var(--ink-soft); }
     -webkit-mask-image:none; mask-image:none;
   }
   .avis-piste{ animation:none; }
-  .avis-serie[aria-hidden="true"], .avis-pause{ display:none; }
+  .avis-serie[aria-hidden="true"]{ display:none; }
   .avis-defile .avis-carte{ scroll-snap-align:start; }
 }
 
